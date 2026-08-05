@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f1f5f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* HEADER */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+/* STATS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.stat-card h3 {
+    margin: 5px 0;
+}
+
+.stat-paid { color: green; }
+.stat-pending { color: orange; }
+.stat-failed { color: red; }
+
+/* FILTER BAR */
+.top-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    background: linear-gradient(135deg, #0d6efd, #0056d2);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* CARD */
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 20px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.05);
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background: #0d6efd;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+/* STATUS */
+.paid { color: green; font-weight: 600; }
+.pending { color: orange; font-weight: 600; }
+.failed { color: red; font-weight: 600; }
+
+/* ALERT */
+.alert {
+    background: #fff3cd;
+    border-left: 5px solid #ffc107;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* MOBILE */
+@media(max-width: 768px) {
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+    <h1>💰 Payment Dashboard</h1>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="stat-card">
+        <span>Total Students</span>
+        <h3>{{ total_students }}</h3>
+    </div>
+
+    <div class="stat-card">
+        <span>Paid</span>
+        <h3 class="stat-paid">{{ paid_count }}</h3>
+    </div>
+
+    <div class="stat-card">
+        <span>Pending</span>
+        <h3 class="stat-pending">{{ pending_count }}</h3>
+    </div>
+
+    <div class="stat-card">
+        <span>Failed</span>
+        <h3 class="stat-failed">{{ failed_count }}</h3>
+    </div>
+</div>
+
+<!-- FILTER -->
+<form method="GET" class="top-bar">
+    <input type="text" name="search" placeholder="Search student..." value="{{ request.GET.search }}">
+    
+    <select name="course">
+        <option value="">All Courses</option>
+        <option>Python</option>
+        <option>Java</option>
+        <option>AWS</option>
+    </select>
+
+    <button type="submit">Filter</button>
+
+    <a href="{% url 'export_excel' %}">
+        <button type="button">⬇ Export</button>
+    </a>
+</form>
+
+<!-- EMI ALERT -->
+{% for s in emi_due_students %}
+<div class="alert">
+    ⚠ {{ s.name }} EMI due soon
+</div>
+{% endfor %}
+
+<!-- PAID -->
+<div class="card">
+<h2>✅ Fully Paid</h2>
+<table>
+<tr>
+<th>Name</th>
+<th>Email</th>
+<th>Course</th>
+<th>Paid</th>
+</tr>
+
+{% for s in paid_students %}
+<tr>
+<td>{{ s.name }}</td>
+<td>{{ s.email }}</td>
+<td>{{ s.course }}</td>
+<td class="paid">₹{{ s.amount_paid }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="4">No Data</td></tr>
+{% endfor %}
+</table>
+</div>
+
+<!-- PENDING -->
+<div class="card">
+<h2>⏳ EMI Pending</h2>
+<table>
+<tr>
+<th>Name</th>
+<th>Total</th>
+<th>Paid</th>
+<th>Remaining</th>
+</tr>
+
+{% for s in pending_students %}
+<tr>
+<td>{{ s.name }}</td>
+<td>₹{{ s.total_amount }}</td>
+<td>₹{{ s.amount_paid }}</td>
+<td class="pending">₹{{ s.remaining }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="4">No Data</td></tr>
+{% endfor %}
+</table>
+</div>
+
+<!-- FAILED -->
+<div class="card">
+<h2>❌ Failed Payments</h2>
+<table>
+<tr>
+<th>Name</th>
+<th>Amount</th>
+<th>EMI</th>
+</tr>
+
+{% for p in failed_payments %}
+<tr>
+<td>{{ p.registration.name }}</td>
+<td>₹{{ p.amount }}</td>
+<td>{{ p.emi_part }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="3">No Failed Payments</td></tr>
+{% endfor %}
+</table>
+</div>
+
+</div>
+
+</body>
+</html>

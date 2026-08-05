@@ -1,0 +1,376 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Portfolio | YGR Gobal IT Services in KBHP</title>
+
+    <meta name="description" content="Explore our diverse portfolio of web development, mobile applications, and enterprise software solutions.">
+    <meta name="keywords" content="IT projects, web development, app development, software solutions">
+
+    <link rel="icon" type="image/png" href="/static/images/logo.png"/>
+    
+    <style>
+        /* ================= PORTFOLIO PAGE REFINEMENTS ================= */
+        .portfolio-main-container {
+            padding-bottom: 120px;
+            min-height: 100vh;
+        }
+
+        .portfolio-hero {
+            padding: 30px 0 20px;
+            text-align: center;
+        }
+        .portfolio-hero.section-head1{
+            margin-bottom: 20px;
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 40px;
+            padding: 0 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .project-card-modern {
+            background: var(--white);
+            border-radius: 30px;
+            padding: 25px;
+            border: 1px solid #f0f0f0;
+            transition: var(--transition-slow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+
+        .project-card-modern:hover {
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-gold);
+        }
+
+        .project-image-wrapper {
+            position: relative;
+            height: 260px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+        }
+
+        .project-main-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+
+        .thumbnail-gallery {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding: 5px;
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .thumbnail-gallery::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .thumb-item {
+            width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition-fast);
+            opacity: 0.7;
+        }
+
+        .thumb-item:hover, .thumb-item.active {
+            border-color: var(--accent-gold);
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .project-content h3 {
+            font-size: 24px;
+            color: var(--primary-navy);
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .meta-item {
+            font-size: 14px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item i {
+            color: var(--accent-gold);
+        }
+
+        .visit-link {
+            font-family: 'Oswald', sans-serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--primary-navy);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition-fast);
+        }
+
+        .visit-link:hover {
+            color: var(--rich-gold);
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        /* Category Badge */
+        .project-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            z-index: 5;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (max-width: 768px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+                padding: 0 15px;
+                gap: 25px;
+            }
+            .project-card-modern {
+                padding: 15px;
+                border-radius: 20px;
+            }
+            .project-image-wrapper {
+                height: 200px;
+                margin-bottom: 15px;
+            }
+            .portfolio-hero {
+                padding: 30px 0 10px;
+            }
+            .portfolio-hero .section-head1 h1{
+                font-size: 20px;
+                margin-bottom: 20px !important;
+            }
+            .thumbnail-gallery {
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+            .thumb-item {
+                width: 55px;
+                height: 55px;
+            }
+        }
+    </style>
+</head>
+
+<body class="page">
+
+{% include "header.html" %}
+
+<div class="portfolio-main-container mesh-gradient animated-bg">
+    
+    <!-- Portfolio Hero -->
+    <div class="portfolio-hero reveal">
+        <div class="container">
+            <div class="section-head1">
+                <span>Showcase</span>
+                <h1>Engineering Excellence</h1>
+                <p>A curated collection of digital products and enterprise solutions delivered gobally.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="projects-grid">
+        {% for project in projects %}
+        <div class="project-card-modern reveal">
+            <div class="project-badge">SUCCESSFUL DELIVERY</div>
+            
+            <div class="project-image-wrapper img-zoom-container" 
+                 onclick="openLightbox(document.getElementById('mainImage{{ project.id }}').src)"
+                 onmousemove="moveLens(event, {{ project.id }})"
+                 onmouseenter="showLens({{ project.id }})"
+                 onmouseleave="hideLens()">
+                <div id="lens{{ project.id }}" class="zoom-lens"></div>
+                <img id="mainImage{{ project.id }}" 
+                     class="project-main-img" 
+                     src="{{ project.image1.url }}" 
+                     alt="{{ project.name }}"
+                     style="cursor: zoom-in;">
+            </div>
+
+            <div class="thumbnail-gallery">
+                <img src="{{ project.image1.url }}" class="thumb-item active" onclick="updateProjectView(this, '{{ project.image1.url }}', {{ project.id }})">
+                {% if project.image2 %}
+                <img src="{{ project.image2.url }}" class="thumb-item" onclick="updateProjectView(this, '{{ project.image2.url }}', {{ project.id }})">
+                {% endif %}
+                {% if project.image3 %}
+                <img src="{{ project.image3.url }}" class="thumb-item" onclick="updateProjectView(this, '{{ project.image3.url }}', {{ project.id }})">
+                {% endif %}
+                {% if project.image4 %}
+                <img src="{{ project.image4.url }}" class="thumb-item" onclick="updateProjectView(this, '{{ project.image4.url }}', {{ project.id }})">
+                {% endif %}
+            </div>
+
+            <div class="project-content">
+                <h3>{{ project.name }}</h3>
+                <div class="project-meta">
+                    <div class="meta-item">
+                        <i class="far fa-calendar-alt"></i>
+                        <span>{{ project.time_taken }}</span>
+                    </div>
+                    {% if project.link %}
+                    <a href="{{ project.link }}" target="_blank" class="visit-link">
+                        Live Demo <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Zoom Preview Container -->
+<div id="zoomPreview" class="zoom-preview-container"></div>
+
+<!-- Lightbox Overlay -->
+<div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+    <div class="lightbox-close"><i class="fas fa-times"></i></div>
+    <img id="lightboxImg" class="lightbox-content" src="" alt="Preview">
+</div>
+
+{% include "footer.html" %}
+
+<script>
+/* ================= PROJECT VIEW CONTROLLER ================= */
+function updateProjectView(thumb, src, id) {
+    // Update main image
+    const mainImg = document.getElementById('mainImage' + id);
+    mainImg.style.opacity = '0';
+    
+    setTimeout(() => {
+        mainImg.src = src;
+        mainImg.style.opacity = '1';
+    }, 200);
+
+    // Update active thumbnail
+    const gallery = thumb.parentElement;
+    gallery.querySelectorAll('.thumb-item').forEach(img => img.classList.remove('active'));
+    thumb.classList.add('active');
+}
+
+/* ================= LIGHTBOX CONTROLLER ================= */
+function openLightbox(src) {
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightboxImg');
+    lbImg.src = src;
+    lb.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent scroll
+}
+
+function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    lb.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restore scroll
+}
+
+/* ================= MAGNIFIER CONTROLLER ================= */
+function showLens(id) {
+    const preview = document.getElementById('zoomPreview');
+    const mainImg = document.getElementById('mainImage' + id);
+    const lens = document.getElementById('lens' + id);
+
+    preview.style.display = 'block';
+    lens.style.display = 'block';
+    preview.style.backgroundImage = `url('${mainImg.src}')`;
+    preview.style.backgroundSize = (mainImg.width * 3) + "px " + (mainImg.height * 3) + "px";
+}
+
+function hideLens() {
+    document.getElementById('zoomPreview').style.display = 'none';
+    const lenses = document.querySelectorAll('.zoom-lens');
+    lenses.forEach(l => l.style.display = 'none');
+}
+
+function moveLens(e, id) {
+    const mainImg = document.getElementById('mainImage' + id);
+    const lens = document.getElementById('lens' + id);
+    const preview = document.getElementById('zoomPreview');
+
+    const pos = getCursorPos(e, mainImg);
+    let x = pos.x - (lens.offsetWidth / 2);
+    let y = pos.y - (lens.offsetHeight / 2);
+
+    if (x > mainImg.width - lens.offsetWidth) { x = mainImg.width - lens.offsetWidth; }
+    if (x < 0) { x = 0; }
+    if (y > mainImg.height - lens.offsetHeight) { y = mainImg.height - lens.offsetHeight; }
+    if (y < 0) { y = 0; }
+
+    lens.style.left = x + "px";
+    lens.style.top = y + "px";
+
+    const cx = preview.offsetWidth / lens.offsetWidth;
+    const cy = preview.offsetHeight / lens.offsetHeight;
+
+    preview.style.backgroundPosition = "-" + (x * 3) + "px -" + (y * 3) + "px";
+}
+
+function getCursorPos(e, img) {
+    const a = img.getBoundingClientRect();
+    const x = e.pageX - a.left - window.pageXOffset;
+    const y = e.pageY - a.top - window.pageYOffset;
+    return { x: x, y: y };
+}
+
+/* ================= REVEAL ANIMATION JS ================= */
+const observerOptions = {
+    threshold: 0.1
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

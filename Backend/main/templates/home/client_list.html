@@ -1,0 +1,83 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Clients Data{% endblock %}
+{% block header_title %}Clients Data{% endblock %}
+
+{% block content %}
+<style>
+.dashboard-container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 25px 45px rgba(0,0,0,0.08);
+}
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.dashboard-header h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #092a49;
+    margin: 0;
+}
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+.table th, .table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    vertical-align: middle;
+    text-align: left;
+}
+.table th {
+    background: #092a49;
+    color: #fff;
+    font-weight: 600;
+}
+tbody tr:hover {
+    background-color: #f5faff;
+}
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h3>Client Submitted Data</h3>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Service</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>{{ client.name }}</td>
+                    <td>{{ client.phone }}</td>
+                    <td>{{ client.email }}</td>
+                    <td>{{ client.service }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align:center; padding: 20px; color: #777;">No clients found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

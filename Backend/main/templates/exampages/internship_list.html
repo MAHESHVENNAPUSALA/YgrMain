@@ -1,0 +1,348 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Internships | YGR Gobal IT Services</title>
+
+    <meta name="description" content="Launch your career with our gobal internship programs. Gain hands-on experience in software development, design, and digital innovation.">
+    <meta name="keywords" content="IT Internships Hyderabad, Software Training, Web Development Internship, Python Internship, Java Training">
+
+    <link rel="icon" type="image/png" href="/static/images/logo.png"/>
+    <link rel="stylesheet" href="{% static 'css/modern_ui.css' %}">
+    
+    <style>
+        /* ================= INTERNSHIP PAGE REFINEMENTS ================= */
+        .internship-main-container {
+            padding-bottom: 120px;
+            min-height: 100vh;
+        }
+
+        .internship-hero {
+            padding: 100px 0 60px;
+            text-align: center;
+        }
+
+        .internship-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 40px;
+            padding: 0 40px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .intern-card-modern {
+            background: var(--white);
+            border-radius: 30px;
+            overflow: hidden;
+            transition: var(--transition-slow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+
+        .intern-card-modern:hover {
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-gold);
+        }
+
+        .intern-image-wrapper {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .intern-card-modern img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition-slow);
+        }
+
+        .intern-card-modern:hover img {
+            transform: scale(1.1);
+        }
+
+        .intern-content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            text-align: center;
+        }
+
+        .intern-card-modern h3 {
+            font-size: 22px;
+            color: var(--primary-navy);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .intern-duration {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .intern-duration i {
+            color: var(--accent-gold);
+        }
+
+        /* Modal Refinement */
+        .intern-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 42, 73, 0.85);
+            backdrop-filter: blur(15px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .intern-modal-overlay.active {
+            display: flex;
+        }
+
+        .intern-modal-card {
+            background: var(--white);
+            width: 100%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-radius: 40px;
+            padding: 60px;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(50px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-gold) transparent;
+        }
+
+        .intern-modal-overlay.active .intern-modal-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .intern-modal-card h2 {
+            font-size: 32px;
+            color: var(--primary-navy);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent-gold);
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .syllabus-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-dark);
+            white-space: pre-line;
+            margin-top: 25px;
+            padding: 40px; /* Increased padding */
+            background: rgba(9, 42, 73, 0.02);
+            border-radius: 30px;
+            border: 1px solid rgba(9, 42, 73, 0.05);
+            text-align: left;
+        }
+
+        .syllabus-content b {
+            color: var(--primary-navy);
+            display: block;
+            margin-top: 20px;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(251, 204, 39, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .syllabus-content b:first-child {
+            margin-top: 0;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #f5f5f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+
+        .modal-close-btn:hover {
+            background: var(--accent-gold);
+            transform: rotate(90deg);
+        }
+
+        @media (max-width: 768px) {
+            .internship-hero {
+                padding: 50px 0 30px;
+            }
+            .internship-hero h1 {
+                font-size: 1.4rem;
+                letter-spacing: 1px;
+                font-weight: 600;
+            }
+            .internship-hero p {
+                font-size: 15px;
+            }
+            .internship-grid {
+                grid-template-columns: 1fr;
+                padding: 0 15px;
+                gap: 20px;
+            }
+            .intern-card-modern h3 {
+                font-size: 18px;
+            }
+            .intern-modal-card {
+                padding: 25px 15px;
+                border-radius: 20px;
+                max-height: 95vh;
+            }
+            .intern-modal-card h2 {
+                font-size: 20px;
+            }
+            .syllabus-content {
+                padding: 15px;
+                font-size: 13px;
+            }
+            .modal-close-btn {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body class="page">
+
+{% include 'header.html' %}
+
+<div class="internship-main-container mesh-gradient animated-bg">
+    
+    <!-- Hero Section -->
+    <div class="internship-hero reveal">
+        <div class="container">
+            <div class="section-head">
+                <span>Kickstart Your Career</span>
+                <h1>Gobal Internship Program</h1>
+                <p>Master industry-standard technologies with hands-on projects and expert mentorship.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="internship-grid">
+        {% for i in internships %}
+        <div class="intern-card-modern reveal" 
+             onclick="openInternModal('{{ i.title|escapejs }}','{{ i.syllabus|escapejs }}', '{% url 'register' i.id %}')">
+            <div class="intern-image-wrapper">
+                {% if i.image %}
+                <img src="{{ i.image.url }}" alt="{{ i.title }}">
+                {% else %}
+                <img src="{% static 'images/internship_placeholder.jpg' %}" alt="{{ i.title }}">
+                {% endif %}
+            </div>
+            
+            <div class="intern-content">
+                <h3>{{ i.title }}</h3>
+                <div class="intern-duration">
+                    <i class="far fa-clock"></i>
+                    <span>Duration: {{ i.duration }}</span>
+                </div>
+
+                <a href="{% url 'register' i.id %}" class="gold-btn w-100" onclick="event.stopPropagation();">
+                    Register Now
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Syllabus Modal -->
+<div id="internModal" class="intern-modal-overlay" onclick="closeInternModal()">
+    <div class="intern-modal-card" onclick="event.stopPropagation()">
+        <div class="modal-close-btn" onclick="closeInternModal()"><i class="fas fa-times"></i></div>
+        <h2 id="modalInternTitle">Program Syllabus</h2>
+        
+        <div class="syllabus-content" id="modalInternSyllabus">
+            <!-- Syllabus content will be injected here -->
+        </div>
+
+        <div class="mt-5 text-center">
+            <p class="text-muted small mb-4">Ready to begin your journey?</p>
+            <a href="#" id="modalRegisterBtn" class="gold-btn">Secure Your Spot</a>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}
+
+<script>
+/* ================= MODAL CONTROLLER ================= */
+function openInternModal(title, syllabus, regUrl) {
+    const modal = document.getElementById('internModal');
+    document.getElementById('modalInternTitle').innerText = title + " Syllabus";
+    
+    // Auto-format "Module" text to be bold and on new lines
+    let formattedSyllabus = syllabus.replace(/Module\s?\d+:/gi, (match) => {
+        return `<b>${match}</b>`;
+    });
+    
+    document.getElementById('modalInternSyllabus').innerHTML = formattedSyllabus;
+    document.getElementById('modalRegisterBtn').href = regUrl;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeInternModal() {
+    const modal = document.getElementById('internModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+/* ================= REVEAL ANIMATION JS ================= */
+const observerOptions = {
+    threshold: 0.1
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

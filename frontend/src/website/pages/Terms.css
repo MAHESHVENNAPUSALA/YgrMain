@@ -1,0 +1,125 @@
+
+/* ===== GOBAL ===== */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #ffffff;
+    color: #333333;
+}
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+/* ===== TERMS SECTION ===== */
+.terms {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.terms img {
+    display: block;
+    margin: 0 auto 20px auto;
+    max-width: 500px;
+}
+
+.terms h2 {
+    font-weight: bold;
+    color: #092a49;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.terms p a :hover{
+    text-decoration: none;
+}
+.terms h4 {
+    margin-top: 20px;
+    color: #092a49;
+    font-size: 18px;
+}
+
+.terms p {
+    font-size: 16px;
+    color: #797979;
+    line-height: 1.7;
+    margin-bottom: 10px;
+}
+
+/* ===== ADDRESS SECTION (FAQ STYLE) ===== */
+.Address {
+    background-color: #f9fafb;
+    padding: 20px 30px;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 30px auto;
+    border: 1px solid #e0e0e0;
+}
+
+.Address h2 {
+    color: #092a49;
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 25px;
+}
+
+.Address h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #092a49;
+    font-size: 18px;
+    border-bottom: 2px solid #1a73e8;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.Address p {
+    font-size: 16px;
+    color: #797979;
+    line-height: 1.6;
+}
+
+.Address i {
+    color: #092a49;
+    margin-right: 6px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .terms {
+        padding: 20px;
+    }
+
+    .terms h2 {
+        font-size: 24px;
+    }
+
+    .terms h4 {
+        font-size: 16px;
+    }
+
+    .terms p {
+        font-size: 14px;
+    }
+
+    .Address {
+        padding: 15px 20px;
+    }
+
+    .Address h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .Address h4 {
+        font-size: 16px;
+        margin-top: 15px;
+        margin-bottom: 8px;
+    }
+
+    .Address p {
+        font-size: 14px;
+    }
+}

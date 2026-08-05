@@ -1,0 +1,115 @@
+
+/* ===== Gobal Body ===== */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+    padding: 0;
+    line-height: 1.7;
+    color: #333;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* ===== Policy Container ===== */
+.policy-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    line-height: 1.7;
+}
+
+/* Headings */
+.policy-container h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #0b3c5d;
+    margin-bottom: 10px;
+}
+
+.policy-container .updated-date {
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 30px;
+}
+
+.policy-container h2, .policy-container h3 {
+    font-size: 20px;
+    margin-top: 30px;
+    margin-bottom: 10px; 
+}
+
+/* Paragraphs, lists, and list items */
+.policy-container p {
+    margin-bottom: 12px;
+}
+
+.policy-container ul {
+    margin-left: 20px;
+}
+
+.policy-container li {
+    margin-bottom: 8px;
+}
+
+/* Boxes */
+.policy-container .business-box {
+    background: #f9fafb;
+    padding: 20px;
+    border-left: 4px solid #1a73e8;
+    margin-top: 20px;
+    border-radius: 4px;
+}
+
+.policy-container .contact-box {
+    background: #eef4ff;
+    padding: 20px;
+    border-radius: 6px;
+    margin-top: 25px;
+}
+
+/* Strong text */
+.policy-container strong {
+    color: #000;
+}
+
+/* Links */
+a {
+    color: #092a49;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Images */
+.policy-container img {
+    display: block;
+    max-width: 400px;
+    width: 100%;
+    margin: 50px auto;
+    border-radius: 6px;
+}
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
+    .policy-container {
+        padding: 20px;
+        margin: 20px 15px;
+    }
+    .policy-container h1 {
+        font-size: 24px;
+    }
+    .policy-container h2, .policy-container h3 {
+        font-size: 18px;
+    }
+    .policy-container p,
+    .policy-container li {
+        font-size: 14px;
+    }
+}

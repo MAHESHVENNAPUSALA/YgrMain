@@ -1,0 +1,224 @@
+{% load static %}
+<style>
+    /* ================= ULTRA-PREMIUM GOBAL PRESENCE ================= */
+    .presence-section {
+        padding: 60px 0;
+        background: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .presence-container {
+        padding: 0 5%;
+        position: relative;
+        z-index: 2;
+    }
+
+    .presence-header-center {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .presence-header-center h2 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #091c47;
+        margin-bottom: 12px;
+        letter-spacing: -1px;
+    }
+
+    .presence-header-center p {
+        font-size: 0.95rem;
+        color: #64748b;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .presence-main-h {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #091c47;
+        margin-bottom: 15px;
+        letter-spacing: -0.5px;
+    }
+
+    .presence-body-p {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.7;
+        margin-bottom: 40px;
+    }
+
+    /* Modern Country Chips */
+    .chips-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .presence-chip {
+        background: #fff;
+        padding: 10px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: default;
+    }
+
+    .presence-chip:hover {
+        transform: translateX(15px);
+        box-shadow: 0 20px 45px rgba(9, 81, 145, 0.1);
+        border-color: #fbcc27;
+    }
+
+    .presence-chip img {
+        width: 25px;
+        height: 25px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .presence-chip span {
+        font-weight: 800;
+        color: #091c47;
+        font-size: 0.85rem;
+    }
+
+    /* Map Display Premium */
+    .map-display-box {
+        position: relative;
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 20px;
+        transition: all 0.5s ease;
+    }
+
+    .map-display-box img {
+        border-radius: 16px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .map-display-box:hover img {
+        transform: scale(1.03) rotate(-1deg);
+        box-shadow: 0 50px 100px rgba(9, 81, 145, 0.15);
+    }
+
+    /* --- SINGLE UNIFIED MOBILE OVERRIDE (991px) --- */
+    @media (max-width: 991px) {
+        body { overflow-x: hidden !important; }
+
+        .presence-section {
+            padding: 40px 0 !important;
+        }
+
+        .presence-header-center {
+            margin-bottom: 30px !important;
+            padding: 0 10px !important;
+        }
+
+        .presence-header-center h2 {
+            font-size: 20px !important;
+            line-height: 1.2 !important;
+            font-weight: 300 !important;
+        }
+
+        .presence-header-center p {
+            font-size: 0.95rem !important;
+            line-height: 1.5 !important;
+        }
+
+        .presence-main-h {
+            font-size: 20px !important;
+            margin-top: 15px !important;
+            text-align: center !important;
+            font-weight: 500 !important;
+        }
+
+        .presence-body-p {
+            font-size: 0.85rem !important;
+            line-height: 1.6 !important;
+            margin-bottom: 30px !important;
+            text-align: center !important;
+        }
+
+        .chips-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
+            padding: 0 10px !important;
+        }
+
+        .presence-chip {
+            padding: 10px !important;
+            border-radius: 12px !important;
+        }
+
+        .presence-chip span {
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+        }
+
+        .map-display-box {
+            margin-top: 40px !important;
+            padding: 10px !important;
+        }
+    }
+</style>
+
+<section class="presence-section">
+    <div class="container-fluid presence-container">
+        <!-- Header -->
+        <div class="presence-header-center">
+            <h2>Serving a Borderless World</h2>
+            <p>Deploying world-class IT solutions across 4 continents and 10+ time zones.</p>
+        </div>
+
+        <div class="row align-items-center">
+            <!-- Left Side: Content & Chips -->
+            <div class="col-lg-6">
+                <div class="presence-text-wrap">
+                    <h4 class="presence-main-h">Global Reach, Localized Precision</h4>
+                    <p class="presence-body-p">
+                        Our decentralized delivery model ensures that no matter where your headquarters are, you receive
+                        the same gold-standard engineering and creative output. We bridge the gap between regional needs
+                        and global scalability.
+                    </p>
+
+                    <div class="chips-grid">
+                        <div class="presence-chip">
+                            <img src="https://flagcdn.com/in.svg" alt="India">
+                            <span>India</span>
+                        </div>
+                        <div class="presence-chip">
+                            <img src="https://flagcdn.com/us.svg" alt="USA">
+                            <span>United States</span>
+                        </div>
+                        <div class="presence-chip">
+                            <img src="https://flagcdn.com/gb.svg" alt="UK">
+                            <span>United Kingdom</span>
+                        </div>
+                        <div class="presence-chip">
+                            <img src="https://flagcdn.com/ca.svg" alt="Canada">
+                            <span>Canada</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Visual -->
+            <div class="col-lg-6">
+                <div class="map-display-box">
+                    <img src="{% static 'images/golbal-img.jpeg' %}" alt="Gobal Presence" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,400 @@
+:root {
+    --primary-navy: #091c47;
+    --secondary-navy: #0d3b6c;
+    --accent-gold: #fbcc27;
+    --rich-gold: #D4AF37;
+    --electric-blue: #00d2ff;
+    --royal-purple: #9d50bb;
+    --text-dark: #1a1a1a;
+    --text-light: #f5f6fa;
+    --text-muted: #6c757d;
+    --bg-light: #fdfeff;
+    --white: #ffffff;
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 15px 35px rgba(9, 42, 73, 0.08);
+    --shadow-lg: 0 30px 60px rgba(9, 42, 73, 0.12);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --transition-slow: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    --transition-fast: all 0.3s ease;
+}
+
+/* ================= GLOBAL ENHANCEMENTS ================= */
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Oswald', sans-serif !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+p {
+    font-family: 'Lato', sans-serif !important;
+    line-height: 1.8;
+    font-size: 17px;
+}
+
+/* ================= ADVANCED BACKGROUNDS ================= */
+.mesh-gradient {
+    background: radial-gradient(at 0% 0%, rgba(9, 42, 73, 0.1) 0, transparent 50%),
+        radial-gradient(at 50% 0%, rgba(251, 204, 39, 0.05) 0, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(0, 210, 255, 0.05) 0, transparent 50%);
+}
+
+.animated-bg {
+    position: relative;
+    overflow: hidden;
+}
+
+.animated-bg::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: var(--accent-gold);
+    filter: blur(150px);
+    opacity: 0.1;
+    top: -150px;
+    right: -150px;
+    border-radius: 50%;
+    animation: float 10s infinite alternate;
+}
+
+@keyframes float {
+    from {
+        transform: translate(0, 0);
+    }
+
+    to {
+        transform: translate(-100px, 100px);
+    }
+}
+
+/* ================= PREMIUM COMPONENTS ================= */
+
+/* Neo-Glass Cards */
+.premium-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 45px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-slow);
+    position: relative;
+}
+
+.premium-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-gold);
+    background: var(--white);
+}
+
+/* Glossy Buttons */
+.gold-btn {
+    background: linear-gradient(135deg, var(--accent-gold), var(--rich-gold));
+    color: var(--primary-navy) !important;
+    padding: 16px 40px;
+    border-radius: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border: none;
+    box-shadow: 0 10px 20px rgba(251, 204, 39, 0.2);
+    transition: var(--transition-slow);
+    display: inline-block;
+    cursor: pointer;
+    font-size: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.gold-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(45deg);
+    transition: var(--transition-slow);
+    pointer-events: none;
+}
+
+.gold-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(251, 204, 39, 0.3);
+}
+
+.gold-btn:hover::after {
+    left: 100%;
+}
+
+/* Section Headlines */
+.section-head {
+    text-align: center;
+    margin-bottom: 80px;
+    position: relative;
+}
+
+.section-head span {
+    color: var(--accent-gold);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.section-head h1,
+.section-head h2 {
+    font-size: 48px;
+    color: var(--primary-navy);
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+/* Reveal Animation */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (max-width: 768px) {
+    .reveal-left, .reveal-right {
+        transform: translateY(30px);
+        transition: all 0.8s ease-out;
+    }
+}
+
+.reveal-left.active, .reveal-right.active {
+    opacity: 1;
+    transform: translate(0, 0);
+}
+
+/* ================= HERO ENHANCEMENTS ================= */
+.hero-glass-container {
+    padding: 40px;
+    background: var(--primary-navy);
+    border-radius: 40px;
+    margin: 40px 20px;
+    position: relative;
+    overflow: hidden;
+    color: var(--white);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+}
+
+.hero-glass-container::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+    opacity: 0.1;
+}
+
+.hero-glass-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+}
+
+.hero-glass-content h1 {
+    font-size: 64px;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 25px;
+}
+
+.hero-glass-content p {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 35px;
+}
+
+@media (max-width: 991px) {
+    .hero-glass-content h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .hero-glass-container {
+        text-align: center;
+        justify-content: center;
+        padding: 30px 20px;
+        margin: 20px 10px;
+        min-height: auto;
+    }
+
+    .section-head h1,
+    .section-head h2 {
+        font-size: 20px;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    .gold-btn {
+        padding: 12px 25px;
+        font-size: 13px;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ================= MOBILE MAGNIFIER DISABLE ================= */
+@media (max-width: 991px) {
+
+    .zoom-preview-container,
+    .zoom-lens {
+        display: none !important;
+    }
+
+    .img-zoom-container {
+        cursor: pointer !important;
+    }
+}
+
+/* ================= BOOTSTRAP 4 COMPATIBILITY ================= */
+.row.g-4 {
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.row.g-4>[class*='col-'] {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+/* ================= MAGNIFIER PREVIEW ================= */
+.zoom-preview-container {
+    position: fixed;
+    top: 50%;
+    right: 50px;
+    transform: translateY(-50%);
+    width: 45vw;
+    height: 70vh;
+    border-radius: 30px;
+    border: 8px solid white;
+    box-shadow: 0 30px 60px rgba(9, 42, 73, 0.2);
+    background-repeat: no-repeat;
+    display: none;
+    z-index: 999;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: white;
+}
+
+.zoom-lens {
+    position: absolute;
+    border: 2px solid #fbcc27;
+    width: 100px;
+    height: 100px;
+    background: rgba(251, 204, 39, 0.1);
+    pointer-events: none;
+    display: none;
+    border-radius: 12px;
+    z-index: 10;
+}
+
+/* ================= PREMIUM IMAGE LIGHTBOX ================= */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(9, 42, 73, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.lightbox-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.lightbox-content {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 20px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    transform: scale(0.8);
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    border: 3px solid rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-overlay.active .lightbox-content {
+    transform: scale(1);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-close:hover {
+    background: #fbcc27;
+    color: #092a49;
+    transform: rotate(90deg);
+}
+/* Override broken legacy reveal animations */
+.reveal, .reveal-left, .reveal-right { opacity: 1 !important; transform: none !important; transition: none !important; }

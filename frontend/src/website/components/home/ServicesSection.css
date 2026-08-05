@@ -1,0 +1,224 @@
+/* ================= PREMIUM SERVICES SECTION (LIGHT) ================= */
+.premium-services-section {
+  padding: 140px 0;
+  background-color: var(--clr-bg-warm);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tabs */
+.ps-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 auto 50px;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: var(--rad-full);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0,0,0,0.05);
+  width: max-content;
+  max-width: 100%;
+}
+
+.ps-tab-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--rad-full);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clr-muted);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 1;
+}
+
+.ps-tab-btn:hover {
+  color: var(--clr-primary);
+}
+
+.ps-tab-btn.active {
+  color: var(--clr-white);
+}
+
+.ps-tab-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light));
+  border-radius: var(--rad-full);
+  z-index: -1;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+}
+
+.ps-tab-label {
+  position: relative;
+  z-index: 2;
+}
+
+/* Services Grid */
+.ps-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+}
+
+.ps-service-card {
+  position: relative;
+  display: block;
+  background: var(--clr-white);
+  border-radius: var(--rad-xl);
+  padding: 36px;
+  height: 100%;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-bounce);
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* Hover Glow Effect */
+.ps-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 50%); /* Secondary green glow */
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ps-service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(37,99,235,0.15);
+}
+
+.ps-service-card:hover .ps-card-glow {
+  opacity: 1;
+}
+
+/* Card Content */
+.ps-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.ps-icon-wrapper {
+  width: 60px; height: 60px;
+  background: rgba(37,99,235,0.05);
+  border-radius: var(--rad-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--clr-primary-light);
+  transition: var(--transition);
+}
+
+.ps-service-card:hover .ps-icon-wrapper {
+  background: var(--clr-secondary);
+  color: var(--clr-white);
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: var(--shadow-glow-green);
+}
+
+.ps-tag {
+  background: rgba(37,99,235,0.06);
+  color: var(--clr-primary-light);
+  padding: 6px 12px;
+  border-radius: var(--rad-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ps-card-title {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--clr-text);
+  margin-bottom: 12px;
+}
+
+.ps-card-desc {
+  font-size: 1rem;
+  color: var(--clr-muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.ps-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  margin-top: auto;
+}
+
+.ps-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-meta-lbl {
+  font-size: 0.75rem;
+  color: var(--clr-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.ps-meta-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--clr-text);
+}
+
+.ps-card-arrow {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--clr-bg);
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-text);
+  transition: var(--transition-fast);
+}
+
+.ps-service-card:hover .ps-card-arrow {
+  background: var(--clr-primary);
+  border-color: var(--clr-primary);
+  color: var(--clr-white);
+  transform: translateX(5px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ps-tabs-container {
+    width: 100%;
+    border-radius: var(--rad-lg);
+  }
+  
+  .ps-tab-btn {
+    flex: 1 1 40%;
+    text-align: center;
+  }
+  
+  .ps-services-grid {
+    grid-template-columns: 1fr;
+  }
+}

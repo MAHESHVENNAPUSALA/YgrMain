@@ -1,0 +1,338 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Careers | YGR Gobal IT Services</title>
+
+    <meta name="description" content="Join our team of experts. Explore job openings, internships, and professional growth opportunities at YGR Gobal IT Services.">
+    <meta name="keywords" content="jobs, internships, skill test, IT careers, career growth, professional development">
+
+    <link rel="icon" type="image/png" href="/static/images/logo.png"/>
+    <link rel="stylesheet" href="{% static 'css/modern_ui.css' %}">
+    
+    <style>
+        /* ================= CAREERS PAGE REFINEMENTS ================= */
+        .careers-main-container {
+            padding-bottom: 120px;
+            min-height: 100vh;
+        }
+
+        .careers-hero {
+            padding: 20px;
+            text-align: center;
+        }
+      .section-head1{
+        margin-bottom: 20px;
+        margin-top: 15px;
+      }
+        .layout-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            gap: 40px;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Scroll Columns */
+        .scroll-column {
+            flex: 1;
+            min-width: 250px;
+            max-width: 320px;
+            height: 700px;
+            overflow: hidden;
+            position: relative;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .scroll-column::before, .scroll-column::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 100px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .scroll-column::before { top: 0; background: linear-gradient(to bottom, var(--bg-light), transparent); }
+        .scroll-column::after { bottom: 0; background: linear-gradient(to top, var(--bg-light), transparent); }
+
+        .scrolling-wrapper-up { animation: scrollVerticalUp 30s linear infinite; }
+        .scrolling-wrapper-down { animation: scrollVerticalDown 30s linear infinite; }
+        
+        .scroll-column:hover .scrolling-wrapper-up, 
+        .scroll-column:hover .scrolling-wrapper-down { 
+            animation-play-state: paused; 
+        }
+
+        .scrolling-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        @keyframes scrollVerticalUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        @keyframes scrollVerticalDown {
+            0% { transform: translateY(-50%); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Center Content */
+        .center-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .career-card {
+            background: var(--white);
+            border-radius: 30px;
+            padding: 45px;
+            border: 1px solid #f0f0f0;
+            transition: var(--transition-slow);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            text-align: center;
+        }
+
+        .career-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-gold);
+        }
+
+        .career-card i {
+            font-size: 48px;
+            color: var(--accent-gold);
+            margin-bottom: 25px;
+            display: block;
+        }
+
+        .career-card h2 {
+            font-size: 28px;
+            color: var(--primary-navy);
+            margin-bottom: 15px;
+        }
+
+        .career-card p {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .already-registered {
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .already-registered a {
+            color: var(--primary-navy);
+            font-weight: 700;
+            text-decoration: underline;
+        }
+
+        /* Student Card Refined */
+        .student-card-mini {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #eee;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .student-card-mini img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent-gold);
+            margin-bottom: 12px;
+        }
+
+        .student-card-mini h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: var(--primary-navy);
+        }
+
+        .student-card-mini span {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 1100px) {
+            .scroll-column { display: none; }
+            .layout-wrapper { justify-content: center; padding: 20px; }
+            .center-column { flex: 1; max-width: 600px; }
+        }
+
+        @media (max-width: 768px) {
+            .careers-hero { padding: 30px 0 10px; }
+            .careers-hero .section-head1 h1 { margin-bottom: 20px !important; font-size: 20px; }
+            .career-card { padding: 30px 20px; }
+        }
+    </style>
+</head>
+
+<body class="page">
+
+{% include "header.html" %}
+
+<div class="careers-main-container mesh-gradient animated-bg">
+    
+    <!-- Hero Section -->
+    <div class="careers-hero reveal">
+        <div class="container">
+            <div class="section-head1">
+                <span>Join Our Force</span>
+                <h1>Shape the Future of Tech</h1>
+                <p>We are looking for visionaries, creators, and problem solvers to build the next generation of digital solutions.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="layout-wrapper">
+        <!-- Left Column (Up Scroll) -->
+        <div class="scroll-column reveal">
+            <div class="scrolling-wrapper-up">
+                <div class="scrolling-content">
+                    <div class="student-card-mini">
+                        <img src="/media/team/tharun.jpeg" alt="Tharun">
+                        <h4>Tharun</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/reddy_odFoq3p.jpeg" alt="Himesh">
+                        <h4>Himesh Reddy</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/pavan.jpeg" alt="Pavan">
+                        <h4>Pavan</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <!-- Duplicate for loop -->
+                    <div class="student-card-mini">
+                        <img src="/media/team/tharun.jpeg" alt="Tharun">
+                        <h4>Tharun</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/reddy_odFoq3p.jpeg" alt="Himesh">
+                        <h4>Himesh Reddy</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/pavan.jpeg" alt="Pavan">
+                        <h4>Pavan</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Column (Main Actions) -->
+        <div class="center-column">
+            <!-- Job Card -->
+            <div class="career-card reveal">
+                <i class="fas fa-briefcase"></i>
+                <h2>Professional Careers</h2>
+                <p>Join a fast-paced, innovative environment where your skills are valued and your growth is prioritized. Explore openings for developers, designers, and managers.</p>
+                <a href="{% url 'vacancies' %}" class="gold-btn">Explore Jobs</a>
+                <div class="already-registered">
+                    Already registered? <a href="{% url 'job_applicant_login' %}">Sign In</a>
+                </div>
+            </div>
+
+            <!-- Internship Card -->
+            <div class="career-card reveal">
+                <i class="fas fa-graduation-cap"></i>
+                <h2>Gobal Internships</h2>
+                <p>Kickstart your journey with real-world experience. Our internship program offers mentorship, live projects, and a pathway to a full-time career.</p>
+                <a href="{% url 'internships_list' %}" class="gold-btn">View Internships</a>
+                <div class="already-registered">
+                    Already registered? <a href="{% url 'login' %}">Student Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column (Down Scroll) -->
+        <div class="scroll-column reveal">
+            <div class="scrolling-wrapper-down">
+                <div class="scrolling-content">
+                    <div class="student-card-mini">
+                        <img src="/media/team/vamsi.jpeg" alt="Vamsi">
+                        <h4>Vamsi</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/sai.nikilesh.jpg.jpeg" alt="Nikilesh">
+                        <h4>Nikilesh</h4>
+                        <span>PYTHON INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/anil.kumar.jpg.jpeg" alt="Anil">
+                        <h4>Anil Kumar</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <!-- Duplicate for loop -->
+                    <div class="student-card-mini">
+                        <img src="/media/team/vamsi.jpeg" alt="Vamsi">
+                        <h4>Vamsi</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/sai.nikilesh.jpg.jpeg" alt="Nikilesh">
+                        <h4>Nikilesh</h4>
+                        <span>PYTHON INTERN</span>
+                    </div>
+                    <div class="student-card-mini">
+                        <img src="/media/team/anil.kumar.jpg.jpeg" alt="Anil">
+                        <h4>Anil Kumar</h4>
+                        <span>JAVA INTERN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% include "footer.html" %}
+
+<script>
+/* ================= REVEAL ANIMATION JS ================= */
+const observerOptions = {
+    threshold: 0.1
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

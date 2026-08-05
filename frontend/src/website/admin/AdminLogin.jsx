@@ -1,0 +1,92 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const AdminLogin = () => {
+    return (
+        <>
+            {/* Converted from Django Template */}
+            <style dangerouslySetInnerHTML={{ __html: `
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    margin: 0;
+  }
+
+  .lf-container {
+    background-color: #fff;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .lf-title {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+  }
+
+  .lf-input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    transition: border-color 0.3s;
+  }
+
+  .lf-input:focus {
+    outline: none;
+    border-color: #007bff;
+  }
+
+  .lf-button {
+    width: 100%;
+    padding: 12px;
+     background: linear-gradient(135deg, #0D3B6C, #095191);
+    color: #fff;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .lf-button:hover {
+    opacity: 0.95;
+  }
+
+  .lf-error {
+    color: red;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+` }} />
+ 
+<div className="lf-container">
+  <h2 className="lf-title">Login</h2>
+
+  
+    
+      <div className="lf-error"></div>
+    
+  
+
+  <form method="post">
+    
+    <input name="email" type="email" placeholder="Email" className="lf-input" required />
+    <input name="password" type="password" placeholder="Password" className="lf-input" required />
+    <button type="submit" className="lf-button">Login</button>
+  </form>
+</div>
+        </>
+    );
+};
+
+export default AdminLogin;

@@ -1,0 +1,35 @@
+import{d as e,f as t,i as n,u as r}from"./index-flnEmda_.js";var i=t(e(),1),a=n(),o=[{title:`Customer Care Portal`,category:`Web`,tech:[`Django`,`React`,`PostgreSQL`],desc:`A full-featured customer support system with ticketing, live chat, and reporting dashboards.`,color:`#0796fe`,img:`https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80`},{title:`Trip Booking Platform`,category:`Web`,tech:[`React`,`Node.js`,`MongoDB`],desc:`End-to-end travel booking platform with real-time availability, payments, and itinerary management.`,color:`#27ae60`,img:`https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80`},{title:`CodeLabs UI/UX Portal`,category:`Design`,tech:[`Figma`,`React`,`TailwindCSS`],desc:`Interactive learning portal for UI/UX training with course management and project showcases.`,color:`#9b59b6`,img:`https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80`},{title:`HR Management System`,category:`Web`,tech:[`Django`,`React`,`SQLite`],desc:`Enterprise HRMS with attendance, leave, payroll, tasks, projects, and real-time communication.`,color:`#e74c3c`,img:`https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&q=80`},{title:`E-Commerce Mobile App`,category:`Mobile`,tech:[`React Native`,`Firebase`,`Stripe`],desc:`Cross-platform shopping app with product catalogue, cart, secure payments, and order tracking.`,color:`#fbcc27`,img:`https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&q=80`},{title:`Digital Marketing Dashboard`,category:`Marketing`,tech:[`React`,`Python`,`Google Analytics API`],desc:`Unified marketing analytics dashboard aggregating SEO, social media, and ad performance.`,color:`#1abc9c`,img:`https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80`}],s=[`All`,`Web`,`Mobile`,`Design`,`Marketing`],c=()=>{let[e,t]=(0,i.useState)(`All`),n=r(),c=e===`All`?o:o.filter(t=>t.category===e);return(0,a.jsxs)(a.Fragment,{children:[(0,a.jsx)(`style`,{children:`
+        .port-hero { background:linear-gradient(135deg,#092a49 0%,#1e3c72 100%); padding:80px 30px; text-align:center; }
+        .port-hero h1 { font-family:'Oswald','Outfit',sans-serif; font-size:clamp(2rem,5vw,3rem); color:#fff; font-weight:700; margin-bottom:14px; }
+        .port-hero p { color:rgba(255,255,255,0.8); font-size:17px; max-width:580px; margin:0 auto 14px; }
+        .port-breadcrumb { color:rgba(255,255,255,0.6); font-size:14px; }
+        .port-breadcrumb a { color:#fbcc27; text-decoration:none; }
+
+        .port-filter { background:#fff; padding:20px 30px; border-bottom:1px solid #eee; position:sticky; top:70px; z-index:90; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .port-filter-inner { max-width:1200px; margin:0 auto; display:flex; gap:10px; flex-wrap:wrap; }
+        .port-filter-btn { padding:8px 22px; border-radius:50px; border:2px solid #dde6f5; background:#fff; color:#555; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+        .port-filter-btn.active,.port-filter-btn:hover { background:#092a49; color:#fff; border-color:#092a49; }
+
+        .port-body { padding:60px 30px; background:#f8fafc; }
+        .port-inner { max-width:1200px; margin:0 auto; }
+        .port-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:28px; }
+        .port-card { background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.07); transition:transform 0.3s,box-shadow 0.3s; }
+        .port-card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.13); }
+        .port-card-img { position:relative; height:200px; overflow:hidden; }
+        .port-card-img img { width:100%; height:100%; object-fit:cover; transition:transform 0.5s; }
+        .port-card:hover .port-card-img img { transform:scale(1.08); }
+        .port-card-cat { position:absolute; top:12px; right:12px; background:rgba(9,42,73,0.85); color:#fff; font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; }
+        .port-card-body { padding:24px 26px; }
+        .port-card-body h3 { font-family:'Oswald','Outfit',sans-serif; color:#092a49; font-size:1.15rem; font-weight:700; margin-bottom:10px; }
+        .port-card-body p { color:#666; font-size:13px; line-height:1.7; margin-bottom:16px; }
+        .port-tech-tags { display:flex; gap:6px; flex-wrap:wrap; }
+        .port-tag { background:#f0f4ff; color:#0796fe; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+
+        .port-cta { text-align:center; margin-top:60px; padding:60px 30px; background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.06); }
+        .port-cta h2 { font-family:'Oswald','Outfit',sans-serif; color:#092a49; font-size:2rem; font-weight:700; margin-bottom:14px; }
+        .port-cta p { color:#666; margin-bottom:28px; }
+        .port-cta-btn { padding:14px 36px; border-radius:50px; background:linear-gradient(135deg,#092a49,#1e3c72); color:#fff; border:none; cursor:pointer; font-size:15px; font-weight:700; transition:all 0.3s; font-family:inherit; }
+        .port-cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(9,42,73,0.3); }
+
+        @media (max-width:600px) { .port-grid { grid-template-columns:1fr; } }
+      `}),(0,a.jsxs)(`div`,{className:`port-hero`,children:[(0,a.jsx)(`h1`,{children:`Our Portfolio`}),(0,a.jsx)(`p`,{children:`Explore our diverse range of projects delivered for clients across industries.`}),(0,a.jsxs)(`div`,{className:`port-breadcrumb`,children:[(0,a.jsx)(`a`,{href:`/`,children:`Home`}),` › Portfolio`]})]}),(0,a.jsx)(`div`,{className:`port-filter`,children:(0,a.jsx)(`div`,{className:`port-filter-inner`,children:s.map(n=>(0,a.jsx)(`button`,{className:`port-filter-btn${e===n?` active`:``}`,onClick:()=>t(n),children:n},n))})}),(0,a.jsx)(`div`,{className:`port-body`,children:(0,a.jsxs)(`div`,{className:`port-inner`,children:[(0,a.jsx)(`div`,{className:`port-grid`,children:c.map((e,t)=>(0,a.jsxs)(`div`,{className:`port-card`,children:[(0,a.jsxs)(`div`,{className:`port-card-img`,children:[(0,a.jsx)(`img`,{src:e.img,alt:e.title}),(0,a.jsx)(`span`,{className:`port-card-cat`,children:e.category})]}),(0,a.jsxs)(`div`,{className:`port-card-body`,children:[(0,a.jsx)(`h3`,{children:e.title}),(0,a.jsx)(`p`,{children:e.desc}),(0,a.jsx)(`div`,{className:`port-tech-tags`,children:e.tech.map((e,t)=>(0,a.jsx)(`span`,{className:`port-tag`,children:e},t))})]})]},t))}),(0,a.jsxs)(`div`,{className:`port-cta`,children:[(0,a.jsx)(`h2`,{children:`Have a Project in Mind?`}),(0,a.jsx)(`p`,{children:`Let's build something great together. Share your requirements and get a free quote.`}),(0,a.jsx)(`button`,{className:`port-cta-btn`,onClick:()=>n(`/contact`),children:`Start Your Project →`})]})]})})]})};export{c as default};

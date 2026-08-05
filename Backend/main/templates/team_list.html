@@ -1,0 +1,1543 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>The Elite Team | YGR Gobal IT Services</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/images/logo.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/modern_ui.css' %}">
+
+    <style>
+        :root {
+            --primary-navy: #091c47;
+            --accent-gold: #fbcc27;
+            --text-slate: #475569;
+            --bg-light: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --shadow-premium: 0 20px 50px rgba(9, 28, 71, 0.08);
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-light);
+            color: var(--primary-navy);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* --- Reveal Logic (Disabled) --- */
+        .reveal {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+
+        /* ================= PANORAMIC STUDIO HERO ================= */
+        .team-hero {
+            min-height: auto;
+            background: radial-gradient(circle at 50% 50%, #fff 0%, var(--bg-light) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+            overflow: hidden;
+            padding: 40px 10% 40px;
+            margin-bottom: 30px;
+        }
+
+        .hero-title-box {
+            text-align: center;
+            margin-bottom: 50px;
+            z-index: 100;
+        }
+
+        .hero-title-box h1 {
+            margin: 0;
+            font-size: 50px;
+            font-weight: 300;
+            color: var(--primary-navy);
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .hero-title-box h1 span {
+            display: block;
+            font-size: 1.1rem;
+            letter-spacing: 12px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            margin-top: 15px;
+        }
+
+        .cinerama-stage {
+            width: 100%;
+            height: 480px;
+            perspective: 2000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .cinerama-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .cinerama-item {
+            position: absolute;
+            width: 650px;
+            height: 420px;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(9, 28, 71, 0.15);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 5px solid #fff;
+            transform-origin: center;
+            backface-visibility: hidden;
+        }
+
+        .cinerama-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+            image-rendering: -webkit-optimize-contrast;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+        .cinerama-item.active {
+            z-index: 100;
+            border-color: var(--accent-gold);
+            box-shadow: 0 40px 100px rgba(9, 28, 71, 0.25);
+        }
+
+        /* Nav Controls */
+        .cinerama-control {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #fff;
+            color: var(--primary-navy);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 200;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .cinerama-control:hover {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev-btn {
+            left: 2%;
+        }
+
+        .next-btn {
+            right: 2%;
+        }
+
+        /* Dot Indicators */
+        .cinerama-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 200;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-radius: 30px;
+        }
+
+        .cinerama-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-navy);
+            opacity: 0.3;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cinerama-dot.active {
+            background: var(--accent-gold);
+            opacity: 1;
+            width: 25px;
+            border-radius: 5px;
+        }
+
+        .cinerama-item {
+            cursor: pointer;
+        }
+
+        /* ================= 3D KINETIC DIRECTOR STACK ================= */
+        .director-kinetic-sec {
+            padding: 30px 10%;
+            margin-top: 100px;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        /* Diagonal Accent */
+        .director-kinetic-sec::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            /* Expanded width */
+            background: var(--primary-navy);
+            color: #ffff;
+            clip-path: polygon(25% 0, 100% 0, 100% 100%, 0% 100%);
+            /* Refined angle */
+            z-index: 1;
+        }
+
+        .kinetic-container {
+            max-width: 1400px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            /* Ensures everything is above the diagonal background */
+        }
+
+        /* Reversed Layout (Matter Left, Image Right) */
+        .director-kinetic-sec.reverse-layout::before {
+            right: auto;
+            left: 0;
+            clip-path: polygon(0 0, 75% 0, 100% 100%, 0% 100%);
+        }
+
+        .director-kinetic-sec.reverse-layout .kinetic-container {
+            grid-template-columns: 1fr 1.1fr;
+        }
+
+        /* The 3D Fan-Out Stack */
+        .kinetic-stack {
+            position: relative;
+            height: 650px;
+            width: 500px;
+            perspective: 2000px;
+            z-index: 5;
+        }
+
+        .stack-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 40px;
+            overflow: hidden;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            border: 4px solid #fff;
+        }
+
+        .stack-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(20%);
+            transition: 0.6s ease;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .card-main {
+            z-index: 5;
+            transform: rotate(-2deg);
+        }
+
+        .card-sub1 {
+            z-index: 3;
+            transform: rotate(5deg) translateX(40px) translateY(20px);
+            opacity: 0.7;
+        }
+
+        .card-sub2 {
+            z-index: 2;
+            transform: rotate(-8deg) translateX(-40px) translateY(-20px);
+            opacity: 0.4;
+        }
+
+        .kinetic-stack:hover .card-main {
+            transform: rotate(0deg) scale(1.02);
+            z-index: 10;
+        }
+
+        .kinetic-stack:hover .card-sub1 {
+            transform: rotate(12deg) translateX(120px) translateY(40px);
+            opacity: 0.9;
+        }
+
+        .kinetic-stack:hover .card-sub2 {
+            transform: rotate(-15deg) translateX(-120px) translateY(-40px);
+            opacity: 0.8;
+        }
+
+        .kinetic-stack:hover img {
+            filter: grayscale(0%);
+        }
+
+        /* Typography */
+        .kinetic-content {
+            z-index: 20;
+            /* Keep text above everything */
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .outline-bg-text {
+            position: absolute;
+            top: -70px;
+            left: -120px;
+            font-size: 11rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1.5px rgba(9, 28, 71, 0.15);
+            /* Increased visibility */
+            z-index: -1;
+            pointer-events: none;
+            white-space: nowrap;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+        }
+
+        .kinetic-content h1,
+        .kinetic-content h4 {
+            color: var(--accent-gold);
+            font-weight: 800;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .kinetic-content h2 {
+            font-size: 30px;
+            /* Reduced to prevent cutoff */
+            font-weight: 400;
+            line-height: 1.1;
+            margin-bottom: 40px;
+            color: #fff;
+            /* White for better visibility on navy side */
+        }
+
+        .executive-summary {
+
+            padding-left: 20px;
+
+            border-left: 6px solid var(--accent-gold);
+            border-radius: 0 30px 30px 0;
+            position: relative;
+            margin-top: 20px;
+        }
+
+
+
+        .signature-box {
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sig-line {
+            width: 100px;
+            height: 2px;
+            background: var(--accent-gold);
+        }
+
+        .sig-name {
+            font-family: serif;
+            font-style: italic;
+            font-size: 1.8rem;
+            color: #ffffff;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 1200px) {
+            .director-kinetic-sec {
+                background: var(--primary-navy) !important;
+                border-radius: 20px;
+                padding: 40px 5% 20px !important;
+                margin-top: 40px !important;
+                margin-bottom: 40px !important;
+                overflow: hidden;
+            }
+
+            .kinetic-container {
+                display: flex !important;
+                flex-direction: column !important;
+                text-align: center !important;
+                width: 100% !important;
+                gap: 0 !important;
+            }
+
+            .kinetic-stack {
+                order: 3 !important;
+                margin: 0 auto 30px !important;
+                width: 100% !important;
+                max-width: 340px !important;
+                height: 420px !important;
+            }
+
+            .kinetic-content {
+                display: contents !important;
+            }
+
+            .outline-bg-text {
+                font-size: 5rem !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                text-align: center !important;
+                -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05) !important;
+            }
+
+            .executive-summary {
+                order: 4 !important;
+                border-left: none !important;
+                border-top: 1px solid rgba(251, 204, 39, 0.3) !important;
+                border-radius: 0 !important;
+                padding: 20px 10px !important;
+                background: transparent !important;
+            }
+
+            .director-kinetic-sec::before {
+                display: none !important;
+            }
+
+            .kinetic-content h2 {
+                order: 2 !important;
+                font-size: 2.2rem !important;
+                color: #fff !important;
+                margin-top: 0 !important;
+                margin-bottom: 25px !important;
+            }
+
+            .kinetic-content h1,
+            .kinetic-content h4 {
+                order: 1 !important;
+                font-size: 1.4rem !important;
+                letter-spacing: 3px !important;
+                margin-top: 0 !important;
+                margin-bottom: 15px !important;
+                color: var(--accent-gold) !important;
+                text-transform: uppercase;
+            }
+        }
+
+        /* ================= TEAM GRID ================= */
+        .team-nav-outer {
+            margin-top: 60px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 20;
+        }
+
+        .team-toggle {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 10px;
+            border-radius: 50px;
+            display: flex;
+            gap: 5px;
+            box-shadow: var(--shadow-premium);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .toggle-btn {
+            padding: 15px 35px;
+            border-radius: 50px;
+            border: none;
+            background: transparent;
+            color: var(--primary-navy);
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary-navy);
+            color: #fff;
+        }
+
+        .team-section {
+            padding: 20px 20px;
+            max-width: 1400px;
+            margin-left: 200px;
+            margin-right: 200px;
+
+        }
+
+        .team-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .team-grid.active {
+            display: grid;
+        }
+
+        .member-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 12px;
+            border: 1px solid #f1f5f9;
+            transition: 0.4s ease;
+            text-align: center;
+        }
+
+        .member-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-gold);
+            box-shadow: var(--shadow-premium);
+        }
+
+        .member-img-wrap {
+            height: 350px;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .member-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            image-rendering: -webkit-optimize-contrast;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+
+        .member-info h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 15px 0 5px;
+        }
+
+        .member-info p {
+            color: var(--accent-gold);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        /* --- SINGLE UNIFIED MOBILE OVERRIDE (991px) --- */
+        @media (max-width: 991px) {
+            body {
+                overflow-x: hidden !important;
+            }
+
+            .team-hero {
+                height: auto !important;
+                min-height: auto !important;
+                padding-top: 25px !important;
+                padding-bottom: 0 !important;
+                margin-bottom: 30px !important;
+            }
+
+            .hero-title-box h1 {
+                font-size: 2rem !important;
+                letter-spacing: -1px !important;
+            }
+
+            .hero-title-box h1 span {
+                font-size: 0.8rem !important;
+                letter-spacing: 5px !important;
+            }
+
+            .cinerama-stage {
+                height: 230px !important;
+            }
+
+            .cinerama-item {
+                width: 300px !important;
+                height: 220px !important;
+                border-width: 3px !important;
+                border-radius: 20px !important;
+            }
+
+            .cinerama-control {
+                width: 25px !important;
+                height: 25px !important;
+                font-size: 12px !important;
+            }
+
+            .director-kinetic-sec {
+                padding: 40px 5% 20px !important;
+                margin-top: 30px !important;
+                margin-bottom: 30px !important;
+                min-height: auto !important;
+                display: block !important;
+                background: var(--primary-navy) !important;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+
+            .director-kinetic-sec::before {
+                display: none !important;
+            }
+
+            .kinetic-container {
+                display: flex !important;
+                flex-direction: column !important;
+                text-align: center !important;
+                width: 100% !important;
+                gap: 0 !important;
+            }
+
+            .kinetic-stack {
+                order: 3 !important;
+                margin: 0 auto 30px !important;
+                width: 100% !important;
+                max-width: 340px !important;
+                height: 420px !important;
+            }
+
+            .kinetic-content {
+                display: contents !important;
+            }
+
+            .outline-bg-text {
+                font-size: 4rem !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                text-align: center !important;
+                -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05) !important;
+            }
+
+            .kinetic-content h2 {
+                order: 2 !important;
+                font-size: 1.8rem !important;
+                color: #fff !important;
+                margin-top: 0 !important;
+                margin-bottom: 25px !important;
+            }
+
+            .kinetic-content h1,
+            .kinetic-content h4 {
+                order: 1 !important;
+                font-size: 1.2rem !important;
+                letter-spacing: 3px !important;
+                margin-top: 0 !important;
+                margin-bottom: 15px !important;
+                color: var(--accent-gold) !important;
+                text-transform: uppercase;
+            }
+
+            .executive-summary {
+                order: 4 !important;
+                padding: 20px 10px !important;
+                border-left: none !important;
+                border-top: 1px solid rgba(251, 204, 39, 0.3) !important;
+                border-radius: 0 !important;
+                text-align: left !important;
+                background: transparent !important;
+            }
+
+            .executive-summary p {
+                font-size: 1rem !important;
+            }
+
+            .sig-name {
+                font-size: 1.4rem !important;
+            }
+
+            .team-section {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                padding: 20px 15px 80px !important;
+            }
+
+            .team-grid {
+                display: none !important;
+            }
+
+            .team-grid.active {
+                display: flex !important;
+                overflow-x: auto !important;
+                scroll-snap-type: x mandatory !important;
+                gap: 20px !important;
+                padding: 15px 20px 40px !important;
+                margin: 0 -20px !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .team-grid::-webkit-scrollbar {
+                display: none !important;
+            }
+
+            .team-grid .member-card {
+                flex: 0 0 85% !important;
+                scroll-snap-align: start !important;
+                margin-bottom: 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            .team-grid .member-card:first-child {
+                margin-left: 10px !important;
+            }
+
+            .member-img-wrap {
+                height: 250px !important;
+            }
+
+            .member-info p {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                text-align: center !important;
+            }
+
+            #grid-mgmt .member-info p:first-of-type {
+                text-align: right !important;
+                margin-right: 20px !important;
+            }
+
+            .toggle-btn {
+                padding: 12px 20px !important;
+                font-size: 0.8rem !important;
+            }
+        }
+
+
+        /* ================= ULTRA-PREMIUM COMPANY STATS ================= */
+        :root {
+            --stat-navy: #091c47;
+            --stat-accent: #fbcc27;
+            --stat-font: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .stats-section {
+            font-family: var(--stat-font);
+            background: var(--stat-navy);
+            padding: 50px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated Background Orbs */
+        .stat-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            animation: stat-pulse 10s infinite alternate ease-in-out;
+        }
+
+        .stat-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(251, 204, 39, 0.15), transparent);
+            top: -100px;
+            left: -200px;
+        }
+
+        .stat-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent);
+            bottom: -150px;
+            right: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes stat-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .stats-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-header-theatre {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(251, 204, 39, 0.1);
+            color: var(--stat-accent);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            border: 1px solid rgba(251, 204, 39, 0.3);
+        }
+
+        .stats-header-theatre h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .stats-header-theatre p {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .stats-theatre-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--stat-accent), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-panel:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-panel:hover::before {
+            opacity: 1;
+        }
+
+        .stat-icon-wrapper {
+            width: 35px;
+            height: 35px;
+            background: rgba(251, 204, 39, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            color: var(--stat-accent);
+            font-size: 1rem;
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-panel:hover .stat-icon-wrapper {
+            background: var(--stat-accent);
+            color: var(--stat-navy);
+        }
+
+        .stat-num-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-plus {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--stat-accent);
+            margin-left: 2px;
+        }
+
+        .stat-desc {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-watermark {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.02);
+            transform: rotate(-15deg);
+            transition: all 0.5s ease;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .stat-panel:hover .stat-watermark {
+            color: rgba(251, 204, 39, 0.05);
+            transform: rotate(0deg) scale(1.1);
+        }
+
+        /* --- SINGLE UNIFIED MOBILE OVERRIDE (991px) --- */
+        @media (max-width: 991px) {
+            body {
+                overflow-x: hidden !important;
+            }
+
+            .stats-section {
+                padding: 30px 0 !important;
+            }
+
+            .stats-header-theatre {
+                margin-bottom: 25px !important;
+                padding: 0 10px !important;
+            }
+
+            .stat-badge {
+                padding: 4px 10px !important;
+                font-size: 0.65rem !important;
+                margin-bottom: 8px !important;
+            }
+
+            .stats-header-theatre h2 {
+                font-size: 1.4rem !important;
+                line-height: 1.2 !important;
+            }
+
+            .stats-header-theatre p {
+                font-size: 0.8rem !important;
+                line-height: 1.5 !important;
+            }
+
+            .stats-theatre-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+                padding: 0 10px !important;
+            }
+
+            .stat-panel {
+                padding: 15px 10px !important;
+                border-radius: 8px !important;
+            }
+
+            .stat-icon-wrapper {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 0.9rem !important;
+                margin-bottom: 8px !important;
+            }
+
+            .stat-num {
+                font-size: 1.4rem !important;
+            }
+
+            .stat-plus {
+                font-size: 1rem !important;
+            }
+
+            .stat-desc {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        /* ================= ZOOM LIGHTBOX ================= */
+        .zoom-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            padding-top: 50px;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(9, 28, 71, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .zoom-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .zoom-modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 4px solid var(--accent-gold);
+            object-fit: contain;
+        }
+
+        .zoom-modal.show .zoom-modal-content {
+            transform: scale(1);
+        }
+
+        .zoom-close {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            color: #fff;
+            font-size: 50px;
+            font-weight: 300;
+            transition: 0.3s;
+            cursor: pointer;
+            z-index: 10000;
+        }
+
+        .zoom-close:hover,
+        .zoom-close:focus {
+            color: var(--accent-gold);
+            text-decoration: none;
+            cursor: pointer;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .zoom-close {
+                top: 15px;
+                right: 25px;
+                font-size: 40px;
+            }
+
+            .zoom-modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'header.html' %}
+
+    <!-- HERO WITH PANORAMIC TRACK -->
+    <section class="team-hero">
+
+        <div class="cinerama-stage">
+            <!-- Navigation Arrows -->
+            <button type="button" class="cinerama-control prev-btn" onclick="prevCinerama()" aria-label="Previous">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="cinerama-track" id="cinerama-track">
+                {% for event in events %}
+                <div class="cinerama-item" onclick="selectCinerama({{ forloop.counter0 }})">
+                    <img src="{{ event.image.url }}" alt="Team Scene">
+                </div>
+                {% empty %}
+                <div class="cinerama-item" onclick="selectCinerama(0)">
+                    <img src="{% static 'images/placeholder.jpg' %}" alt="Team Scene">
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="cinerama-control next-btn" onclick="nextCinerama()" aria-label="Next">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
+
+    <section class="stats-section">
+        <!-- Animated Orbs -->
+        <div class="stat-orb stat-orb-1"></div>
+        <div class="stat-orb stat-orb-2"></div>
+
+        <div class="container-fluid px-lg-5 px-3 stats-container">
+            <div class="stats-header-theatre">
+                <div class="stat-badge">
+                    <i class="fas fa-chart-line"></i> Our Impact
+                </div>
+                <h2>The Global Footprint</h2>
+                <p>Our metrics of success reflect our relentless dedication to delivering world-class IT solutions and
+                    transformative growth.</p>
+            </div>
+
+            <div class="stats-theatre-grid">
+                <!-- Stat 1 -->
+                <div class="stat-panel">
+                    <i class="fas fa-users stat-watermark"></i>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-num-wrapper">
+                        <span class="stat-num counter" data-count="97">0</span>
+                        <span class="stat-plus">+</span>
+                    </div>
+                    <span class="stat-desc">Active Clients</span>
+                </div>
+
+                <!-- Stat 2 -->
+                <div class="stat-panel">
+                    <i class="fas fa-layer-group stat-watermark"></i>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-num-wrapper">
+                        <span class="stat-num counter" data-count="98">0</span>
+                        <span class="stat-plus">+</span>
+                    </div>
+                    <span class="stat-desc">Projects Delivered</span>
+                </div>
+
+                <!-- Stat 3 -->
+                <div class="stat-panel">
+                    <i class="fas fa-medal stat-watermark"></i>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-medal"></i>
+                    </div>
+                    <div class="stat-num-wrapper">
+                        <span class="stat-num counter" data-count="5">0</span>
+                        <span class="stat-plus">+</span>
+                    </div>
+                    <span class="stat-desc">Years Expertise</span>
+                </div>
+
+                <!-- Stat 4 -->
+                <div class="stat-panel">
+                    <i class="fas fa-earth-americas stat-watermark"></i>
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-earth-americas"></i>
+                    </div>
+                    <div class="stat-num-wrapper">
+                        <span class="stat-num counter" data-count="4">0</span>
+                        <span class="stat-plus">+</span>
+                    </div>
+                    <span class="stat-desc">Market Regions</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- FOUNDER SECTION: 3D KINETIC IDENTITY STACK -->
+
+    <section class="director-kinetic-sec reverse-layout reveal">
+        <div class="kinetic-container">
+            <div class="kinetic-content">
+                <h1>Chairman
+                </h1>
+                <h2>Driving Excellence & Growth</h2>
+                <!-- <h2>Driving Operational Excellence</h2> -->
+
+                <div class="executive-summary">
+                    <p style="color: #ffff;">We provide professional IT services including Website Development, Web
+                        Applications, Mobile Applications, and Digital Marketing solutions. Our goal is to deliver
+                        quality services that help businesses grow and succeed in the digital world.
+
+                        We are committed to innovation, customer satisfaction, and building long-term relationships with
+                        our clients. Thank you for your trust and support.</p>
+                    <div class="signature-box">
+
+                        <div class="sig-line"></div>
+                        <div class="sig-name">Y.Varalakshmi</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kinetic-stack">
+                <div class="outline-bg-text" style="right: 0; left: auto; text-align: right;">OPERATIONS</div>
+
+                <!-- Main Card -->
+                <div class="stack-card card-main">
+                    <img src="{% static 'images/yg.jpeg' %}" alt="Suneetha Reddy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="director-kinetic-sec reveal">
+        <div class="kinetic-container">
+            <div class="kinetic-stack">
+                <div class="outline-bg-text">LEADERSHIP</div>
+
+                <!-- Main Card -->
+                <div class="stack-card card-main">
+                    <img src="{% static 'images/rr.jpeg' %}" alt="Y. Ravindra Reddy">
+                </div>
+            </div>
+
+            <div class="kinetic-content">
+                <h4>Director's Message</h4>
+                <h2>Architect of Innovation</h2>
+
+                <div class="executive-summary">
+                    <p style="color: #ffff;">We started our journey with a vision to empower individuals and businesses
+                        through technology,
+                        innovation, and quality services. With dedication, hard work, and continuous growth,
+
+                        we have built a platform that provides professional IT training and reliable technology
+                        solutions. <br>Our commitment is to deliver excellence, create opportunities, and support our
+                        students and clients in achieving success. We thank everyone who has been part of our journey
+                        and trusted us throughout our growth. <br>Together, let us build a smarter future with
+                        technology.</p>
+
+                    <div class="signature-box">
+
+                        <div class="sig-line"></div>
+                        <div class="sig-name">Y. Ravindra Reddy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="director-kinetic-sec reverse-layout reveal">
+        <div class="kinetic-container">
+            <div class="kinetic-content">
+                <h4>General Manager Message</h4>
+                <h2>Driving Operational Excellence</h2>
+
+                <div class="executive-summary">
+                    <p style="color: #ffff;">As the General Manager of our organization, I am proud to lead a dedicated
+                        team committed to excellence, innovation, and customer satisfaction. Our mission is to provide
+                        high-quality services while building strong relationships with our clients and community. We
+                        continuously strive to create new opportunities, maintain professional standards, and deliver
+                        the best possible experience to everyone associated with our company.</p>
+                    <div class="signature-box">
+
+                        <div class="sig-line"></div>
+                        <div class="sig-name">Y.Suneetha Reddy</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kinetic-stack">
+                <div class="outline-bg-text" style="right: 0; left: auto; text-align: right;">OPERATIONS</div>
+
+                <!-- Main Card -->
+                <div class="stack-card card-main">
+                    <img src="{% static 'images/su.jpeg' %}" alt="Suneetha Reddy">
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- TOGGLE NAV -->
+    <div class="team-nav-outer">
+        <div class="team-toggle">
+            <button class="toggle-btn active" onclick="switchTeam('mgmt', this)">Executive Board</button>
+            <button class="toggle-btn" onclick="switchTeam('team', this)">Creative Core</button>
+        </div>
+    </div>
+
+    <!-- TEAM GRID SECTION -->
+    <section class="team-section">
+        <div class="team-grid active" id="grid-mgmt">
+            <div class="member-card">
+                <div class="member-img-wrap">
+                    <img src="{% static 'images/yg.jpeg' %}" alt="">
+                </div>
+                <div class="member-info">
+                    <h3>Y.Vara Lakshmi</h3>
+                    <p>Chairman</p>
+
+                </div>
+            </div> 
+                 <div class="member-card">
+                <div class="member-img-wrap">
+                    <img src="{% static 'images/rr1.jpeg' %}" alt="Y. Ravindra Reddy">
+
+                </div>
+                <div class="member-info">
+                    <h3>Y. Ravindra Reddy</h3>
+                    <p>Director & CEO</p>
+
+                </div>
+            </div>
+
+            <div class="member-card">
+                <div class="member-img-wrap">
+                    <img src="{% static 'images/su1.jpeg' %}" alt="">
+                </div>
+                <div class="member-info">
+                    <h3>Suneetha Reddy</h3>
+                    <p>General Manager</p>
+
+                </div>
+            </div>
+            
+        </div>
+
+
+
+        <div class="team-grid" id="grid-team">
+            {% for member in team %}
+            <div class="member-card">
+                <div class="member-img-wrap">
+                    <img src="{{ member.image.url }}" alt="{{ member.name }}">
+                </div>
+                <div class="member-info">
+                    <h3>{{ member.name }}</h3>
+                    <p>{{ member.role }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; width: 100%; grid-column: 1/-1; padding: 50px;">
+                <p style="color: var(--text-slate); font-weight: 600;">The creative ensemble is growing. Stay tuned.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <script>
+        const items = document.querySelectorAll('.cinerama-item');
+        let centerIndex = Math.floor(items.length / 2);
+        let cineramaInterval;
+
+        function updateCinerama() {
+            const isMobile = window.innerWidth <= 991;
+            const offset = isMobile ? 300 : 500;
+
+            items.forEach((item, i) => {
+                let diff = i - centerIndex;
+
+                // Circular Logic: shortest distance wrap
+                if (diff > items.length / 2) diff -= items.length;
+                if (diff < -items.length / 2) diff += items.length;
+
+                let x = diff * offset;
+                let z = diff === 0 ? (isMobile ? 150 : 300) : -250;
+                let r = diff * -20;
+                let scale = diff === 0 ? 1.1 : 0.85;
+                let opacity = Math.abs(diff) > 1 && isMobile ? 0 : (Math.abs(diff) > 2 ? 0 : 1);
+
+                item.style.transform = `translateX(${x}px) translateZ(${z}px) rotateY(${r}deg) scale(${scale})`;
+                item.style.opacity = opacity;
+                item.style.zIndex = 100 - Math.abs(diff);
+                item.classList.toggle('active', diff === 0);
+            });
+        }
+
+        let userPaused = false;
+
+        function stopCineramaTimer() {
+            clearInterval(cineramaInterval);
+            userPaused = true;
+        }
+
+        function prevCinerama() {
+            stopCineramaTimer(); // Manual click stops the auto photo scroll
+            if (items.length > 0) {
+                centerIndex = (centerIndex - 1 + items.length) % items.length;
+                updateCinerama();
+            }
+        }
+
+        function nextCinerama() {
+            stopCineramaTimer(); // Manual click stops the auto photo scroll
+            if (items.length > 0) {
+                centerIndex = (centerIndex + 1) % items.length;
+                updateCinerama();
+            }
+        }
+
+        function selectCinerama(idx) {
+            stopCineramaTimer(); // Clicking a photo stops the auto photo scroll!
+
+            if (idx === centerIndex) {
+                // If it's already in the center, open the zoom lightbox!
+                const imgSrc = items[idx].querySelector('img').src;
+                openZoomModal(imgSrc);
+            } else {
+                centerIndex = idx;
+                updateCinerama();
+            }
+        }
+
+        function openZoomModal(imgSrc) {
+            const modal = document.getElementById('photo-zoom-modal');
+            const modalImg = document.getElementById('zoomed-image');
+            modalImg.src = imgSrc;
+            modal.style.display = "flex";
+
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+
+            document.body.style.overflow = "hidden"; // Prevent scrolling behind modal
+        }
+
+        function closeZoomModal() {
+            const modal = document.getElementById('photo-zoom-modal');
+            modal.classList.remove('show');
+
+            setTimeout(() => {
+                modal.style.display = "none";
+                document.body.style.overflow = "auto";
+            }, 300);
+        }
+
+        function startCineramaTimer() {
+            cineramaInterval = setInterval(() => {
+                if (items.length > 0) {
+                    centerIndex = (centerIndex + 1) % items.length;
+                    updateCinerama();
+                }
+            }, 5000);
+        }
+
+        // Pause on Hover for desktop
+        const stage = document.querySelector('.cinerama-stage');
+        if (stage) {
+            stage.addEventListener('mouseenter', () => clearInterval(cineramaInterval));
+            stage.addEventListener('mouseleave', () => {
+                if (!userPaused) startCineramaTimer();
+            });
+        }
+
+        // Start Initial
+        if (items.length > 0) {
+            updateCinerama();
+            startCineramaTimer();
+        }
+
+        function switchTeam(type, btn) {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.team-grid').forEach(g => g.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`grid-${type}`).classList.add('active');
+        }
+
+        window.addEventListener('scroll', () => {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100) {
+                    el.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const panels = document.querySelectorAll('.counter');
+
+            const runStatCounter = (el) => {
+                const target = +el.getAttribute('data-count');
+                let count = 0;
+                const speed = 2000;
+                const inc = target / (speed / 16);
+
+                const update = () => {
+                    count += inc;
+                    if (count < target) {
+                        el.innerText = Math.ceil(count);
+                        requestAnimationFrame(update);
+                    } else {
+                        el.innerText = target;
+                    }
+                };
+                update();
+            };
+
+            const statObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        runStatCounter(entry.target);
+                        statObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            panels.forEach(p => statObserver.observe(p));
+        });
+    </script>
+
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

@@ -1,0 +1,2025 @@
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+
+from django.contrib.auth.models import BaseUserManager
+
+class UserManager(BaseUserManager):
+    def create_user(self, username, email=None, password=None, **extra_fields):
+        if not username:
+            raise ValueError("The Username must be set")
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", "MD")  
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+        return self.create_user(username, email, password, **extra_fields)
+
+
+
+
+class Internships(models.Model):
+    title = models.CharField(max_length=100, blank=True, null=True)
+    image = models.ImageField(upload_to='image/', blank=True, null=True)
+    duration = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(max_length=100, blank=True, null=True)
+    syllabus = models.CharField(max_length=1000, blank=True, null=True)
+    completed_topics = models.JSONField(default=list, blank=True, null=True)
+
+    def __str__(self):
+        return self.title or "Unnamed Internship"
+
+
+class User(AbstractUser):
+    ROLE_CHOICES = [
+        ('MD', 'MD'),
+        ('HR', 'HR'),
+        ('Manager', 'Manager'),
+        ('TeamLead', 'Team Lead'),
+        ('Employee', 'Employee'),
+    ]
+    
+    DEPARTMENT = [
+    ('python_dev', 'Python Developer'),
+    ('java_dev', 'Java Developer'),
+    ('frontend_dev', 'Front-End Developer'),
+    ('backend_dev', 'Back-End Developer'),
+    ('fullstack_dev', 'Full Stack Developer'),
+    ('testing', 'Testing / QA'),
+    ('devops', 'DevOps Engineer'),
+    ('data_analyst', 'Data Analyst'),
+    ('data_scientist', 'Data Scientist'),
+    ('ai_ml', 'AI / ML Engineer'),
+    ('cyber_security', 'Cyber Security'),
+    ('cloud_engineer', 'Cloud Engineer'),
+    ('digital_marketing', 'Digital Marketing'),
+    ('ui_ux', 'UI / UX Designer'),
+    ('mobile_dev', 'Mobile App Developer'),
+]
+
+    GENDER_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ]
+
+    objects = UserManager()
+
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Employee')
+    profile_pic = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    salary = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    emp_id = models.CharField(max_length=20, unique=True, editable=False, blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_joining = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=20, default='Fresher')
+    experience_years = models.PositiveIntegerField(blank=True, null=True)
+    previous_company = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField( max_length=100, choices=DEPARTMENT, default='python_dev' )
+    team_name = models.CharField(max_length=100, null=True, blank=True)
+    document = models.FileField(upload_to='employee_docs/', blank=True, null=True)
+    designation = models.CharField(max_length=100, blank=True, null=True)
+    aadhaar = models.CharField(max_length=12, blank=True, null=True)
+    reporting_manager = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subordinates'
+    )
+
+    # Student / Intern fields from main app
+    wnumber = models.CharField(blank=True, null=True, max_length=12)
+    clg_name = models.CharField(max_length=50, blank=True)
+    clg_address = models.CharField(max_length=100, blank=True)
+    roll_no = models.CharField(max_length=20, blank=True)
+    branch = models.CharField(max_length=50, blank=True)
+    photo = models.ImageField(upload_to='img/', blank=True, null=True)
+    resume = models.FileField(upload_to='doc/', blank=True, null=True)
+    exam_attempt = models.BooleanField(default=False)
+    exam_attpemt = models.BooleanField(default=False)  # spelling alias for main app compatibility
+    is_paid = models.BooleanField(default=False)
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    course = models.ForeignKey('Internships', on_delete=models.SET_NULL, null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        if not self.emp_id:
+            # prefix based on assigned role
+            prefix = {
+                "MD": "YGRMD",
+                "HR": "YGRHR",
+                "Manager": "YGRMAN",
+                "TeamLead": "YGRTLD",
+                "Employee": "YGREMP",
+            }.get(self.role, "YGRUSR")
+
+            last_user = User.objects.filter(emp_id__startswith=prefix).order_by('-id').first()
+            num = int(last_user.emp_id.replace(prefix, "")) if last_user and last_user.emp_id else 1000
+            self.emp_id = f"{prefix}{num + 1}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.username} ({self.role})"
+
+
+
+class Project(models.Model):
+    project_id = models.CharField(max_length=50, unique=True)
+    project_code = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    startdate = models.DateField(null=True, blank=True)
+    deadline = models.DateField(null=True, blank=True)
+
+    # Client information
+    client_name = models.CharField(max_length=150, null=True, blank=True)
+    client_contact = models.CharField(max_length=150, null=True, blank=True)
+    client = models.ForeignKey(
+        'Client',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_records"
+    )
+
+    project_category = models.CharField(max_length=100, null=True, blank=True)
+    priority = models.CharField(
+        max_length=20,
+        choices=[
+            ('Low', 'Low'),
+            ('Medium', 'Medium'),
+            ('High', 'High'),
+            ('Critical', 'Critical')
+        ],
+        default='Medium'
+    )
+    estimated_budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    technology_stack = models.CharField(max_length=255, null=True, blank=True)
+    project_logo = models.ImageField(upload_to='project_logos/', null=True, blank=True)
+    project_color = models.CharField(max_length=10, default='#3b82f6')
+
+    # HR → Manager
+    assigned_manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_projects",
+        limit_choices_to={"role": "Manager"}
+    )
+
+    # Manager → Team
+    assigned_teams = models.ManyToManyField("Team", blank=True, related_name="projects")
+
+    document = models.FileField(
+        upload_to="projects/",
+        null=True,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ("Pending", "Pending"),
+            ("Active", "Active"),
+            ("Completed", "Completed"),
+            ("Delayed", "Delayed"),
+            ("Archived", "Archived"),
+            ("Rejected", "Rejected"),
+        ],
+        default="Pending"
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_projects"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_archived = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.project_code:
+            # We will generate a new project code PRJ-xxxx
+            last_proj = Project.objects.order_by('-id').first()
+            num = last_proj.id + 1000 if last_proj else 1000
+            self.project_code = f"PRJ-{num + 1}"
+            if not self.project_id:
+                self.project_id = self.project_code
+        elif not self.project_id:
+            self.project_id = self.project_code
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.project_code or self.project_id} - {self.name}"
+
+
+
+
+from django.conf import settings
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class ChatMessage(models.Model):
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_chats"
+    )
+    receiver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_chats"
+    )
+
+    text = models.TextField(blank=True)
+    file = models.FileField(upload_to="chat_files/", blank=True, null=True)
+
+    # DELETE LOGIC
+    deleted_for = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="hidden_messages",
+        blank=True
+    )
+
+    deleted_for_everyone = models.BooleanField(default=False)
+
+    deleted_by_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deleted_messages_by_user"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    is_read = models.BooleanField(default=False)
+    is_delivered = models.BooleanField(default=False)
+    
+    # Unified chat extensions
+    reply_to = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="replies"
+    )
+    edited = models.BooleanField(default=False)
+    reactions = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"{self.sender} → {self.receiver}"
+
+
+class ChatRoom(models.Model):
+    name = models.CharField(max_length=100)
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+    
+    # Unified chat extensions
+    room_type = models.CharField(
+        max_length=20,
+        choices=[('channel', 'Channel'), ('team', 'Team')],
+        default='channel'
+    )
+    description = models.TextField(blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    is_announcement_only = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_rooms"
+    )
+    admins = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="admin_rooms"
+    )
+    icon = models.ImageField(upload_to="room_icons/", blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class GroupMessage(models.Model):
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    text = models.TextField(blank=True)   # 🔹 allow empty after delete
+    is_deleted = models.BooleanField(default=False)
+
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deleted_group_messages"
+    )
+    
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Unified chat extensions
+    reply_to = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="replies"
+    )
+    edited = models.BooleanField(default=False)
+    reactions = models.JSONField(default=dict, blank=True)
+    file = models.FileField(upload_to="group_chat_files/", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.sender} in {self.room}"
+
+
+class UserPresence(models.Model):
+    STATUS_CHOICES = [
+        ('Online', 'Online'),
+        ('Offline', 'Offline'),
+        ('Away', 'Away'),
+        ('Busy', 'Busy'),
+        ('In Meeting', 'In Meeting'),
+        ('Working From Home', 'Working From Home')
+    ]
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='presence')
+    status = models.CharField(max_length=25, choices=STATUS_CHOICES, default='Offline')
+    last_activity = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.status}"
+
+
+class CompanyAnnouncement(models.Model):
+    ANNOUNCEMENT_TYPES = [
+        ('Holiday', 'Holiday Notification'),
+        ('Payroll', 'Payroll Released'),
+        ('Event', 'Company Event'),
+        ('Policy', 'Policy Update'),
+        ('Birthday', 'Birthday Wish'),
+        ('Festival', 'Festival Wish'),
+        ('Emergency', 'Emergency Notification'),
+        ('General', 'General Announcement')
+    ]
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    announcement_type = models.CharField(max_length=20, choices=ANNOUNCEMENT_TYPES, default='General')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+    
+ 
+
+    # =============invoce====================
+from django.db import models
+from django.utils import timezone
+
+
+class Client(models.Model):
+    name = models.CharField(max_length=150)
+    business_name = models.CharField(max_length=200, blank=True)
+    gst_number = models.CharField(max_length=50, blank=True, null=True)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
+    address = models.TextField()
+    country = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    contact_person = models.CharField(max_length=150, blank=True, null=True)
+    website = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(max_length=20, default='Active')
+
+    def __str__(self):
+        return self.name
+
+
+class Service(models.Model):
+    name = models.CharField(max_length=150)
+    service_code = models.CharField(max_length=50, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    gst_percent = models.FloatField(default=18.0)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, default='Active')
+
+    def __str__(self):
+        return f"{self.name} - ₹{self.amount}"
+    
+
+from django.db import models
+from decimal import Decimal
+# models.py
+
+class Invoice(models.Model):
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    project = models.CharField(max_length=200, blank=True, null=True)
+    note = models.TextField(blank=True, null=True)
+
+    gst_percent = models.FloatField(default=18)
+    discount_percent = models.FloatField(default=0, blank=True, null=True)
+    status = models.CharField(max_length=50, default='Pending')
+    due_date = models.DateField(blank=True, null=True)
+    paid_date = models.DateField(blank=True, null=True)
+
+    invoice_number = models.CharField(max_length=20, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Auto invoice numbering
+        if not self.invoice_number:
+            last_invoice = Invoice.objects.order_by('id').last()
+            if last_invoice and last_invoice.invoice_number:
+                try:
+                    last_number = int(last_invoice.invoice_number.split('-')[-1])
+                except ValueError:
+                    last_number = 0
+            else:
+                last_number = 0
+            self.invoice_number = f"YGR-{last_number+1:04d}"
+
+        super().save(*args, **kwargs)
+
+    # -------------------------------------
+    # Required properties for your template
+    # -------------------------------------
+
+    @property
+    def subtotal(self):
+        """Sum of item amounts before discount and GST."""
+        return sum(item.amount for item in self.items.all())
+
+    @property
+    def discount_amount(self):
+        """Discount applied on subtotal."""
+        if not self.discount_percent:
+            return 0
+        return Decimal(self.subtotal) * Decimal(self.discount_percent) / Decimal(100)
+
+    @property
+    def gst(self):
+        """GST on amount after discount."""
+        amount_after_discount = Decimal(self.subtotal) - Decimal(self.discount_amount)
+        return amount_after_discount * Decimal(self.gst_percent) / Decimal(100)
+
+    @property
+    def grand_total(self):
+        """Final invoice amount."""
+        amount_after_discount = Decimal(self.subtotal) - Decimal(self.discount_amount)
+        return amount_after_discount + Decimal(self.gst)
+
+    def _str_(self):
+        return f"Invoice {self.invoice_number}"
+
+
+class InvoiceItem(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
+    service = models.ForeignKey('Service', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_percent = models.FloatField(default=0, blank=True, null=True  )
+
+    def save(self, *args, **kwargs):
+        # Set amount from service if not manually specified
+        if not self.amount and self.service:
+            self.amount = self.service.amount
+        super().save(*args, **kwargs)
+
+    @property
+    def gst_amount(self):
+        return Decimal(self.amount) * Decimal(self.invoice.gst_percent) / Decimal(100)
+
+    @property
+    def total_amount(self):
+        return Decimal(self.amount) + self.gst_amount
+
+    def __str__(self):
+        return f"{self.service.name} - {self.amount}"
+    
+
+
+
+    
+    # manager models************
+class Team(models.Model):
+    name = models.CharField(max_length=150)
+    # project field removed in favor of Project.assigned_teams ManyToMany
+    team_code = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    department = models.CharField(
+        max_length=100,
+        choices=User.DEPARTMENT,
+        default='python_dev'
+    )
+    description = models.TextField(blank=True, null=True)
+    max_size = models.PositiveIntegerField(default=10)
+
+    # Key Team Lead (User with role='TeamLead')
+    lead = models.ForeignKey(
+        'User',
+        related_name='leading_teams',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'role': 'TeamLead'}
+    )
+
+    # Team Members (Users with role='Employee')
+    members = models.ManyToManyField(
+        'User',
+        related_name='teams',
+        blank=True,
+        limit_choices_to={'role': 'Employee'}
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    def save(self, *args, **kwargs):
+        if not self.team_code:
+            last_team = Team.objects.order_by('-id').first()
+            num = last_team.id + 1000 if last_team else 1000
+            self.team_code = f"TEAM-{num + 1}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.team_code or self.id} - {self.name}"
+
+
+class ProjectDocument(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_documents')
+    name = models.CharField(max_length=255)
+    file = models.FileField(upload_to='project_docs/')
+    uploaded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='uploaded_project_documents')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.project.name})"
+
+
+class ProjectComment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_comments')
+    author = models.ForeignKey('User', on_delete=models.CASCADE, related_name='project_comments')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Comment by {self.author.username} on {self.project.name}"
+
+
+class ProjectAuditLog(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_audit_logs')
+    action = models.CharField(max_length=100) # e.g. "Project Created", "Manager Assigned", etc.
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='project_audit_actions')
+    details = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.action} - {self.project.name} by {self.user.username if self.user else 'System'}"
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='general_notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notification to {self.recipient.username}: {self.title}"
+
+    
+
+class TeamLead(models.Model):
+    employee = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'TeamLead'}
+    )
+    team_name = models.CharField(max_length=100)
+    promotion_date = models.DateTimeField(auto_now_add=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.employee.username} - Team Lead"
+    
+
+class ProjectWorkUpdate(models.Model):
+    project = models.ForeignKey(
+        Project,
+        related_name='work_updates',
+        on_delete=models.CASCADE
+    )
+
+    team_lead = models.ForeignKey(
+        'User',
+        related_name='teamlead_work_updates',
+        on_delete=models.CASCADE,
+        limit_choices_to={'role': 'TeamLead'}
+    )
+
+    work_details = models.TextField()
+    file = models.FileField(upload_to="project_updates/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.project.name} - {self.team_lead.username}"
+
+
+
+class ManagerProjectSubmission(models.Model):
+    manager = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        related_name="submissions_to_hr",
+        limit_choices_to={'role': 'Manager'}
+    )
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="manager_submissions"
+    )
+
+    details = models.TextField()
+    file = models.FileField(upload_to="manager_submissions/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.manager.username} â†’ {self.project.title}"
+
+
+
+# tl models***********
+    
+class Task(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("In Progress", "In Progress"),
+        ("Submitted", "Submitted"),
+        ("Completed", "Completed"),
+        ("Rejected", "Rejected"),
+        ("Need Changes", "Need Changes"),
+    ]
+    PRIORITY_CHOICES = [
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High'),
+        ('Critical', 'Critical')
+    ]
+
+    project = models.ForeignKey('Project', on_delete=models.CASCADE, related_name='tasks')
+    task_name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Medium')
+    
+    start_date = models.DateField()
+    end_date = models.DateField()
+    due_time = models.TimeField(null=True, blank=True)
+    estimated_hours = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    
+    file = models.FileField(upload_to='tasks/', blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    
+    created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='created_tasks')
+    assigned_to = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='assigned_tasks', limit_choices_to={'role': 'Employee'})
+    
+    # Performance Tracking
+    performance_score = models.IntegerField(default=100)
+    is_extended = models.BooleanField(default=False)
+    extended_deadline = models.DateTimeField(null=True, blank=True)
+    actual_submission_time = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.task_name
+
+class TaskExtension(models.Model):
+    task = models.OneToOneField(Task, on_delete=models.CASCADE, related_name='extension')
+    reason = models.TextField()
+    requested_hours = models.IntegerField()
+    status = models.CharField(max_length=20, choices=[('Pending', 'Pending'), ('Approved', 'Approved'), ('Rejected', 'Rejected')], default='Pending')
+    approved_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TaskReview(models.Model):
+    task = models.OneToOneField(Task, on_delete=models.CASCADE, related_name='review')
+    
+    tl_score = models.IntegerField(null=True, blank=True)
+    tl_remarks = models.TextField(blank=True, null=True)
+    tl_reviewed_at = models.DateTimeField(null=True, blank=True)
+    tl_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='tl_reviews', limit_choices_to={'role': 'TeamLead'})
+    
+    hr_score = models.IntegerField(null=True, blank=True)
+    hr_remarks = models.TextField(blank=True, null=True)
+    hr_reviewed_at = models.DateTimeField(null=True, blank=True)
+    hr_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='hr_reviews', limit_choices_to={'role': 'HR'})
+    
+    md_score = models.IntegerField(null=True, blank=True)
+    md_remarks = models.TextField(blank=True, null=True)
+    md_reviewed_at = models.DateTimeField(null=True, blank=True)
+    md_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='md_reviews', limit_choices_to={'role': 'MD'})
+    
+    manager_score = models.IntegerField(null=True, blank=True)
+    manager_remarks = models.TextField(blank=True, null=True)
+    manager_reviewed_at = models.DateTimeField(null=True, blank=True)
+    manager_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='manager_reviews', limit_choices_to={'role': 'Manager'})
+    
+    final_score = models.IntegerField(null=True, blank=True)
+    review_status = models.CharField(max_length=50, choices=[
+        ('Pending TL', 'Pending TL'),
+        ('Pending Manager', 'Pending Manager'),
+        ('Pending HR', 'Pending HR'),
+        ('Pending MD', 'Pending MD'),
+        ('Finalized', 'Finalized')
+    ], default='Pending TL')
+
+class ProjectReview(models.Model):
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='review')
+    
+    tl_remarks = models.TextField(blank=True, null=True)
+    tl_reviewed_at = models.DateTimeField(null=True, blank=True)
+    tl_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='tl_project_reviews', limit_choices_to={'role': 'TeamLead'})
+    
+    manager_remarks = models.TextField(blank=True, null=True)
+    manager_reviewed_at = models.DateTimeField(null=True, blank=True)
+    manager_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='manager_project_reviews', limit_choices_to={'role': 'Manager'})
+    
+    hr_remarks = models.TextField(blank=True, null=True)
+    hr_reviewed_at = models.DateTimeField(null=True, blank=True)
+    hr_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='hr_project_reviews', limit_choices_to={'role': 'HR'})
+    
+    md_remarks = models.TextField(blank=True, null=True)
+    md_reviewed_at = models.DateTimeField(null=True, blank=True)
+    md_reviewed_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='md_project_reviews', limit_choices_to={'role': 'MD'})
+    
+    review_status = models.CharField(max_length=50, choices=[
+        ('Pending TL Submission', 'Pending TL Submission'),
+        ('Pending Manager', 'Pending Manager'),
+        ('Pending HR', 'Pending HR'),
+        ('Pending MD', 'Pending MD'),
+        ('Finalized', 'Finalized')
+    ], default='Pending TL Submission')
+
+
+class TaskAuditLog(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='audit_logs')
+    action = models.CharField(max_length=100)
+    user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    user_role = models.CharField(max_length=50)
+    remarks = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+
+
+    
+
+    
+# hr/models.py
+from django.db import models
+from django.conf import settings
+
+class EmpUpdate(models.Model):
+    employee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="employee_reports"
+    )
+    team_lead = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="tl_reports"
+    )
+    date = models.DateField()
+    time = models.TimeField()
+    work_status = models.TextField()
+
+
+
+
+    def __str__(self):
+        return f"{self.employee.username} - {self.date}"
+
+
+from django.db import models
+from django.conf import settings
+from hr.models import Project
+
+class DailyReport(models.Model):
+    # Who submitted the report
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="daily_reports"
+    )
+
+    # Project for which the report is submitted
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="daily_reports"
+    )
+
+    tasks_completed = models.TextField()
+    tasks_in_progress = models.TextField(blank=True)
+    issues = models.TextField(blank=True)
+    plan_for_tomorrow = models.TextField(blank=True)
+    document = models.FileField(upload_to='documents/', blank=True, null=True)
+    deadline = models.DateField(null=True, blank=True)
+
+    # Recipient role of this report (TeamLead, Manager, HR, etc.)
+    recipient_role = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Role to which this report is sent"
+    )
+
+    # When the report was submitted
+    report_date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-report_date"]
+
+    def __str__(self):
+        recipient = self.recipient_role if self.recipient_role else "Unknown"
+        return f"{self.user} -> {recipient} ({self.report_date})"
+
+
+
+# ------------------leave--section-----
+# models.py
+# hr/models.py
+from django.db import models
+from django.conf import settings
+
+class Leave(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    from_date = models.DateField()
+    to_date = models.DateField()
+    reason = models.TextField()
+
+    LEAVE_TYPES = [
+        ('Paid', 'Paid Leave'),
+        ('Unpaid', 'Unpaid Leave'),
+    ]
+    leave_type = models.CharField(max_length=20, choices=LEAVE_TYPES, default='Paid')
+
+    approved_tl = models.BooleanField(default=False)
+    approved_manager = models.BooleanField(default=False)
+    approved_hr = models.BooleanField(default=False)
+    approved_md = models.BooleanField(default=False)
+
+    status = models.CharField(max_length=50, default="Pending Team Leader Approval")
+    comments = models.TextField(blank=True, null=True)
+    
+    current_approver_role = models.CharField(max_length=50, blank=True, null=True)
+    user_role_at_submission = models.CharField(max_length=50, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f"{self.user.username} - {self.status}"
+
+class LeaveApprovalStep(models.Model):
+    leave = models.ForeignKey(Leave, on_delete=models.CASCADE, related_name='approval_steps')
+    approver = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    approver_role = models.CharField(max_length=50)
+    decision = models.CharField(max_length=20, choices=[('Submitted', 'Submitted'), ('Approved', 'Approved'), ('Rejected', 'Rejected'), ('Returned', 'Returned')])
+    remarks = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.leave.user.username} - {self.approver_role} {self.decision}"
+    
+from datetime import time
+from django.utils import timezone
+from django.db import models
+
+def recalculate_attendance_for_user_month(user, year, month):
+    import calendar
+    from datetime import date, timedelta
+    from django.utils import timezone
+    from hr.models import Attendance, HRSettings
+    
+    settings = HRSettings.get_settings()
+    _, num_days = calendar.monthrange(year, month)
+    today = timezone.localdate()
+    
+    existing_records = {r.date: r for r in Attendance.objects.filter(user=user, date__year=year, date__month=month)}
+    
+    days_list = []
+    for d_num in range(1, num_days + 1):
+        curr_date = date(year, month, d_num)
+        record = existing_records.get(curr_date)
+        if not record:
+            record = Attendance(user=user, date=curr_date)
+        
+        record.calculate_basic_status(settings)
+        days_list.append(record)
+        
+    if settings.sandwich_leave_enabled:
+        i = 0
+        while i < len(days_list):
+            day = days_list[i]
+            if day.is_weekoff or day.is_holiday:
+                block_start = i
+                block_end = i
+                while block_end + 1 < len(days_list) and (days_list[block_end + 1].is_weekoff or days_list[block_end + 1].is_holiday):
+                    block_end += 1
+                
+                has_leave_before = False
+                if block_start > 0:
+                    prev_day = days_list[block_start - 1]
+                    if "Leave" in prev_day.original_status or "Absent" in prev_day.original_status:
+                        has_leave_before = True
+                else:
+                    prev_date = date(year, month, 1) - timedelta(days=1)
+                    prev_record = Attendance.objects.filter(user=user, date=prev_date).first()
+                    if prev_record:
+                        if "Leave" in prev_record.original_status or "Absent" in prev_record.original_status:
+                            has_leave_before = True
+                
+                has_leave_after = False
+                if block_end < len(days_list) - 1:
+                    next_day = days_list[block_end + 1]
+                    if "Leave" in next_day.original_status or "Absent" in next_day.original_status:
+                        has_leave_after = True
+                else:
+                    next_date = date(year, month, num_days) + timedelta(days=1)
+                    next_record = Attendance.objects.filter(user=user, date=next_date).first()
+                    if next_record:
+                        if "Leave" in next_record.original_status or "Absent" in next_record.original_status:
+                            has_leave_after = True
+                            
+                if has_leave_before and has_leave_after:
+                    for k in range(block_start, block_end + 1):
+                        days_list[k].calculated_status = "Sandwich Leave"
+                        days_list[k].is_sandwich_leave = True
+                        
+                i = block_end + 1
+            else:
+                i += 1
+                
+    for day in days_list:
+        status = day.calculated_status
+        if status in ["Present", "Work From Home", "On Duty"] or "Present" in status:
+            day.payroll_count_flag = True
+        elif "Half Day" in status:
+            day.payroll_count_flag = True
+        elif status == "Week Off":
+            day.payroll_count_flag = True
+        elif status == "Holiday":
+            day.payroll_count_flag = True
+        elif "Paid Leave" in status or status == "Leave":
+            from hr.models import Leave
+            lv = Leave.objects.filter(user=user, status__in=['Approved', 'Final Approved'], from_date__lte=day.date, to_date__gte=day.date).first()
+            if lv and lv.leave_type == 'Paid':
+                day.payroll_count_flag = True
+            else:
+                if lv and lv.leave_type == 'Unpaid':
+                    day.payroll_count_flag = False
+                else:
+                    day.payroll_count_flag = True
+        elif "Unpaid Leave" in status or "Absent" in status or status == "Sandwich Leave" or status == "Future":
+            day.payroll_count_flag = False
+        else:
+            day.payroll_count_flag = False
+            
+        day._no_recalc = True
+        day.save()
+
+
+class Attendance(models.Model):
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+    check_in_time = models.DateTimeField(null=True, blank=True)
+    check_out_time = models.DateTimeField(null=True, blank=True)
+
+    # ── Legacy photo fields (kept for backward compat) ──
+    check_in_photo = models.ImageField(upload_to='attendance/checkin/', null=True, blank=True)
+    check_out_photo = models.ImageField(upload_to='attendance/checkout/', null=True, blank=True)
+
+    # ── New enterprise selfie fields ──
+    check_in_image = models.ImageField(upload_to='attendance/checkin/', null=True, blank=True)
+    check_out_image = models.ImageField(upload_to='attendance/checkout/', null=True, blank=True)
+
+    # ── Location ──
+    check_in_location = models.CharField(max_length=255, null=True, blank=True)
+    check_out_location = models.CharField(max_length=255, null=True, blank=True)
+
+    check_in_latitude = models.FloatField(null=True, blank=True)
+    check_in_longitude = models.FloatField(null=True, blank=True)
+    check_out_latitude = models.FloatField(null=True, blank=True)
+    check_out_longitude = models.FloatField(null=True, blank=True)
+
+    check_in_address = models.CharField(max_length=500, null=True, blank=True)
+    check_out_address = models.CharField(max_length=500, null=True, blank=True)
+
+    check_in_map_url = models.CharField(max_length=500, null=True, blank=True)
+    check_out_map_url = models.CharField(max_length=500, null=True, blank=True)
+
+    # ── Device & network ──
+    check_in_ip = models.GenericIPAddressField(null=True, blank=True)
+    check_out_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    check_in_browser = models.CharField(max_length=300, null=True, blank=True)
+    check_out_browser = models.CharField(max_length=300, null=True, blank=True)
+
+    check_in_device = models.CharField(max_length=300, null=True, blank=True)
+    check_out_device = models.CharField(max_length=300, null=True, blank=True)
+
+    total_hours = models.FloatField(null=True, blank=True)
+    status = models.CharField(max_length=50, blank=True)
+    is_late = models.BooleanField(default=False)
+    left_early = models.BooleanField(default=False)
+    remarks = models.TextField(blank=True, default='')
+
+    # Policy Fields
+    original_status = models.CharField(max_length=50, blank=True, null=True)
+    calculated_status = models.CharField(max_length=50, blank=True, null=True)
+    is_sandwich_leave = models.BooleanField(default=False)
+    payroll_count_flag = models.BooleanField(default=True)
+    is_weekoff = models.BooleanField(default=False)
+    is_holiday = models.BooleanField(default=False)
+    calculation_timestamp = models.DateTimeField(auto_now=True)
+
+    def calculate_basic_status(self, settings=None):
+        if not settings:
+            settings = HRSettings.get_settings()
+
+        weekday_num = self.date.weekday()
+        try:
+            off_days = [int(x.strip()) for x in settings.weekly_off_days.split(",") if x.strip().isdigit()]
+        except Exception:
+            off_days = [5, 6]
+
+        self.is_weekoff = (weekday_num in off_days)
+
+        from .models import Holiday
+        from django.db.models import Q
+        holiday = Holiday.objects.filter(
+            status='Approved',
+            date=self.date
+        ).filter(
+            Q(department__isnull=True) | Q(department='') | Q(department__iexact='all') | Q(department=self.user.department)
+        ).first()
+
+        self.is_holiday = (holiday is not None)
+
+        from .models import Leave
+        leave = Leave.objects.filter(
+            user=self.user,
+            status__in=['Approved', 'Final Approved'],
+            from_date__lte=self.date,
+            to_date__gte=self.date
+        ).first()
+
+        if self.check_in_time:
+            if self.check_out_time:
+                hours = (self.check_out_time - self.check_in_time).total_seconds() / 3600
+                self.total_hours = round(hours, 2)
+            else:
+                self.total_hours = 0.0
+                hours = 9.0
+
+            office_start = settings.office_start_time
+            office_end = settings.office_end_time
+            grace = settings.grace_time
+
+            from datetime import datetime, timedelta, date as dt_date
+            dummy_dt = datetime.combine(dt_date.today(), office_start)
+            grace_dt = dummy_dt + timedelta(minutes=grace)
+            office_start_with_grace = grace_dt.time()
+
+            local_check_in = timezone.localtime(self.check_in_time).time()
+            self.is_late = local_check_in > office_start_with_grace
+
+            if self.check_out_time:
+                local_check_out = timezone.localtime(self.check_out_time).time()
+                self.left_early = local_check_out < office_end
+                if hours >= 9:
+                    self.status = "Present"
+                elif hours >= settings.half_day_working_hours:
+                    self.status = "Half Day"
+                else:
+                    self.status = "Absent"
+            else:
+                self.left_early = False
+                self.status = "Present"
+
+            if self.is_late and settings.late_mark_rules_enabled:
+                self.status += " (Late)"
+            if self.left_early:
+                self.status += " (Left Early)"
+        else:
+            self.total_hours = 0
+            self.is_late = False
+            self.left_early = False
+            
+            if leave:
+                self.status = f"{leave.leave_type} Leave"
+            elif self.is_holiday:
+                self.status = "Holiday"
+            elif self.is_weekoff:
+                self.status = "Week Off"
+            else:
+                today = timezone.localdate()
+                if self.date > today:
+                    self.status = "Future"
+                else:
+                    self.status = "Absent"
+
+        self.original_status = self.status
+        self.calculated_status = self.status
+        self.is_sandwich_leave = False
+
+    def calculate_status(self):
+        self.calculate_basic_status()
+        self._no_recalc = True
+        self.save()
+# models.py
+from django.db import models
+
+
+# models.py
+from django.db import models
+
+SELECT_TYPE = [
+    ('python', 'Python'),
+    ('java', 'Java'),
+    ('testing', 'Testing'),
+    ('php', 'PHP'),
+    ('react', 'React JS'),
+    ('digital_marketing', 'Digital Marketing'),
+    ('ui_ux', 'UI/UX'),
+    ('flutter', 'Flutter'),
+    ('basic_test','basic_test'),
+]
+
+class Examuser(models.Model):
+    username = models.CharField(max_length=100)
+    email = models.EmailField(max_length=50, unique=True)
+    phone_no = models.CharField(max_length=15, blank=True, null=True)
+    role = models.CharField(max_length=50, choices=SELECT_TYPE)
+    password = models.CharField(max_length=100)
+    
+
+    def __str__(self):
+        return self.username
+
+
+class Question(models.Model):
+  
+    language = models.CharField(max_length=20, choices=SELECT_TYPE)
+    question_text = models.TextField()
+    option_a = models.CharField(max_length=255)
+    option_b = models.CharField(max_length=255)
+    option_c = models.CharField(max_length=255)
+    option_d = models.CharField(max_length=255)
+    correct_option = models.CharField(max_length=1)
+
+    def _str_(self):
+        return f"{self.language} - {self.question_text[:50]}"
+
+
+from django.db import models
+
+
+ 
+
+# ---------------- EXAM SESSION MODEL ----------------
+class ExamSession(models.Model):
+    user = models.ForeignKey(Examuser, on_delete=models.CASCADE)
+    language = models.CharField(max_length=20, choices=SELECT_TYPE)
+
+    start_time = models.DateTimeField(auto_now_add=True)
+    is_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.language}"
+    
+ 
+
+# ---------------- USER ANSWER MODEL ----------------
+class UserAnswer(models.Model):
+    exam = models.ForeignKey(ExamSession, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+    selected_option = models.CharField(max_length=1)  # A/B/C/D
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.exam.user.username} - Q{self.question.id}"
+    
+
+# ---------------- RESULT MODEL ----------------
+class Result(models.Model):
+    exam = models.OneToOneField(ExamSession, on_delete=models.CASCADE)
+
+    total_questions = models.IntegerField()
+    correct_answers = models.IntegerField()
+    score_percentage = models.FloatField()
+
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.exam.user.username} - Result"
+
+
+# ==================== PAYSLIP MODULE ====================
+
+MONTH_CHOICES = [
+    (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
+    (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
+    (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December'),
+]
+
+class Payslip(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Generated', 'Generated'),
+        ('Pending Approval', 'Pending Approval'),
+        ('Approved', 'Approved'),
+        ('Paid', 'Paid'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    employee = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        related_name='payslips',
+        limit_choices_to={'role__in': ['Employee', 'TeamLead', 'Manager']}
+    )
+
+    month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
+    year = models.PositiveIntegerField()
+
+    # Earnings
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="HRA")
+    transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # Deductions
+    pf_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="PF")
+    esi_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="ESI")
+    professional_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="TDS")
+    loan_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    # Attendance
+    working_days = models.PositiveSmallIntegerField(default=26)
+    days_present = models.PositiveSmallIntegerField(default=26)
+    days_absent = models.PositiveSmallIntegerField(default=0)
+    leaves_taken = models.PositiveSmallIntegerField(default=0)
+
+    # Status & Payment
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Draft')
+    payment_date = models.DateField(null=True, blank=True)
+    is_published = models.BooleanField(default=False)
+
+    # Optional PDF upload
+    payslip_pdf = models.FileField(upload_to='payslips/', null=True, blank=True)
+
+    # Historical copy of details
+    employee_name = models.CharField(max_length=150, blank=True, null=True)
+    designation = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    account_number = models.CharField(max_length=50, blank=True, null=True)
+    ifsc_code = models.CharField(max_length=20, blank=True, null=True)
+    pan = models.CharField(max_length=20, blank=True, null=True)
+    uan = models.CharField(max_length=20, blank=True, null=True)
+    aadhaar = models.CharField(max_length=12, blank=True, null=True)
+
+    # Lock status
+    is_locked = models.BooleanField(default=False)
+
+    # Automated workflow fields
+    loss_of_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    needs_recalculation = models.BooleanField(default=False)
+    generated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_payslips')
+    generated_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_payslips')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    recalculated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='recalculated_payslips')
+    recalculated_at = models.DateTimeField(null=True, blank=True)
+
+    # Detailed Attendance Metrics
+    unpaid_leave_days = models.PositiveSmallIntegerField(default=0)
+    half_days = models.PositiveSmallIntegerField(default=0)
+    holidays = models.PositiveSmallIntegerField(default=0)
+    week_offs = models.PositiveSmallIntegerField(default=0)
+    sandwich_leave_days = models.PositiveSmallIntegerField(default=0, verbose_name="Sandwich Leave Days")
+
+    # Audit
+    created_by = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='payslips_created'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('employee', 'month', 'year')
+        ordering = ['-year', '-month']
+
+    @property
+    def gross_salary(self):
+        from decimal import Decimal
+        return (
+            self.basic_salary + self.hra + self.transport_allowance +
+            self.medical_allowance + self.special_allowance + self.bonus
+        )
+
+    @property
+    def total_deductions(self):
+        return (
+            self.pf_deduction + self.esi_deduction + self.professional_tax +
+            self.tds + self.loan_deduction + self.other_deductions
+        )
+
+    @property
+    def net_salary(self):
+        from decimal import Decimal
+        val = self.gross_salary - self.total_deductions
+        return max(val, Decimal('0.00'))
+
+    @property
+    def month_name(self):
+        import calendar
+        return calendar.month_name[self.month]
+
+    def __str__(self):
+        return f"{self.employee.get_full_name() or self.employee.username} - {self.month_name} {self.year}"
+
+
+class PayslipDownloadLog(models.Model):
+    payslip = models.ForeignKey(Payslip, on_delete=models.CASCADE, related_name='download_logs')
+    downloaded_by = models.ForeignKey('User', on_delete=models.CASCADE)
+    downloaded_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.downloaded_by.username} downloaded {self.payslip} at {self.downloaded_at}"
+
+
+class Holiday(models.Model):
+    """
+    Company Holiday with full approval workflow.
+    Only Approved holidays affect payroll and attendance.
+    """
+    HOLIDAY_TYPE_CHOICES = [
+        ('National', 'National Holiday'),
+        ('Festival', 'Festival Holiday'),
+        ('Company',  'Company Holiday'),
+        ('Optional', 'Optional Holiday'),
+        ('Regional', 'Regional Holiday'),
+    ]
+    STATUS_CHOICES = [
+        ('Draft',     'Draft'),
+        ('Pending',   'Pending Approval'),
+        ('Approved',  'Approved'),
+        ('Rejected',  'Rejected'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    # Core details
+    name         = models.CharField(max_length=150)
+    date         = models.DateField()                    # no longer unique – multiple branches allowed
+    holiday_type = models.CharField(max_length=20, choices=HOLIDAY_TYPE_CHOICES, default='Company')
+    description  = models.TextField(blank=True, null=True)
+    branch       = models.CharField(max_length=100, default='All Branches')
+    department   = models.CharField(max_length=100, blank=True, null=True,
+                                    help_text="Leave blank to apply to all departments")
+    year         = models.PositiveSmallIntegerField(blank=True, null=True)
+
+    # Workflow status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Draft')
+
+    # Audit trail
+    created_by    = models.ForeignKey('User', related_name='created_holidays',
+                                      on_delete=models.SET_NULL, null=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+
+    submitted_by  = models.ForeignKey('User', related_name='submitted_holidays',
+                                      on_delete=models.SET_NULL, null=True, blank=True)
+    submitted_at  = models.DateTimeField(null=True, blank=True)
+
+    approved_by   = models.ForeignKey('User', related_name='approved_holidays',
+                                      on_delete=models.SET_NULL, null=True, blank=True)
+    approved_at   = models.DateTimeField(null=True, blank=True)
+
+    rejected_by   = models.ForeignKey('User', related_name='rejected_holidays',
+                                      on_delete=models.SET_NULL, null=True, blank=True)
+    rejected_at   = models.DateTimeField(null=True, blank=True)
+
+    cancelled_by  = models.ForeignKey('User', related_name='cancelled_holidays',
+                                      on_delete=models.SET_NULL, null=True, blank=True)
+    cancelled_at  = models.DateTimeField(null=True, blank=True)
+
+    remarks           = models.TextField(blank=True, null=True)
+    last_modified_by  = models.ForeignKey('User', related_name='modified_holidays',
+                                          on_delete=models.SET_NULL, null=True, blank=True)
+    last_modified_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date']
+
+    def __str__(self):
+        return f"{self.name} ({self.date}) [{self.status}]"
+
+    @property
+    def is_editable_by_hr(self):
+        """HR may only edit Draft or Pending holidays."""
+        return self.status in ('Draft', 'Pending')
+
+    @property
+    def type_color(self):
+        """Returns a CSS colour class for the holiday type badge."""
+        return {
+            'National': 'badge-national',
+            'Festival': 'badge-festival',
+            'Company':  'badge-company',
+            'Optional': 'badge-optional',
+            'Regional': 'badge-regional',
+        }.get(self.holiday_type, 'badge-company')
+
+
+class HolidayNotification(models.Model):
+    """
+    In-app notification generated whenever a holiday changes status.
+    """
+    NOTIF_TYPE_CHOICES = [
+        ('pending',   'Submitted for Approval'),
+        ('approved',  'Holiday Approved'),
+        ('rejected',  'Holiday Rejected'),
+        ('cancelled', 'Holiday Cancelled'),
+        ('general',   'General Announcement'),
+    ]
+    recipient    = models.ForeignKey('User', on_delete=models.CASCADE,
+                                     related_name='holiday_notifications')
+    holiday      = models.ForeignKey(Holiday, on_delete=models.CASCADE,
+                                     related_name='notifications', null=True, blank=True)
+    notif_type   = models.CharField(max_length=20, choices=NOTIF_TYPE_CHOICES, default='general')
+    message      = models.TextField()
+    is_read      = models.BooleanField(default=False)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Notif → {self.recipient.username}: {self.message[:50]}"
+
+
+class SalaryStructure(models.Model):
+    employee = models.OneToOneField('User', on_delete=models.CASCADE, related_name='salary_structure')
+    monthly_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Earnings structure (monthly bases)
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Deductions settings
+    pf_enabled = models.BooleanField(default=True)
+    pf_rate = models.DecimalField(max_digits=5, decimal_places=2, default=12.00)  # 12% of Basic
+    pf_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)   # flat amount override if non-zero
+    
+    esi_enabled = models.BooleanField(default=True)
+    esi_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.75)   # 0.75% of Gross
+    esi_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    pt_enabled = models.BooleanField(default=True)
+    pt_amount = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
+    
+    tds_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    # Bank & Statutory Details
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    account_number = models.CharField(max_length=50, blank=True, null=True)
+    ifsc_code = models.CharField(max_length=20, blank=True, null=True)
+    pan = models.CharField(max_length=20, blank=True, null=True)
+    uan = models.CharField(max_length=20, blank=True, null=True)
+    aadhaar = models.CharField(max_length=12, blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Salary Structure - {self.employee.username}"
+
+
+class PayrollAuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('GENERATE', 'Payroll Generated'),
+        ('REGENERATE', 'Payroll Regenerated'),
+        ('LOCK', 'Payslip Locked'),
+        ('UNLOCK', 'Payslip Unlocked'),
+        ('PAID', 'Salary Marked as Paid'),
+        ('EMAIL', 'Payslip Emailed'),
+        ('DOWNLOAD', 'Payslip Downloaded'),
+    ]
+    payslip = models.ForeignKey(Payslip, on_delete=models.CASCADE, related_name='audit_logs', null=True, blank=True)
+    performed_by = models.ForeignKey('User', on_delete=models.CASCADE)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    details = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.performed_by.username} - {self.action} - {self.timestamp}"
+
+
+# ==================== HR COMPANY SETTINGS ====================
+
+class HRSettings(models.Model):
+    """
+    Company-level HR configuration.
+    Only one row should exist (singleton pattern – always use pk=1).
+    """
+    sandwich_leave_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Enable Sandwich Leave Policy",
+        help_text=(
+            "When ON, Weekly Offs and Holidays sandwiched between two consecutive Absent / "
+            "Unpaid-Leave days are automatically converted to Absent (Loss of Pay)."
+        )
+    )
+    md_approval_required = models.BooleanField(
+        default=True,
+        verbose_name="Enable MD Approval Requirement",
+        help_text="When ON, all leave requests approved by HR must also be approved by the MD."
+    )
+
+    # Policy Configurations
+    weekly_off_days = models.CharField(
+        max_length=50, 
+        default="5,6", 
+        verbose_name="Weekly Off Days",
+        help_text="Comma-separated weekday numbers (0=Monday, 6=Sunday). Default Saturday and Sunday: '5,6'."
+    )
+    half_day_working_hours = models.FloatField(
+        default=4.5,
+        verbose_name="Half Day Working Hours",
+        help_text="Minimum working hours required to count as Half Day instead of Absent."
+    )
+    grace_time = models.IntegerField(
+        default=15,
+        verbose_name="Grace Time (Minutes)",
+        help_text="Grace time allowed for late check-in before mark as late."
+    )
+    office_start_time = models.TimeField(
+        default="09:30:00",
+        verbose_name="Office Start Time"
+    )
+    office_end_time = models.TimeField(
+        default="18:30:00",
+        verbose_name="Office End Time"
+    )
+    late_mark_rules_enabled = models.BooleanField(
+        default=True,
+        verbose_name="Enable Late Mark Rules"
+    )
+
+    class Meta:
+        verbose_name = "HR Settings"
+        verbose_name_plural = "HR Settings"
+
+    @classmethod
+    def get_settings(cls):
+        """Return (or create) the single settings row."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "HR Settings"
+
+
+class AttendanceFinalization(models.Model):
+    month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
+    year = models.PositiveIntegerField()
+    is_finalized = models.BooleanField(default=True)
+    finalized_by = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='finalized_periods'
+    )
+    finalized_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('month', 'year')
+        ordering = ['-year', '-month']
+
+    def __str__(self):
+        import calendar
+        return f"{calendar.month_name[self.month]} {self.year} - Finalized"
+
+
+# ==================== ENTERPRISE WEBRTC CALLING & MEETINGS ====================
+
+class CallSession(models.Model):
+    CALL_TYPE_CHOICES = [
+        ('voice', 'Voice Call'),
+        ('video', 'Video Call'),
+    ]
+    STATUS_CHOICES = [
+        ('ringing', 'Ringing'),
+        ('active', 'Active'),
+        ('ended', 'Ended'),
+        ('rejected', 'Rejected'),
+        ('missed', 'Missed'),
+    ]
+    caller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='initiated_calls')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_calls', null=True, blank=True)
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='calls', null=True, blank=True)
+    call_type = models.CharField(max_length=10, choices=CALL_TYPE_CHOICES, default='video')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='ringing')
+    caller_sdp = models.TextField(blank=True, null=True)
+    receiver_sdp = models.TextField(blank=True, null=True)
+    caller_ice = models.JSONField(default=list, blank=True)
+    receiver_ice = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        if self.room:
+            return f"{self.call_type} in {self.room.name} [{self.status}]"
+        return f"{self.caller.username} → {self.receiver.username if self.receiver else 'Group'} [{self.status}]"
+
+
+class ScheduledMeeting(models.Model):
+    RECURRENCE_CHOICES = [
+        ('none', 'None'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+    ]
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='scheduled_meetings', null=True, blank=True)
+    scheduled_time = models.DateTimeField()
+    duration_minutes = models.PositiveIntegerField(default=30)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_meetings')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='invited_meetings')
+    recurrence = models.CharField(max_length=10, choices=RECURRENCE_CHOICES, default='none')
+    waiting_room_enabled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} by {self.creator.username} ({self.scheduled_time})"
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Attendance)
+@receiver(post_delete, sender=Attendance)
+def trigger_recalculation_on_attendance_change(sender, instance, **kwargs):
+    try:
+        from hr.models import Payslip
+        date_val = instance.date
+        payslips = Payslip.objects.filter(
+            employee=instance.user,
+            month=date_val.month,
+            year=date_val.year
+        )
+        for payslip in payslips:
+            if not payslip.needs_recalculation:
+                payslip.needs_recalculation = True
+                payslip.save()
+    except Exception:
+        pass
+
+
+class AttendanceCorrection(models.Model):
+    attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE, related_name='corrections')
+    original_check_in = models.DateTimeField(null=True, blank=True)
+    original_check_out = models.DateTimeField(null=True, blank=True)
+    original_status = models.CharField(max_length=50, blank=True)
+    original_total_hours = models.FloatField(null=True, blank=True)
+    original_remarks = models.TextField(blank=True, default='')
+
+    new_check_in = models.DateTimeField(null=True, blank=True)
+    new_check_out = models.DateTimeField(null=True, blank=True)
+    new_status = models.CharField(max_length=50, blank=True)
+    new_total_hours = models.FloatField(null=True, blank=True)
+    new_remarks = models.TextField(blank=True, default='')
+
+    reason = models.TextField()
+    batch_id = models.CharField(max_length=100, blank=True, null=True)
+    attachment = models.FileField(upload_to='correction_attachments/', null=True, blank=True)
+    edited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='edited_corrections')
+    status = models.CharField(max_length=20, choices=[
+        ('Pending', 'Pending Approval'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected')
+    ], default='Pending')
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_corrections')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    md_remarks = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Correction for {self.attendance.user.username} on {self.attendance.date} ({self.status})"
+
+
+# Recalculate signals
+@receiver(post_save, sender=Attendance)
+def attendance_post_save(sender, instance, created, **kwargs):
+    if getattr(instance, '_no_recalc', False):
+        return
+    recalculate_attendance_for_user_month(instance.user, instance.date.year, instance.date.month)
+
+@receiver(post_save, sender=Leave)
+def leave_post_save(sender, instance, **kwargs):
+    from datetime import date, datetime
+    
+    from_date = instance.from_date
+    to_date = instance.to_date
+    
+    if isinstance(from_date, str):
+        try:
+            from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+    if isinstance(to_date, str):
+        try:
+            to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+            
+    current_date = from_date
+    while current_date <= to_date:
+        recalculate_attendance_for_user_month(instance.user, current_date.year, current_date.month)
+        if current_date.month == 12:
+            current_date = date(current_date.year + 1, 1, 1)
+        else:
+            current_date = date(current_date.year, current_date.month + 1, 1)
+
+@receiver(post_save, sender=Holiday)
+@receiver(post_delete, sender=Holiday)
+def holiday_signal(sender, instance, **kwargs):
+    from hr.models import User
+    for user in User.objects.filter(is_active=True):
+        recalculate_attendance_for_user_month(user, instance.date.year, instance.date.month)
+
+@receiver(post_save, sender=HRSettings)
+def hr_settings_post_save(sender, instance, **kwargs):
+    from hr.models import User
+    today = timezone.localdate()
+    for user in User.objects.filter(is_active=True):
+        recalculate_attendance_for_user_month(user, today.year, today.month)
+
+
+# =============================================================
+# MAIN APP INTEGRATED MODELS (managed in main app)
+# =============================================================
+
+class AddCarouselImages(models.Model):
+    carouseltitle = models.CharField(max_length=255)
+    carouselDesc = models.CharField(max_length=255, blank=True, null=True)
+    carouselImage = models.ImageField(upload_to='carousel_images/')
+
+    def __str__(self):
+        return self.carouseltitle
+
+
+class Score(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    score = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.score}"
+
+
+class Testimonial(models.Model):
+    client_name = models.CharField(max_length=100)
+    company_name = models.CharField(max_length=150)
+    country = models.CharField(max_length=50)
+    message = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.client_name} - {self.company_name}"
+
+
+class LastMonthEvent(models.Model):
+    image = models.ImageField(upload_to='events/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Event {self.id}"
+
+
+class AdminAccount(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def set_password(self, raw_password):
+        from django.contrib.auth.hashers import make_password
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_password, self.password)
+
+    def save(self, *args, **kwargs):
+        from django.contrib.auth.hashers import make_password, identify_hasher
+        try:
+            identify_hasher(self.password)
+        except Exception:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.email
+
+
+class JobApplication(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="job_applications_main"
+    )
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    dob = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    current_city = models.CharField(max_length=100, blank=True, null=True)
+    current_address = models.TextField()
+    permanent_address = models.TextField(blank=True, null=True)
+    job_role = models.CharField(max_length=200, blank=True, null=True)
+    department = models.CharField(max_length=100)
+    employment_type = models.CharField(max_length=50)
+    preferred_work_mode = models.CharField(max_length=50)
+    preferred_job_location = models.CharField(max_length=100, blank=True, null=True)
+    highest_qualification = models.CharField(max_length=100)
+    college_university = models.CharField(max_length=200)
+    passout_year = models.IntegerField(null=True, blank=True)
+    course = models.CharField(max_length=100)
+    ssc_marks = models.CharField(max_length=10, blank=True, null=True)
+    inter_diploma_marks = models.CharField(max_length=10, blank=True, null=True)
+    higher_education_marks = models.CharField(max_length=10, blank=True, null=True)
+    backlogs = models.IntegerField(blank=True, null=True)
+    primary_skills = models.CharField(max_length=200)
+    secondary_skills = models.CharField(max_length=200, blank=True, null=True)
+    technical_skills = models.TextField()
+    certifications = models.CharField(max_length=200, blank=True, null=True)
+    internship_details = models.TextField(blank=True, null=True)
+    candidate_type = models.CharField(max_length=50)
+    total_experience = models.CharField(max_length=50, blank=True, null=True)
+    relevant_experience = models.CharField(max_length=50, blank=True, null=True)
+    current_company = models.CharField(max_length=100, blank=True, null=True)
+    current_designation = models.CharField(max_length=100, blank=True, null=True)
+    current_ctc = models.CharField(max_length=50, blank=True, null=True)
+    expected_ctc = models.CharField(max_length=50, blank=True, null=True)
+    notice_period = models.IntegerField(blank=True, null=True)
+    reason_for_job_change = models.TextField(blank=True, null=True)
+    resume = models.FileField(upload_to="documents/resumes/")
+    profile_photo = models.ImageField(upload_to="documents/photos/")
+    pan_number = models.CharField(max_length=20, blank=True, null=True)
+    pan_card_image = models.ImageField(upload_to='documents/pan/', blank=True, null=True)
+    aadhaar_number = models.CharField(max_length=20, blank=True, null=True)
+    aadhaar_front_image = models.ImageField(upload_to='documents/aadhaar/', blank=True, null=True)
+    aadhaar_back_image = models.ImageField(upload_to='documents/aadhaar/', blank=True, null=True)
+    linkedin = models.URLField(blank=True, null=True)
+    github = models.URLField(blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    STATUS_CHOICES = [
+        ("screening", "Screening in Progress"),
+        ("shortlisted", "Shortlisted"),
+        ("assessment", "Online Assessment"),
+        ("hr_interview", "HR Interview"),
+        ("technical_interview", "Technical Interview"),
+        ("documentation", "Document Verification"),
+        ("onboarding", "Onboarding"),
+        ("not_selected", "Not Selected"),
+    ]
+
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default="screening"
+    )
+
+    basic_test_date = models.DateField(blank=True, null=True)
+    test_link = models.URLField(blank=True, null=True)
+    document_verification_date = models.DateField(null=True, blank=True)
+    interview_date = models.DateField(blank=True, null=True)
+    interview_link = models.URLField(blank=True, null=True)
+    technical_round_date = models.DateField(blank=True, null=True)
+    technical_round_link = models.URLField(blank=True, null=True)
+    document_submission_date = models.DateField(blank=True, null=True)
+    join_date = models.DateField(blank=True, null=True)
+    rejection_message = models.TextField(blank=True, null=True)
+    note = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.job_role}"
+
+
+class InternshipRegistration(models.Model):
+    name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    course = models.CharField(max_length=100)
+    address = models.TextField(null=True, blank=True)
+    plan = models.CharField(max_length=50)
+    base_amount = models.FloatField()
+    gst_amount = models.FloatField()
+    total_amount = models.FloatField()
+    payment_type = models.CharField(max_length=20)
+    emi_part = models.IntegerField(null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=255)
+    amount_paid = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Payment(models.Model):
+    registration = models.ForeignKey(
+        InternshipRegistration,
+        on_delete=models.CASCADE
+    )
+    amount = models.FloatField()
+    emi_part = models.IntegerField(null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=200)
+    razorpay_payment_id = models.CharField(max_length=200, blank=True)
+    razorpay_signature = models.CharField(max_length=300, blank=True)
+    is_paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.registration.name} - ₹{self.amount}"
+
+
+class ClientLead(models.Model):
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    service = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+

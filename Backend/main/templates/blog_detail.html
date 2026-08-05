@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ blog.title }} | YGR Gobal IT Services</title>
+
+    <link rel="icon" type="image/png" href="/static/images/logo.png" />
+
+    <style>
+        /* ================= ABSOLUTE RESET ================= */
+        :root {
+            --primary-navy: #092a49;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #f8fafd !important;
+            display: block !important;
+        }
+
+        /* FORCE EVERYTHING TO BE A BLOCK AND CLEAR FLOATS */
+        .page-wrapper,
+        .main-article-wrapper,
+        .blog-detail-container,
+        .blog-header,
+        .blog-rich-content {
+            display: block !important;
+            clear: both !important;
+            position: relative !important;
+        }
+
+        /* MASSIVE 280PX CLEARANCE FOR THE STICKY HEADER */
+        .master-header-spacer {
+            height: 280px !important;
+            width: 100% !important;
+            display: block !important;
+            clear: both !important;
+            margin-top: -220px;
+        }
+
+        .blog-detail-container {
+            max-width: 1000px;
+            width: 90%;
+            margin: 0 auto 100px !important;
+            background: #ffffff !important;
+            border-radius: 40px;
+            padding: 80px;
+            box-shadow: 0 30px 60px rgba(9, 42, 73, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .blog-category-badge {
+            display: inline-block !important;
+            padding: 12px 30px !important;
+            background: #f0f4f8 !important;
+            color: #092a49 !important;
+            border-radius: 100px !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 2px !important;
+            margin: 0 auto 40px !important;
+            border: 1px solid #d1d9e6 !important;
+            text-align: center;
+        }
+
+        .blog-detail-container h1 {
+            display: block !important;
+            clear: both !important;
+            font-size: 44px !important;
+            line-height: 1.4 !important;
+            color: #092a49 !important;
+            margin: 40px 0 !important;
+            font-family: 'Oswald', sans-serif !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            text-align: center !important;
+            position: relative !important;
+        }
+
+        .blog-main-image {
+            display: block !important;
+            clear: both !important;
+            width: 100% !important;
+            height: auto !important;
+            max-height: 600px !important;
+            object-fit: cover !important;
+            border-radius: 30px !important;
+            margin: 60px 0 !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .blog-rich-content {
+            font-size: 19px !important;
+            line-height: 2.2 !important;
+            color: #333 !important;
+            font-family: 'Lato', sans-serif !important;
+            margin-top: 40px !important;
+        }
+
+        .blog-footer-actions {
+            margin-top: 80px !important;
+            padding-top: 40px !important;
+            border-top: 1px solid #eee !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
+
+        .back-to-blogs {
+            color: #092a49 !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+
+        @media (max-width: 992px) {
+            .master-header-spacer {
+                height: 180px !important;
+                margin-top: -150px;
+            }
+
+            .blog-detail-container {
+                padding: 40px 20px !important;
+            }
+
+            .blog-detail-container h1 {
+                font-size: 30px !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="page">
+
+    {% include "header.html" %}
+
+    <div class="main-article-wrapper">
+
+        <!-- ABSOLUTE CLEARANCE ZONE -->
+        <div class="master-header-spacer"></div>
+
+        <div class="blog-detail-container">
+
+            <!-- Category -->
+            <div style="text-align: center; width: 100%;">
+                <span class="blog-category-badge">Technology Insight</span>
+            </div>
+
+            <!-- Title -->
+            <h1>{{ blog.title }}</h1>
+
+            <!-- Image -->
+            {% if blog.image %}
+            <img src="{{ blog.image.url }}" alt="{{ blog.title }}" class="blog-main-image">
+            {% endif %}
+
+            <!-- Text -->
+            <div class="blog-rich-content">
+                {{ blog.description|linebreaks }}
+            </div>
+
+            <!-- Footer -->
+            <footer class="blog-footer-actions">
+                <a href="{% url 'blog_list' %}" class="back-to-blogs">
+                    <i class="fas fa-arrow-left"></i> Back to Insights
+                </a>
+
+                <div class="share-icons">
+                    <span class="small text-muted mr-3">Share:</span>
+                    <a href="#" class="text-muted mr-2"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" class="text-muted mr-2"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-muted"><i class="fas fa-link"></i></a>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+
+</body>
+
+</html>

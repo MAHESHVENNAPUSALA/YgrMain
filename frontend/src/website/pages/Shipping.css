@@ -1,0 +1,115 @@
+
+/* ===== Gobal Body ===== */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f5f6fa;
+    margin: 0;
+    padding: 0;
+    line-height: 1.7;
+    color: #333;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* ===== Policy Container ===== */
+.policy-wrapper {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    line-height: 1.7;
+}
+
+/* Headings */
+.policy-wrapper h1, 
+.policy-wrapper h2 {
+    font-family: 'Oswald', sans-serif;
+}
+
+.policy-wrapper h1 {
+    text-align: center;
+    font-size: 28px;
+    color: #092a49; /* Keep main heading color */
+    margin-bottom: 10px;
+}
+
+.policy-wrapper .updated {
+    text-align: center; 
+    font-size: 14px;
+    color: #777; 
+    margin-bottom: 30px;
+}
+
+.policy-wrapper h2 {
+    font-size: 20px; 
+    margin-top: 30px;
+    margin-bottom: 10px; 
+}
+
+/* Paragraphs, lists, and list items */
+.policy-wrapper p,
+.policy-wrapper ul,
+.policy-wrapper li {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333;
+    margin: 10px 0;
+}
+
+.policy-wrapper ul {
+    margin-left: 20px;
+}
+
+.policy-wrapper li {
+    margin-bottom: 8px;
+}
+
+/* Boxes */
+.policy-wrapper .business-box,
+.policy-wrapper .contact-box,
+.policy-wrapper .info-box {
+    padding: 20px;
+    border-radius: 6px;
+    color: #333;
+}
+
+.policy-wrapper .business-box {
+    background: #f9fafb;
+    border-left: 4px solid #1a73e8;
+    margin-top: 20px;
+}
+
+.policy-wrapper .contact-box,
+.policy-wrapper .info-box {
+    background: #eef4ff;
+    margin-top: 25px;
+}
+
+/* Links */
+a {
+    color: #092a49;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
+    .policy-wrapper {
+        padding: 20px;
+        margin: 20px 15px;
+    }
+    .policy-wrapper h1 {
+        font-size: 24px;
+    }
+    .policy-wrapper h2 {
+        font-size: 18px;
+    }
+    .policy-wrapper p,
+    .policy-wrapper li {
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,553 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Join Our Team | Job Application</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/modern_ui.css' %}">
+    
+    <style>
+        :root {
+            --primary-navy: #092a49;
+            --accent-gold: #fbcc27;
+            --white: #ffffff;
+            --step-inactive: #e2e8f0;
+        }
+
+        body {
+            background: #f0f4f8 !important;
+            font-family: 'Lato', sans-serif;
+        }
+
+        /* Clearance for Sticky Header */
+        .apply-offset {
+            padding-top: 160px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+        }
+
+        .application-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 40px;
+            box-shadow: 0 40px 100px rgba(9, 42, 73, 0.12);
+            padding: 60px;
+            max-width: 950px;
+            margin: 0 auto;
+            position: relative;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header-section img {
+            width: 110px;
+            margin-bottom: 25px;
+        }
+
+        .header-section h1 {
+            font-size: 36px;
+            color: var(--primary-navy);
+            font-family: 'Oswald', sans-serif !important;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        /* Progress Tracker */
+        .progress-tracker {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 60px;
+            position: relative;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .progress-tracker::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--step-inactive);
+            z-index: 0;
+        }
+
+        .step-item {
+            width: 45px;
+            height: 45px;
+            background: var(--white);
+            border: 4px solid var(--step-inactive);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #94a3b8;
+            position: relative;
+            z-index: 1;
+            transition: all 0.4s ease;
+            font-size: 14px;
+        }
+
+        .step-item.active {
+            border-color: var(--accent-gold);
+            color: var(--primary-navy);
+            background: var(--accent-gold);
+            transform: scale(1.1);
+        }
+
+        .step-item.completed {
+            border-color: var(--primary-navy);
+            background: var(--primary-navy);
+            color: var(--white);
+        }
+
+        /* Form Steps */
+        .form-step {
+            display: none;
+            animation: fadeIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            color: var(--primary-navy);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-gold);
+            display: inline-block;
+        }
+
+        .modern-label {
+            display: block;
+            font-weight: 700;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modern-input {
+            width: 100%;
+            padding: 15px 18px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            color: var(--primary-navy);
+            margin-bottom: 20px;
+        }
+
+        .modern-input:focus {
+            border-color: var(--primary-navy);
+            background: #fff;
+            outline: none;
+            box-shadow: 0 10px 20px rgba(9, 42, 73, 0.05);
+        }
+
+        textarea.modern-input {
+            height: 100px;
+        }
+
+        /* Buttons */
+        .btn-group-custom {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .action-btn {
+            padding: 18px 35px;
+            border-radius: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            flex: 1;
+        }
+
+        .btn-next {
+            background: var(--primary-navy);
+            color: var(--white);
+        }
+
+        .btn-next:hover {
+            background: #0d3b6c;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(9, 42, 73, 0.2);
+        }
+
+        .btn-prev {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-submit {
+            background: var(--accent-gold);
+            color: var(--primary-navy);
+        }
+
+        /* File Upload */
+        .file-upload-box {
+            border: 2px dashed #cbd5e1;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            background: #f8fafc;
+            position: relative;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-box:hover {
+            border-color: var(--accent-gold);
+            background: #fff;
+        }
+
+        .file-upload-box input {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-box i {
+            font-size: 28px;
+            color: var(--primary-navy);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .apply-offset { padding-top: 120px; }
+            .application-card { padding: 40px 20px; border-radius: 25px; }
+            .progress-tracker { margin-bottom: 40px; }
+            .step-item { width: 35px; height: 35px; font-size: 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include "header.html" %}
+
+    <div class="apply-offset mesh-gradient">
+        <div class="container">
+            <div class="application-card reveal">
+                
+                <div class="header-section">
+                    <img src="{% static 'images/logo1.png' %}" alt="logo">
+                    <h1>Join Our Ecosystem</h1>
+                    <p style="color: #64748b; font-weight: 600;">Fill out the form below to start your professional journey with YGR.</p>
+                </div>
+
+                <!-- Progress Tracker -->
+                <div class="progress-tracker" id="tracker">
+                    <div class="step-item active" data-step="0">1</div>
+                    <div class="step-item" data-step="1">2</div>
+                    <div class="step-item" data-step="2">3</div>
+                    <div class="step-item" data-step="3">4</div>
+                    <div class="step-item" data-step="4">5</div>
+                    <div class="step-item" data-step="5">6</div>
+                </div>
+
+                <form id="jobForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if error %}
+                    <div class="alert alert-danger mb-4" style="border-radius: 15px; font-weight: 600;">
+                        <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+                    </div>
+                    {% endif %}
+
+                    <!-- STEP 1: PERSONAL -->
+                    <div class="form-step active">
+                        <div class="section-title">Personal Details</div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">First Name *</label>
+                                <input type="text" name="first_name" class="modern-input" placeholder="e.g. John" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Last Name *</label>
+                                <input type="text" name="last_name" class="modern-input" placeholder="e.g. Doe" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">Date of Birth *</label>
+                                <input type="date" name="dob" class="modern-input" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Gender *</label>
+                                <select name="gender" class="modern-input" required>
+                                    <option value="">Select</option>
+                                    <option>Male</option>
+                                    <option>Female</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">Phone *</label>
+                                <input type="tel" name="phone" class="modern-input" pattern="[0-9]{10}" maxlength="10" placeholder="10 Digit Number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Email *</label>
+                                <input type="email" name="email" class="modern-input" placeholder="john@email.com" required>
+                            </div>
+                        </div>
+                        <label class="modern-label">Current Address *</label>
+                        <textarea name="current_address" class="modern-input" required></textarea>
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-next">Save & Continue <i class="fas fa-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: JOB -->
+                    <div class="form-step">
+                        <div class="section-title">Job Information</div>
+                        <label class="modern-label">Job Role Applying For *</label>
+                        <input type="text" name="job_role" class="modern-input" value="{{ job.title }}" readonly>
+                        
+                        <label class="modern-label">Department *</label>
+                        <input type="text" name="department" class="modern-input" placeholder="e.g. Software Engineering" required>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">Employment Type *</label>
+                                <select name="employment_type" class="modern-input" required>
+                                    <option>Full Time</option>
+                                    <option>Part Time</option>
+                                    <option>Internship</option>
+                                    <option>Contract</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Preferred Work Mode *</label>
+                                <select name="preferred_work_mode" class="modern-input" required>
+                                    <option>Work From Office</option>
+                                    <option>Work From Home</option>
+                                    <option>Hybrid</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-prev"><i class="fas fa-arrow-left me-2"></i> Back</button>
+                            <button type="button" class="action-btn btn-next">Continue <i class="fas fa-arrow-right ms-2"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: EDUCATION -->
+                    <div class="form-step">
+                        <div class="section-title">Academic History</div>
+                        <label class="modern-label">Highest Qualification *</label>
+                        <select name="highest_qualification" class="modern-input" required>
+                            <option value="">Select Qualification</option>
+                            <option>Graduate</option>
+                            <option>Post Graduate</option>
+                            <option>PhD</option>
+                        </select>
+
+                        <label class="modern-label">College / University *</label>
+                        <input type="text" name="college_university" class="modern-input" required>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">Passout Year *</label>
+                                <input type="number" name="passout_year" class="modern-input" min="1950" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Course / Stream *</label>
+                                <input type="text" name="course" class="modern-input" required>
+                            </div>
+                        </div>
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-prev">Back</button>
+                            <button type="button" class="action-btn btn-next">Continue</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: SKILLS -->
+                    <div class="form-step">
+                        <div class="section-title">Technical Expertise</div>
+                        <label class="modern-label">Primary Skills *</label>
+                        <input type="text" name="primary_skills" class="modern-input" placeholder="e.g. Python, React" required>
+
+                        <label class="modern-label">Technical Skills Description *</label>
+                        <textarea name="technical_skills" class="modern-input" placeholder="Describe your proficiency..." required></textarea>
+
+                        <label class="modern-label">Certifications</label>
+                        <input type="text" name="certifications" class="modern-input">
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-prev">Back</button>
+                            <button type="button" class="action-btn btn-next">Continue</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 5: EXPERIENCE -->
+                    <div class="form-step">
+                        <div class="section-title">Experience Summary</div>
+                        <label class="modern-label">Candidate Type *</label>
+                        <select name="candidate_type" id="candidate_type" class="modern-input" required>
+                            <option value="">Select Type</option>
+                            <option>Fresher</option>
+                            <option>Experienced</option>
+                        </select>
+
+                        <div id="experience_fields" style="display:none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="modern-label">Total Exp (Years)</label>
+                                    <input type="number" step="0.1" name="total_experience" class="modern-input">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="modern-label">Relevant Exp (Years)</label>
+                                    <input type="number" step="0.1" name="relevant_experience" class="modern-input">
+                                </div>
+                            </div>
+                            <label class="modern-label">Current Company</label>
+                            <input type="text" name="current_company" class="modern-input">
+                        </div>
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-prev">Back</button>
+                            <button type="button" class="action-btn btn-next">Continue</button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 6: DOCUMENTS -->
+                    <div class="form-step">
+                        <div class="section-title">Verification & Submission</div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="modern-label">Upload Resume (PDF) *</label>
+                                <div class="file-upload-box">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>Upload Resume</span>
+                                    <input type="file" name="resume" accept=".pdf" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modern-label">Profile Photo *</label>
+                                <div class="file-upload-box">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>Upload Photo</span>
+                                    <input type="file" name="profile_photo" accept="image/*" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="modern-label">PAN Number</label>
+                        <input type="text" name="pan_number" class="modern-input" maxlength="10" placeholder="ABCDE1234F">
+
+                        <label class="modern-label">LinkedIn / Portfolio URL</label>
+                        <input type="url" name="linkedin" class="modern-input" placeholder="https://linkedin.com/in/yourprofile">
+
+                        <div class="mt-4">
+                            <label class="d-flex align-items-center gap-3" style="cursor: pointer;">
+                                <input type="checkbox" required style="width: 20px; height: 20px;">
+                                <span style="font-size: 14px; font-weight: 600; color: #64748b;">I declare that the information provided is accurate.</span>
+                            </label>
+                        </div>
+
+                        <div class="btn-group-custom">
+                            <button type="button" class="action-btn btn-prev">Back</button>
+                            <button type="submit" class="action-btn btn-submit">Submit Application <i class="fas fa-paper-plane ms-2"></i></button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% include "footer.html" %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const steps = document.querySelectorAll(".form-step");
+        const nextBtns = document.querySelectorAll(".btn-next");
+        const prevBtns = document.querySelectorAll(".btn-prev");
+        const stepItems = document.querySelectorAll(".step-item");
+        
+        let current = 0;
+
+        nextBtns.forEach(btn => {
+            btn.onclick = () => {
+                const inputs = steps[current].querySelectorAll("input,select,textarea");
+                for(let i of inputs){
+                    if(!i.checkValidity()){
+                        i.reportValidity();
+                        return;
+                    }
+                }
+                current++;
+                update();
+                window.scrollTo({ top: 100, behavior: 'smooth' });
+            };
+        });
+
+        prevBtns.forEach(btn => {
+            btn.onclick = () => {
+                current--;
+                update();
+                window.scrollTo({ top: 100, behavior: 'smooth' });
+            };
+        });
+
+        function update(){
+            steps.forEach((s,i) => s.classList.toggle("active", i === current));
+            stepItems.forEach((item, i) => {
+                item.classList.toggle("active", i === current);
+                item.classList.toggle("completed", i < current);
+            });
+        }
+
+        document.getElementById("candidate_type").addEventListener("change", function(){
+            const exp = document.getElementById("experience_fields");
+            exp.style.display = this.value === "Experienced" ? "block" : "none";
+        });
+
+        // Reveal Logic
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('active');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>
