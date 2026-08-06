@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from .forms import BlogForm, ProjectForm
  
@@ -12,10 +13,18 @@ from django.contrib import messages
 from functools import wraps
 from django.shortcuts import redirect
 
+from django.http import HttpResponse, JsonResponse
+import json as _json
+
 def admin_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.session.get("admin_id"):
+            # Check if this is an API/JSON request from the CMS
+            if (request.headers.get('Accept', '').startswith('application/json') or
+                request.headers.get('Content-Type', '').startswith('application/json') or
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest'):
+                return JsonResponse({'success': False, 'error': 'Admin authentication required'}, status=403)
             return redirect("admin_login")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -30,49 +39,84 @@ from django.contrib import messages
  
 # admin login 
 from django.contrib import messages
+@csrf_exempt
 def admin_login(request):
     if request.method == "POST":
-        email = request.POST.get("email")
-        password = request.POST.get("password")
+        # Support both JSON (from CMS) and form POST (legacy HTML form)
+        content_type = request.content_type or ''
+        if 'application/json' in content_type:
+            try:
+                body = _json.loads(request.body)
+                email = (body.get("email") or body.get("username") or "").strip()
+                username_input = (body.get("username") or body.get("email") or "").strip()
+                password = body.get("password", "")
+            except Exception:
+                return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+            is_json_request = True
+        else:
+            email = (request.POST.get("email") or request.POST.get("username") or "").strip()
+            username_input = (request.POST.get("username") or request.POST.get("email") or "").strip()
+            password = request.POST.get("password", "")
+            is_json_request = False
 
-        # 1. Try Django Superuser authentication (email field could be username)
         from django.contrib.auth import authenticate, login
         from django.contrib.auth import get_user_model
+        from django.db.models import Q
+
+        user = None
+        # 1. Try direct authenticate with provided input as username
+        user = authenticate(request, username=username_input, password=password)
+        if not user and email:
+            user = authenticate(request, username=email, password=password)
         
-        user = authenticate(request, username=email, password=password)
         if not user:
-            # Maybe they used email instead of username
+            # Try lookup by email or username in User model
             User = get_user_model()
-            try:
-                user_obj = User.objects.get(email=email)
+            user_obj = User.objects.filter(Q(email__iexact=email) | Q(username__iexact=username_input) | Q(username__iexact=email)).first()
+            if user_obj:
                 user = authenticate(request, username=user_obj.username, password=password)
-            except (User.DoesNotExist, User.MultipleObjectsReturned):
-                pass
-                
-        if user and user.is_superuser:
+
+        if user and (user.is_superuser or user.is_staff or user.is_active):
             login(request, user)
             request.session["admin_id"] = f"superuser_{user.id}"
+            if is_json_request:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Login successful',
+                    'user': {'name': user.get_full_name() or user.username, 'email': user.email or email}
+                })
             return redirect("admin_base")
 
         # 2. Fallback to AdminAccount authentication
-        try:
-            admin = AdminAccount.objects.get(email=email)
-            if admin.check_password(password):
-                request.session["admin_id"] = admin.id
-                return redirect("admin_base")
-        except AdminAccount.DoesNotExist:
-            pass
+        admin_account = AdminAccount.objects.filter(
+            Q(email__iexact=email) | Q(email__iexact=username_input) | Q(name__iexact=username_input)
+        ).first()
 
+        if admin_account and admin_account.check_password(password):
+            request.session["admin_id"] = admin_account.id
+            if is_json_request:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Login successful',
+                    'user': {'name': admin_account.name or 'CMS Admin', 'email': admin_account.email}
+                })
+            return redirect("admin_base")
+
+        if is_json_request:
+            return JsonResponse({'success': False, 'error': 'Invalid email/username or password.'}, status=401)
         messages.error(request, "Invalid email or password")
         return redirect("admin_login")
 
     return render(request, "admin_login.html")
 
 @never_cache
-@admin_required
 def admin_logout(request):
     request.session.flush()
+    content_type = request.content_type or ''
+    if 'application/json' in content_type or request.headers.get('Accept', '').startswith('application/json'):
+        return JsonResponse({'success': True})
     return redirect("admin_login")
+
 
 
 # ================= BASIC PAGES =================
@@ -154,15 +198,18 @@ def carousel_dashboard(request):
     })
 
 
+@csrf_exempt
 @admin_required
 def carousel_create(request):
     admin = get_admin_from_session(request)
     if request.method == "POST":
-        AddCarouselImages.objects.create(
+        obj = AddCarouselImages.objects.create(
             carouseltitle=request.POST.get("carouseltitle"),
             carouselDesc=request.POST.get("carouselDesc"),
             carouselImage=request.FILES.get("carouselImage")
         )
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': obj.id, 'message': 'Carousel item created'})
         return redirect("carousel_dashboard")
 
     return render(request, "carousel_form.html", {
@@ -171,6 +218,7 @@ def carousel_create(request):
     })
 
 
+@csrf_exempt
 @admin_required
 def carousel_edit(request, id):
     admin = get_admin_from_session(request)
@@ -179,11 +227,11 @@ def carousel_edit(request, id):
     if request.method == "POST":
         carousel.carouseltitle = request.POST.get("carouseltitle")
         carousel.carouselDesc = request.POST.get("carouselDesc")
-
         if request.FILES.get("carouselImage"):
             carousel.carouselImage = request.FILES.get("carouselImage")
-
         carousel.save()
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': carousel.id, 'message': 'Carousel item updated'})
         return redirect("carousel_dashboard")
 
     return render(request, "carousel_form.html", {
@@ -193,12 +241,15 @@ def carousel_edit(request, id):
     })
 
 
+@csrf_exempt
 @admin_required
 @require_POST
 def carousel_delete(request, id):
     admin = get_admin_from_session(request)
     carousel = get_object_or_404(AddCarouselImages, id=id)
     carousel.delete()
+    if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Deleted'})
     return redirect("carousel_dashboard")
 
 
@@ -284,29 +335,35 @@ def team_dashboard(request):
     })
 
 
+@csrf_exempt
 @admin_required
 def team_create(request):
     admin = get_admin_from_session(request)
     if request.method == 'POST':
-        TeamMember.objects.create(
-            name=request.POST['name'],
-            role=request.POST['role'],
-            image=request.FILES['image']
+        obj = TeamMember.objects.create(
+            name=request.POST.get('name', ''),
+            role=request.POST.get('role', ''),
+            image=request.FILES.get('image')
         )
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': obj.id, 'message': 'Team member created'})
         return redirect('team_dashboard')
     return render(request, 'team_form.html', {'admin': admin})
 
 
+@csrf_exempt
 @admin_required
 def team_edit(request, id):
     admin = get_admin_from_session(request)
     member = get_object_or_404(TeamMember, id=id)
     if request.method == 'POST':
-        member.name = request.POST['name']
-        member.role = request.POST['role']
+        member.name = request.POST.get('name', member.name)
+        member.role = request.POST.get('role', member.role)
         if 'image' in request.FILES:
             member.image = request.FILES['image']
         member.save()
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': member.id, 'message': 'Team member updated'})
         return redirect('team_dashboard')
     return render(request, 'team_form.html', {
         'member': member,
@@ -314,11 +371,14 @@ def team_edit(request, id):
     })
 
 
+@csrf_exempt
 @admin_required
 def team_delete(request, id):
     admin = get_admin_from_session(request)
     member = get_object_or_404(TeamMember, id=id)
     member.delete()
+    if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Team member deleted'})
     return redirect('team_dashboard')
 
 
@@ -373,14 +433,20 @@ def admin_project_list(request):
         'admin': admin,
     })
 
+@csrf_exempt
 @admin_required
 def project_add(request):
     admin = get_admin_from_session(request)
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            obj = form.save()
+            if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'id': obj.id, 'message': 'Portfolio item created'})
             return redirect('admin_project_list')
+        else:
+            if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': str(form.errors)}, status=400)
     else:
         form = ProjectForm()
     return render(request, 'project_form.html', {
@@ -388,6 +454,7 @@ def project_add(request):
         'admin': admin,
     })
 
+@csrf_exempt
 @admin_required
 def project_edit(request, id):
     admin = get_admin_from_session(request)
@@ -395,8 +462,13 @@ def project_edit(request, id):
     if request.method == 'POST':
         form = ProjectForm(request.POST, request.FILES, instance=project)
         if form.is_valid():
-            form.save()
+            obj = form.save()
+            if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'id': obj.id, 'message': 'Portfolio item updated'})
             return redirect('admin_project_list')
+        else:
+            if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': str(form.errors)}, status=400)
     else:
         form = ProjectForm(instance=project)
     return render(request, 'project_form.html', {
@@ -404,12 +476,15 @@ def project_edit(request, id):
         'admin': admin,
     })
 
+@csrf_exempt
 @admin_required
 def project_delete(request, id):
     admin = get_admin_from_session(request)
     project = get_object_or_404(Project, id=id)
     if request.method == 'POST':
         project.delete()
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Portfolio item deleted'})
         return redirect('admin_project_list')
     return render(request, 'project_confirm_delete.html', {
         'project': project,
@@ -1144,35 +1219,40 @@ def admin_testimonial_list(request):
     })
 
 
+@csrf_exempt
 @admin_required
 def testimonial_create(request):
     admin = get_admin_from_session(request)
     if request.method == "POST":
-        Testimonial.objects.create(
-            client_name=request.POST["client_name"],
-            company_name=request.POST["company_name"],
-            country=request.POST["country"],
-            message=request.POST["message"],
-            is_active=request.POST.get("is_active") == "on",
+        obj = Testimonial.objects.create(
+            client_name=request.POST.get("client_name", ""),
+            company_name=request.POST.get("company_name", ""),
+            country=request.POST.get("country", ""),
+            message=request.POST.get("message", ""),
+            is_active=request.POST.get("is_active") in ["on", "true", "True", "1"],
         )
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': obj.id, 'message': 'Testimonial created'})
         return redirect("admin_testimonial_list")
 
     return render(request, "testimonial_form.html", {"admin": admin})
 
 
+@csrf_exempt
 @admin_required
 def testimonial_update(request, pk):
     admin = get_admin_from_session(request)
     testimonial = get_object_or_404(Testimonial, pk=pk)
 
     if request.method == "POST":
-        testimonial.client_name = request.POST["client_name"]
-        testimonial.company_name = request.POST["company_name"]
-        testimonial.country = request.POST["country"]
-        testimonial.message = request.POST["message"]
-        testimonial.is_active = request.POST.get("is_active") == "on"
+        testimonial.client_name = request.POST.get("client_name", testimonial.client_name)
+        testimonial.company_name = request.POST.get("company_name", testimonial.company_name)
+        testimonial.country = request.POST.get("country", testimonial.country)
+        testimonial.message = request.POST.get("message", testimonial.message)
+        testimonial.is_active = request.POST.get("is_active") in ["on", "true", "True", "1"]
         testimonial.save()
-
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': testimonial.id, 'message': 'Testimonial updated'})
         return redirect("admin_testimonial_list")
 
     return render(request, "testimonial_form.html", {
@@ -1181,6 +1261,7 @@ def testimonial_update(request, pk):
     })
 
 
+@csrf_exempt
 @admin_required
 def testimonial_delete(request, pk):
     admin = get_admin_from_session(request)
@@ -1188,6 +1269,8 @@ def testimonial_delete(request, pk):
 
     if request.method == "POST":
         testimonial.delete()
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Testimonial deleted'})
         return redirect("admin_testimonial_list")
 
     return render(request, "testimonial_confirm_delete.html", {
@@ -1243,22 +1326,24 @@ def admin_vacancies(request):
 # =======================
 # ADD VACANCY
 # =======================
+@csrf_exempt
 @admin_required
 def add_vacancy(request):
     admin = get_admin_from_session(request)
 
     if request.method == "POST":
-        JobVacancy.objects.create(
+        obj = JobVacancy.objects.create(
             title=request.POST.get("title"),
             location=request.POST.get("location"),
             role=request.POST.get("role"),
             package=request.POST.get("package"),
             description=request.POST.get("description"),
             requirements=request.POST.get("requirements"),
-            vacancies=request.POST.get("vacancies"),   # Fixed
+            vacancies=request.POST.get("vacancies"),
             is_active=True,
         )
-
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': obj.id, 'message': 'Vacancy created'})
         return redirect("admin_vacancies")
 
     return render(request, "exampages/admin_add_vacancy.html", {
@@ -1269,25 +1354,24 @@ def add_vacancy(request):
 # =======================
 # EDIT VACANCY
 # =======================
+@csrf_exempt
 @admin_required
 def edit_vacancy(request, id):
     admin = get_admin_from_session(request)
     job = get_object_or_404(JobVacancy, id=id)
 
     if request.method == "POST":
-        job.title = request.POST.get("title")
-        job.location = request.POST.get("location")
-        job.role = request.POST.get("role")
-        job.package = request.POST.get("package")
-        job.description = request.POST.get("description")
-        job.requirements = request.POST.get("requirements")
-        job.vacancies = request.POST.get("vacancies")
-
-        # Optional: update active status
-        job.is_active = request.POST.get("is_active") == "on"
-
+        job.title = request.POST.get("title", job.title)
+        job.location = request.POST.get("location", job.location)
+        job.role = request.POST.get("role", job.role)
+        job.package = request.POST.get("package", job.package)
+        job.description = request.POST.get("description", job.description)
+        job.requirements = request.POST.get("requirements", job.requirements)
+        job.vacancies = request.POST.get("vacancies", job.vacancies)
+        job.is_active = request.POST.get("is_active") in ["on", "true", "True", "1"]
         job.save()
-
+        if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'id': job.id, 'message': 'Vacancy updated'})
         return redirect("admin_vacancies")
 
     return render(request, "exampages/admin_add_vacancy.html", {
@@ -1300,11 +1384,13 @@ def edit_vacancy(request, id):
 # =======================
 # DELETE VACANCY
 # =======================
+@csrf_exempt
 @admin_required
 def delete_vacancy(request, id):
     job = get_object_or_404(JobVacancy, id=id)
     job.delete()
-
+    if request.headers.get('Accept', '').startswith('application/json') or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': 'Vacancy deleted'})
     return redirect("admin_vacancies")
 
 # vacancies 
@@ -2064,3 +2150,305 @@ def client_form(request):
 def client_list(request):
     clients = Client.objects.all()
     return render(request, 'home/client_list.html', {'clients': clients})
+
+
+# ==============================================================================
+# BLOG MODULE - ADMIN & PUBLIC API HANDLERS
+# ==============================================================================
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.text import slugify
+from .models import Blog, BlogCategory, BlogAuthor, BlogTag
+
+def blog_list(request):
+    """Fallback render view if accessed via legacy url"""
+    blogs = Blog.objects.filter(is_published=True).order_by('-created_at')
+    return render(request, 'blog_list.html', {'blogs': blogs})
+
+def admin_blog_list(request):
+    """Fallback render view if accessed via legacy admin url"""
+    blogs = Blog.objects.all().order_by('-created_at')
+    return render(request, 'admin_blog_list.html', {'blogs': blogs})
+
+def add_blog(request):
+    return render(request, 'add_blog.html')
+
+def edit_blog(request, blog_id):
+    blog = get_object_or_404(Blog, id=blog_id)
+    return render(request, 'edit_blog.html', {'blog': blog})
+
+def delete_blog(request, blog_id):
+    blog = get_object_or_404(Blog, id=blog_id)
+    blog.delete()
+    return redirect('admin_blog_list')
+
+
+@csrf_exempt
+def admin_api_blogs_list(request):
+    """GET /api/admin/blogs/ -> Returns all blogs for Admin CMS"""
+    blogs = Blog.objects.select_related('category', 'author').prefetch_related('tags').all().order_by('-created_at')
+    data = []
+    for b in blogs:
+        image_uri = ''
+        if b.image:
+            try:
+                image_uri = request.build_absolute_uri(b.image.url)
+            except Exception:
+                image_uri = b.image.url
+        elif b.image_url:
+            image_uri = b.image_url
+
+        data.append({
+            'id': b.id,
+            'title': b.title,
+            'slug': b.slug or slugify(b.title),
+            'short_description': b.short_description,
+            'content': b.content,
+            'image': image_uri,
+
+            'category_id': b.category.id if b.category else None,
+            'category_name': b.category.name if b.category else '',
+            'author_id': b.author.id if b.author else None,
+            'author_name': b.author.name if b.author else b.author_name,
+            'author_role': b.author.role if b.author else b.author_role,
+            'tags': [t.name for t in b.tags.all()],
+            'reading_time': b.reading_time,
+            'is_featured': b.is_featured,
+            'is_trending': b.is_trending,
+            'is_published': b.is_published,
+            'views_count': b.views_count,
+            'meta_title': b.meta_title,
+            'meta_description': b.meta_description,
+            'youtube_url': b.youtube_url or '',
+            'pdf_url': b.pdf_url or '',
+            'created_at': b.created_at.strftime('%Y-%m-%d %H:%M'),
+        })
+    return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def admin_api_blog_create(request):
+    """POST /api/admin/blogs/create/"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+    try:
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            payload = request.POST
+            cover_file = request.FILES.get('image')
+        else:
+            payload = json.loads(request.body.decode('utf-8'))
+            cover_file = None
+
+        title = payload.get('title', '').strip()
+        if not title:
+            return JsonResponse({'error': 'Title is required'}, status=400)
+
+        slug = payload.get('slug', '').strip() or slugify(title)
+        base_slug = slug
+        counter = 1
+        while Blog.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        category_id = payload.get('category_id')
+        category = BlogCategory.objects.filter(id=category_id).first() if category_id else None
+        
+        if not category and payload.get('category_name'):
+            category, _ = BlogCategory.objects.get_or_create(
+                name=payload.get('category_name').strip(),
+                defaults={'slug': slugify(payload.get('category_name').strip())}
+            )
+
+        author_id = payload.get('author_id')
+        author = BlogAuthor.objects.filter(id=author_id).first() if author_id else None
+
+        blog = Blog.objects.create(
+            title=title,
+            slug=slug,
+            short_description=payload.get('short_description', ''),
+            content=payload.get('content', ''),
+            category=category,
+            author=author,
+            author_name=payload.get('author_name', 'YGR Tech Team'),
+            author_role=payload.get('author_role', 'Engineering Team'),
+            reading_time=payload.get('reading_time', '5 min read'),
+            is_featured=str(payload.get('is_featured', 'false')).lower() in ['true', '1'],
+            is_trending=str(payload.get('is_trending', 'false')).lower() in ['true', '1'],
+            is_published=str(payload.get('is_published', 'true')).lower() in ['true', '1'],
+            meta_title=payload.get('meta_title', title),
+            meta_description=payload.get('meta_description', payload.get('short_description', '')),
+            youtube_url=payload.get('youtube_url', ''),
+            pdf_url=payload.get('pdf_url', ''),
+            image_url=payload.get('image_url', ''),
+            attachments_json=payload.get('attachments_json', '[]')
+        )
+
+        if cover_file:
+            blog.image = cover_file
+            blog.save()
+
+        tags_raw = payload.get('tags', '')
+        if isinstance(tags_raw, str):
+            tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
+        elif isinstance(tags_raw, list):
+            tag_names = tags_raw
+        else:
+            tag_names = []
+
+        for tag_name in tag_names:
+            tag_obj, _ = BlogTag.objects.get_or_create(name=tag_name, defaults={'slug': slugify(tag_name)})
+            blog.tags.add(tag_obj)
+
+        return JsonResponse({'message': 'Blog created successfully', 'id': blog.id, 'slug': blog.slug}, status=201)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@csrf_exempt
+def admin_api_blog_update(request, blog_id):
+    """PUT/POST /api/admin/blogs/<blog_id>/update/"""
+    blog = get_object_or_404(Blog, id=blog_id)
+    try:
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            payload = request.POST
+            cover_file = request.FILES.get('image')
+        else:
+            payload = json.loads(request.body.decode('utf-8'))
+            cover_file = None
+
+        if 'title' in payload:
+            blog.title = payload.get('title').strip()
+        if 'slug' in payload and payload.get('slug').strip():
+            blog.slug = slugify(payload.get('slug').strip())
+        if 'short_description' in payload:
+            blog.short_description = payload.get('short_description')
+        if 'content' in payload:
+            blog.content = payload.get('content')
+        
+        if 'category_id' in payload and payload.get('category_id'):
+            blog.category = BlogCategory.objects.filter(id=payload.get('category_id')).first()
+        elif 'category_name' in payload and payload.get('category_name'):
+            c, _ = BlogCategory.objects.get_or_create(
+                name=payload.get('category_name').strip(),
+                defaults={'slug': slugify(payload.get('category_name').strip())}
+            )
+            blog.category = c
+
+        if 'author_id' in payload and payload.get('author_id'):
+            blog.author = BlogAuthor.objects.filter(id=payload.get('author_id')).first()
+        if 'author_name' in payload:
+            blog.author_name = payload.get('author_name')
+        if 'author_role' in payload:
+            blog.author_role = payload.get('author_role')
+        if 'reading_time' in payload:
+            blog.reading_time = payload.get('reading_time')
+        
+        if 'is_featured' in payload:
+            blog.is_featured = str(payload.get('is_featured')).lower() in ['true', '1']
+        if 'is_trending' in payload:
+            blog.is_trending = str(payload.get('is_trending')).lower() in ['true', '1']
+        if 'is_published' in payload:
+            blog.is_published = str(payload.get('is_published')).lower() in ['true', '1']
+        
+        if 'meta_title' in payload:
+            blog.meta_title = payload.get('meta_title')
+        if 'meta_description' in payload:
+            blog.meta_description = payload.get('meta_description')
+        if 'youtube_url' in payload:
+            blog.youtube_url = payload.get('youtube_url')
+        if 'pdf_url' in payload:
+            blog.pdf_url = payload.get('pdf_url')
+        if 'image_url' in payload:
+            blog.image_url = payload.get('image_url')
+        if 'attachments_json' in payload:
+            blog.attachments_json = payload.get('attachments_json')
+
+        if cover_file:
+            blog.image = cover_file
+
+        blog.save()
+
+        if 'tags' in payload:
+            blog.tags.clear()
+            tags_raw = payload.get('tags')
+            if isinstance(tags_raw, str):
+                tag_names = [t.strip() for t in tags_raw.split(',') if t.strip()]
+            elif isinstance(tags_raw, list):
+                tag_names = tags_raw
+            else:
+                tag_names = []
+            for tag_name in tag_names:
+                tag_obj, _ = BlogTag.objects.get_or_create(name=tag_name, defaults={'slug': slugify(tag_name)})
+                blog.tags.add(tag_obj)
+
+        return JsonResponse({'message': 'Blog updated successfully', 'id': blog.id})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@csrf_exempt
+def admin_api_blog_delete(request, blog_id):
+    """DELETE/POST /api/admin/blogs/<blog_id>/delete/"""
+    blog = get_object_or_404(Blog, id=blog_id)
+    blog.delete()
+    return JsonResponse({'message': 'Blog deleted successfully'})
+
+
+@csrf_exempt
+def admin_api_blog_toggle_visibility(request, blog_id):
+    """POST /api/admin/blogs/<blog_id>/toggle-visibility/"""
+    blog = get_object_or_404(Blog, id=blog_id)
+    blog.is_published = not blog.is_published
+    blog.save()
+    return JsonResponse({'message': 'Visibility updated', 'is_published': blog.is_published})
+
+
+@csrf_exempt
+def admin_api_blog_toggle_featured(request, blog_id):
+    """POST /api/admin/blogs/<blog_id>/toggle-featured/"""
+    blog = get_object_or_404(Blog, id=blog_id)
+    blog.is_featured = not blog.is_featured
+    blog.save()
+    return JsonResponse({'message': 'Featured status updated', 'is_featured': blog.is_featured})
+
+
+@csrf_exempt
+def admin_api_categories(request):
+    """GET/POST /api/admin/blog/categories/"""
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+            name = payload.get('name', '').strip()
+            if not name:
+                return JsonResponse({'error': 'Name is required'}, status=400)
+            slug = payload.get('slug', '').strip() or slugify(name)
+            icon = payload.get('icon', 'fa-layer-group')
+            desc = payload.get('description', '')
+            cat, created = BlogCategory.objects.get_or_create(name=name, defaults={'slug': slug, 'icon': icon, 'description': desc})
+            return JsonResponse({'id': cat.id, 'name': cat.name, 'slug': cat.slug}, status=201 if created else 200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    
+    categories = BlogCategory.objects.all().order_by('name')
+    return JsonResponse([{'id': c.id, 'name': c.name, 'slug': c.slug, 'icon': c.icon, 'description': c.description} for c in categories], safe=False)
+
+
+@csrf_exempt
+def admin_api_authors(request):
+    """GET/POST /api/admin/blog/authors/"""
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+            name = payload.get('name', '').strip()
+            if not name:
+                return JsonResponse({'error': 'Name is required'}, status=400)
+            role = payload.get('role', 'Tech Writer')
+            bio = payload.get('bio', '')
+            author = BlogAuthor.objects.create(name=name, role=role, bio=bio)
+            return JsonResponse({'id': author.id, 'name': author.name, 'role': author.role}, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    authors = BlogAuthor.objects.all().order_by('name')
+    return JsonResponse([{'id': a.id, 'name': a.name, 'role': a.role, 'bio': a.bio} for a in authors], safe=False)

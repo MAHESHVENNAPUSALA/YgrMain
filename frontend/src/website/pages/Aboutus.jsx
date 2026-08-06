@@ -1,406 +1,1358 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useInView, useSpring, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './Aboutus.css';
 
+// Count-up animated number component for stats
+const AnimatedNumber = ({ value, suffix }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-10%' });
+
+  useEffect(() => {
+    if (!isInView) return;
+    let start = 0;
+    const end = value;
+    const duration = 2000;
+    const stepTime = Math.abs(Math.floor(duration / end));
+
+    const timer = setInterval(() => {
+      start += 1;
+      setCount(start);
+      if (start >= end) {
+        clearInterval(timer);
+      }
+    }, Math.max(stepTime, 16));
+
+    return () => clearInterval(timer);
+  }, [isInView, value]);
+
+  return (
+    <span ref={ref} className="stat-number">
+      {count}{suffix}
+    </span>
+  );
+};
+
+const ABOUT_STATS = [
+  { value: 250, suffix: '+', label: 'Projects Delivered' },
+  { value: 99, suffix: '%', label: 'Client Satisfaction' },
+  { value: 8, suffix: '+', label: 'Years of Excellence' },
+  { value: 24, suffix: '×7', label: 'Technical Support' }
+];
+
+const FLOATING_TECH_BADGES = [
+  { label: 'ISO 27001 Certified', icon: 'fa-shield-halved', position: 'top-left' },
+  { label: 'AI Intelligence Mesh', icon: 'fa-brain', position: 'top-right' },
+  { label: 'Multi-Cloud Architecture', icon: 'fa-cloud', position: 'bottom-left' },
+  { label: '99.99% SLA Uptime', icon: 'fa-server', position: 'bottom-right' }
+];
+
+const TIMELINE_MILESTONES = [
+  {
+    step: '01',
+    title: 'Idea',
+    desc: 'Conceptualizing user-centric digital transformation.',
+    icon: 'fa-lightbulb'
+  },
+  {
+    step: '02',
+    title: 'Research',
+    desc: 'Deep architecture planning & technical analysis.',
+    icon: 'fa-compass-drafting'
+  },
+  {
+    step: '03',
+    title: 'Innovation',
+    desc: 'Integrating AI, cloud, & cutting-edge frameworks.',
+    icon: 'fa-brain'
+  },
+  {
+    step: '04',
+    title: 'Engineering',
+    desc: 'Building secure, scalable, enterprise-grade software.',
+    icon: 'fa-code'
+  },
+  {
+    step: '05',
+    title: 'Growth',
+    desc: 'Accelerating business expansion & market reach.',
+    icon: 'fa-chart-line'
+  },
+  {
+    step: '06',
+    title: 'Digital Transformation',
+    desc: 'Delivering long-term digital evolution.',
+    icon: 'fa-rocket'
+  }
+];
+
+const STORY_HIGHLIGHT_CARDS = [
+  {
+    id: 'innovation',
+    title: 'Innovation First',
+    desc: 'We embrace modern technologies and creative problem-solving to engineer forward-thinking software platforms.',
+    icon: 'fa-lightbulb'
+  },
+  {
+    id: 'customer',
+    title: 'Customer-Centric',
+    desc: 'Every solution is designed around business objectives, user experience, and measurable strategic outcomes.',
+    icon: 'fa-user-check'
+  },
+  {
+    id: 'engineering',
+    title: 'Engineering Excellence',
+    desc: 'We follow enterprise-grade architecture standards, zero-trust security, and agile delivery frameworks.',
+    icon: 'fa-shield-halved'
+  }
+];
+
+const CORE_VALUE_CHIPS = [
+  'Innovation',
+  'Integrity',
+  'Collaboration',
+  'Customer Success',
+  'Quality',
+  'Continuous Learning',
+  'Transparency',
+  'Excellence'
+];
+
+const COMPANY_JOURNEY_MILESTONES = [
+  {
+    year: '2023',
+    title: 'Company Founded',
+    desc: 'Started with a vision to build reliable digital solutions.',
+    icon: 'fa-flag'
+  },
+  {
+    year: '2024',
+    title: 'Expanding Capabilities',
+    desc: 'Successfully delivered projects across multiple industries while growing our engineering expertise.',
+    icon: 'fa-chart-line'
+  },
+  {
+    year: '2025',
+    title: 'Enterprise Growth',
+    desc: 'Strengthened our development processes and expanded our portfolio with scalable enterprise applications.',
+    icon: 'fa-building'
+  },
+  {
+    year: '2026',
+    title: 'Innovation & AI',
+    desc: 'Focused on cloud-native development, AI-powered solutions, automation, and modern digital platforms.',
+    icon: 'fa-brain'
+  },
+  {
+    year: 'Future',
+    title: 'Global Digital Partner',
+    desc: 'Continuing to innovate and build secure, intelligent technology solutions for businesses worldwide.',
+    icon: 'fa-globe-americas'
+  }
+];
+
+const TEAM_MEMBERS = [
+  {
+    name: 'Vikram Reddy',
+    role: 'Senior Cloud & DevOps Architect',
+    specs: 'AWS • Kubernetes • Terraform',
+    avatarBg: '#2D4A6D',
+    initials: 'VR',
+    linkedin: 'https://linkedin.com'
+  },
+  {
+    name: 'Ananya Sharma',
+    role: 'Lead AI & Software Engineer',
+    specs: 'Python • PyTorch • React',
+    avatarBg: '#5E9133',
+    initials: 'AS',
+    linkedin: 'https://linkedin.com'
+  },
+  {
+    name: 'Karthik Verma',
+    role: 'Enterprise Solutions Architect',
+    specs: 'Microservices • Java • Node.js',
+    avatarBg: '#D36B1C',
+    initials: 'KV',
+    linkedin: 'https://linkedin.com'
+  },
+  {
+    name: 'Priya Sundaram',
+    role: 'Head of Product & UX Design',
+    specs: 'Design Systems • UI/UX • Agile',
+    avatarBg: '#0F172A',
+    initials: 'PS',
+    linkedin: 'https://linkedin.com'
+  }
+];
+
+const ENGINEERING_PRINCIPLES = [
+  {
+    title: 'Scalable Architecture',
+    desc: 'Applications designed for future business growth.',
+    icon: 'fa-layer-group'
+  },
+  {
+    title: 'Security First',
+    desc: 'Enterprise-grade security integrated into every layer.',
+    icon: 'fa-shield-halved'
+  },
+  {
+    title: 'Cloud Native',
+    desc: 'Optimized for modern cloud infrastructure.',
+    icon: 'fa-cloud'
+  },
+  {
+    title: 'Performance Focused',
+    desc: 'Fast, optimized and highly reliable systems.',
+    icon: 'fa-gauge-high'
+  },
+  {
+    title: 'Quality Assurance',
+    desc: 'Continuous testing and quality-driven delivery.',
+    icon: 'fa-square-check'
+  },
+  {
+    title: 'Continuous Improvement',
+    desc: 'Monitoring, optimization and long-term support.',
+    icon: 'fa-arrows-rotate'
+  }
+];
+
+const ARCHITECTURE_LAYERS = [
+  { step: '01', title: 'Users & Interfaces', icon: 'fa-users-gear' },
+  { step: '02', title: 'Frontend UI Mesh', icon: 'fa-desktop' },
+  { step: '03', title: 'API Gateway & WAF', icon: 'fa-network-wired' },
+  { step: '04', title: 'Microservices Cluster', icon: 'fa-cubes' },
+  { step: '05', title: 'Database & Caching', icon: 'fa-database' },
+  { step: '06', title: 'Cloud Infrastructure', icon: 'fa-cloud-meatball' },
+  { step: '07', title: 'Monitoring & Security', icon: 'fa-shield-heart' }
+];
+
+const TECH_GROUPS = [
+  {
+    title: 'Enterprise Development',
+    tag: 'Core Backend Services',
+    icon: 'fa-server',
+    iconColor: '#2D4A6D',
+    chips: ['Java', 'Spring Boot', 'Hibernate', 'Node.js', 'Python']
+  },
+  {
+    title: 'Frontend Technologies',
+    tag: 'UI & Web Experience',
+    icon: 'fa-desktop',
+    iconColor: '#5E9133',
+    chips: ['React', 'Angular', 'Next.js', 'TypeScript', 'JavaScript']
+  },
+  {
+    title: 'Cloud & DevOps',
+    tag: 'Infrastructure & CI/CD',
+    icon: 'fa-cloud',
+    iconColor: '#D36B1C',
+    chips: ['AWS', 'Microsoft Azure', 'Docker', 'Kubernetes', 'GitHub Actions', 'Jenkins']
+  },
+  {
+    title: 'Databases',
+    tag: 'Storage & Caching',
+    icon: 'fa-database',
+    iconColor: '#2D4A6D',
+    chips: ['MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase']
+  },
+  {
+    title: 'Quality & Collaboration',
+    tag: 'QA & Automation Mesh',
+    icon: 'fa-vial',
+    iconColor: '#5E9133',
+    chips: ['Git', 'Postman', 'Swagger', 'JUnit', 'Playwright', 'Selenium']
+  }
+];
+
+const CULTURE_HIGHLIGHTS = [
+  {
+    title: 'Continuous Learning',
+    desc: 'We encourage constant skill development and knowledge sharing.',
+    icon: 'fa-graduation-cap'
+  },
+  {
+    title: 'Innovation',
+    desc: 'We embrace modern technologies and creative thinking.',
+    icon: 'fa-lightbulb'
+  },
+  {
+    title: 'Collaboration',
+    desc: 'Cross-functional teamwork drives every successful project.',
+    icon: 'fa-people-group'
+  },
+  {
+    title: 'Ownership',
+    desc: 'Every team member takes responsibility for delivering quality.',
+    icon: 'fa-user-check'
+  },
+  {
+    title: 'Customer Focus',
+    desc: 'Business outcomes guide every engineering decision.',
+    icon: 'fa-bullseye'
+  },
+  {
+    title: 'Integrity',
+    desc: 'Transparency, trust, and professionalism define our work.',
+    icon: 'fa-handshake'
+  }
+];
+
+const WORKspace_NODES = [
+  { label: 'Software Developers', icon: 'fa-code', color: 'text-blue' },
+  { label: 'UI/UX Product Designers', icon: 'fa-compass-drafting', color: 'text-green' },
+  { label: 'Cloud Solutions Mesh', icon: 'fa-cloud', color: 'text-orange' },
+  { label: 'AI Intelligence Engine', icon: 'fa-brain', color: 'text-blue' },
+  { label: 'Enterprise Architecture', icon: 'fa-network-wired', color: 'text-green' },
+  { label: 'Agile Delivery Sprints', icon: 'fa-arrows-spin', color: 'text-orange' }
+];
+
+const TRUST_INDICATORS = [
+  'Free Consultation',
+  'Transparent Process',
+  'Long-Term Support',
+  'Enterprise Solutions'
+];
+
 const Aboutus = () => {
-    return (
-        <div className="corporate-about-page">
-            
-            {/* --- HERO SECTION --- */}
-            <section className="corp-hero">
-                <div className="corp-hero-bg">
-                    <div className="bg-pattern-dots"></div>
-                </div>
-                <div className="corp-container hero-flex">
-                    <div className="hero-text-side animate-fade-in-up">
-                        <div className="corp-badge">
-                            <span className="corp-badge-dot"></span>
-                            <span className="highlight-keyword">Top IT Consulting Firm in Hyderabad</span>
-                        </div>
-                        <h1 className="hero-title">
-                            Empowering Enterprise Growth Through <br/>
-                            <span className="text-primary-gradient">Digital Transformation.</span>
-                        </h1>
-                        <p className="hero-desc">
-                            YGR Gobal IT Services Pvt. Ltd. is an industry-leading <span className="highlight-keyword">software development</span> and <span className="highlight-keyword">technology consulting company</span> based in Hyderabad, India. We specialize in delivering cutting-edge, <span className="highlight-keyword">scalable software engineering</span>, <span className="highlight-keyword">cloud computing infrastructure</span>, <span className="highlight-keyword">AI/ML integrations</span>, and custom <span className="highlight-keyword">enterprise IT solutions</span> for modern businesses gobally.
-                        </p>
-                        <div className="hero-buttons">
-                            <Link to="/contact" className="corp-btn corp-btn-primary">Consult With Our Experts <i className="fas fa-arrow-right"></i></Link>
-                            <Link to="/services" className="corp-btn corp-btn-outline">Explore IT Services</Link>
-                        </div>
-                    </div>
-                    
-                    <div className="hero-visual-side animate-fade-in-left">
-                        <div className="corp-hero-image-wrapper">
-                            <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80" alt="Corporate Software Development Team Hyderabad" className="hero-main-img" />
-                            
-                            <div className="hero-floating-card top-right float-anim-1">
-                                <div className="card-icon"><i className="fas fa-certificate"></i></div>
-                                <div className="card-content">
-                                    <h4>ISO 9001</h4>
-                                    <p>Certified IT Quality</p>
-                                </div>
-                            </div>
+  const heroRef = useRef(null);
+  const storyRef = useRef(null);
+  const foundationRef = useRef(null);
+  const journeyRef = useRef(null);
+  const leadershipRef = useRef(null);
+  const engineeringRef = useRef(null);
+  const techRef = useRef(null);
+  const cultureRef = useRef(null);
+  const ctaRef = useRef(null);
 
-                            <div className="hero-floating-card bottom-left float-anim-2">
-                                <div className="card-icon"><i className="fas fa-users"></i></div>
-                                <div className="card-content">
-                                    <h4>100+</h4>
-                                    <p>Expert Full Stack Developers</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+  const isHeroInView = useInView(heroRef, { once: true, margin: '-10%' });
+  const isStoryInView = useInView(storyRef, { once: true, margin: '-10%' });
+  const isFoundationInView = useInView(foundationRef, { once: true, margin: '-10%' });
+  const isJourneyInView = useInView(journeyRef, { once: true, margin: '-10%' });
+  const isLeadershipInView = useInView(leadershipRef, { once: true, margin: '-10%' });
+  const isEngineeringInView = useInView(engineeringRef, { once: true, margin: '-10%' });
+  const isTechInView = useInView(techRef, { once: true, margin: '-10%' });
+  const isCultureInView = useInView(cultureRef, { once: true, margin: '-10%' });
+  const isCtaInView = useInView(ctaRef, { once: true, margin: '-10%' });
 
+  // Mouse Parallax Physics for Right Visual Composition
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-            {/* --- IMPACT STATS --- */}
-            <section className="corp-stats">
-                <div className="corp-container">
-                    <div className="stats-grid animate-fade-in-up delay-1">
-                        <div className="stat-card">
-                            <h3>144<span>+</span></h3>
-                            <p>Custom Software Projects Delivered</p>
-                        </div>
-                        <div className="stat-card">
-                            <h3>10<span>+</span></h3>
-                            <p>Years IT Industry Experience</p>
-                        </div>
-                        <div className="stat-card">
-                            <h3>4<span>+</span></h3>
-                            <p>Gobal Markets (USA, UK, CA, IN)</p>
-                        </div>
-                        <div className="stat-card">
-                            <h3>100<span>%</span></h3>
-                            <p>Client Satisfaction & Retention</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!heroRef.current) return;
+      const rect = heroRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width - 0.5) * 16;
+      const y = ((e.clientY - rect.top) / rect.height - 0.5) * 16;
+      setMousePos({ x, y });
+    };
 
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
-            {/* --- WHO WE ARE --- */}
-            <section className="corp-section corp-about-story bg-white">
-                <div className="corp-container story-layout">
-                    
-                    <div className="story-visual animate-fade-in-up">
-                        <div className="ygr-service-visual">
-                            {/* Top Logo */}
-                            <div className="ygr-visual-logo">
-                                <img src="/images/corporate_office.jpeg" alt="YGR Group of Companies" />
-                            </div>
-                            
-                            {/* Subtitle */}
-                            <h3 className="ygr-visual-subtitle">YOUR GROWTH RESOURCE</h3>
+  const springX = useSpring(mousePos.x, { stiffness: 45, damping: 25 });
+  const springY = useSpring(mousePos.y, { stiffness: 45, damping: 25 });
 
-                            {/* Service Grid */}
-                            <div className="ygr-visual-grid">
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-code"></i></div>
-                                    <h4>SOFTWARE<br/>DEVELOPMENT</h4>
-                                    <p>Custom solutions built for your business</p>
-                                </div>
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-globe"></i></div>
-                                    <h4>WEB<br/>DEVELOPMENT</h4>
-                                    <p>Responsive, SEO-friendly websites that grow your brand</p>
-                                </div>
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-mobile-alt"></i></div>
-                                    <h4>MOBILE APP<br/>DEVELOPMENT</h4>
-                                    <p>Intuitive mobile apps for Android & iOS</p>
-                                </div>
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-cloud"></i></div>
-                                    <h4>CLOUD<br/>SOLUTIONS</h4>
-                                    <p>Scalable and secure cloud services</p>
-                                </div>
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-chart-line"></i></div>
-                                    <h4>DIGITAL<br/>MARKETING</h4>
-                                    <p>Strategic marketing to increase visibility and reach</p>
-                                </div>
-                                <div className="ygr-v-card">
-                                    <div className="v-card-icon"><i className="fas fa-graduation-cap"></i></div>
-                                    <h4>INTERNSHIPS<br/>& TRAINING</h4>
-                                    <p>Industry-oriented training for a successful career</p>
-                                </div>
-                            </div>
-                            
-                            {/* Dark Blue Footer Banner */}
-                            <div className="ygr-visual-footer">
-                                <i className="fas fa-users"></i> Empowering Businesses. Enriching Careers. Building the Future.
-                            </div>
-                        </div>
-                    </div>
+  const card1X = useTransform(springX, (v) => v * 1.1);
+  const card1Y = useTransform(springY, (v) => v * 1.1);
+  const card2X = useTransform(springX, (v) => -v * 1.0);
+  const card2Y = useTransform(springY, (v) => -v * 1.0);
 
-                    <div className="story-content animate-fade-in-left delay-1">
-                        <h4 className="corp-eyebrow">Who We Are</h4>
-                        <h2 className="corp-section-title">DRIVING GOBAL DIGITAL TRANSFORMATION</h2>
-                        
-                        <div className="story-text-blocks">
-                            <p className="lead-p">
-                                <strong>YGR Gobal IT Services Pvt. Ltd.</strong>, is a leading Best IT company in Hyderabad providing software development, web development, mobile app development, cloud solutions, DevOps services, AWS solutions, corporate training, internships, and professional IT courses. We offer industry-focused training in <strong>Java Full Stack, Python Full Stack, MERN Stack, MEAN Stack, Data Science, Software Testing, UI/UX Design, Artificial Intelligence, and Machine Learning</strong>.
-                            </p>
-                            
-                            <p>
-                                YGR Gobal IT Services Pvt. Ltd. – Empowering Your Growth Through Technology. The name YGR stands for Your Growth Resource, reflecting our commitment to helping businesses and professionals achieve success through innovative technology solutions. We specialize in software development, AI automation, cloud services, digital transformation, and IT consulting.
-                            </p>
-                            
-                            <p>
-                                With a strong focus on quality, innovation, and customer satisfaction, we deliver reliable and scalable solutions that drive business growth. Whether you are a business seeking technology expertise or a student looking to build a successful IT career, YGR Gobal IT Services Pvt. Ltd. is your trusted technology and training partner.
-                            </p>
-                        </div>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.12, delayChildren: 0.1 }
+    }
+  };
 
-                        {/* Inline Mini Stats Row */}
-                        <div className="story-mini-stats">
-                            <div className="mini-stat-pill">
-                                <div className="m-icon blue"><i className="fas fa-users"></i></div>
-                                <div className="m-text">
-                                    <strong>1007+</strong>
-                                    <span>Students Trained</span>
-                                </div>
-                            </div>
-                            <div className="mini-stat-pill">
-                                <div className="m-icon green"><i className="fas fa-briefcase"></i></div>
-                                <div className="m-text">
-                                    <strong>41+</strong>
-                                    <span>Students Placed</span>
-                                </div>
-                            </div>
-                            <div className="mini-stat-pill">
-                                <div className="m-icon orange"><i className="fas fa-handshake"></i></div>
-                                <div className="m-text">
-                                    <strong>63+</strong>
-                                    <span>Corporate Clients</span>
-                                </div>
-                            </div>
-                            <div className="mini-stat-pill">
-                                <div className="m-icon blue"><i className="fas fa-medal"></i></div>
-                                <div className="m-text">
-                                    <strong>99%</strong>
-                                    <span>Quality Commitment</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+  const fadeUpVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } }
+  };
 
-
-            {/* --- WHAT YGR MEANS (ULTRA-PREMIUM EDITORIAL) --- */}
-            <section className="corp-section ygr-editorial-meaning bg-white">
-                <div className="corp-container">
-                    <div className="corp-section-header center animate-fade-in-up">
-                        <h4 className="corp-eyebrow">The Core of Our Identity</h4>
-                        <h2 className="corp-section-title">What YGR Stands For</h2>
-                        <p className="corp-section-subtitle">
-                            Every letter in our name reflects our purpose — to discover and deliver unique, creative solutions that empower the next generation of enterprises.
-                        </p>
-                    </div>
-
-                    <div className="editorial-cards-container">
-                        {/* Y - YOUR */}
-                        <div className="editorial-card card-y animate-fade-in-up delay-1">
-                            <div className="ec-bg-letter">Y</div>
-                            <div className="ec-content">
-                                <div className="ec-icon"><i className="fas fa-user-tie"></i></div>
-                                <h3>YOUR</h3>
-                                <p>We focus intensely on your specific business requirements, crafting bespoke digital experiences and empowering your business to stay ahead of the curve.</p>
-                            </div>
-                        </div>
-
-                        {/* G - GROWTH */}
-                        <div className="editorial-card card-g animate-fade-in-up delay-2">
-                            <div className="ec-bg-letter">G</div>
-                            <div className="ec-content">
-                                <div className="ec-icon"><i className="fas fa-chart-line"></i></div>
-                                <h3>GROWTH</h3>
-                                <p>Driving sustainable business evolution. By implementing highly scalable architectures and AI automation, we ensure impactful and measurable investments.</p>
-                            </div>
-                        </div>
-
-                        {/* R - RIGHT DIRECTION */}
-                        <div className="editorial-card card-r animate-fade-in-up delay-3">
-                            <div className="ec-bg-letter">R</div>
-                            <div className="ec-content">
-                                <div className="ec-icon"><i className="fas fa-compass"></i></div>
-                                <h3>RIGHT DIRECTION</h3>
-                                <p>We act as your technical compass. From initial strategy to final deployment, we guide your enterprise with precision to ensure long-term digital success.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            {/* --- ISO CERTIFIED EXCELLENCE --- */}
-            <section className="corp-section corp-iso-section bg-light-gray">
-                <div className="corp-container">
-                    <div className="iso-layout">
-                        
-                        {/* Left Side: Badge & Stats */}
-                        <div className="iso-visual animate-fade-in-up">
-                            <div className="iso-badge-wrapper">
-                                <img src="/images/iso1.jpeg" alt="ISO 9001:2015 Certified Company" className="iso-badge-img" />
-                            </div>
-                            
-                            <div className="iso-stats">
-                                <div className="iso-stat-item">
-                                    <h3>145+</h3>
-                                    <span>SUCCESSFUL PROJECTS</span>
-                                </div>
-                                <div className="iso-stat-item">
-                                    <h3>48+</h3>
-                                    <span>EXPERT ENGINEERS</span>
-                                </div>
-                                <div className="iso-stat-item">
-                                    <h3>4+</h3>
-                                    <span>GOBAL MARKETS</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right Side: Text Content */}
-                        <div className="iso-content animate-fade-in-up delay-1">
-                            <h4 className="corp-eyebrow text-gold">CERTIFIED EXCELLENCE</h4>
-                            <h2 className="corp-section-title">YGR GOBAL IT SERVICES<br />ISO CERTIFIED EXCELLENCE</h2>
-                            
-                            <div className="iso-text-blocks">
-                                <p>
-                                    <strong>YGR Gobal IT Services Pvt. Ltd.</strong> is committed to quality, trust, and customer. Our <strong>ISO Certification</strong> reflects our dedication to maintaining international standards in service quality, business operations, and customer excellence.
-                                </p>
-                                <p>
-                                    Recognized for delivering the <strong>best IT services in Hyderabad</strong>, we provide innovative, reliable, and customized technology solutions that help businesses achieve digital transformation and sustainable growth.
-                                </p>
-                                <p>
-                                    As a <strong>top IT company in Hyderabad</strong>, we specialize in software development, web and mobile application development, digital marketing, cloud solutions, IT consulting, UI/UX design, and enterprise software solutions. Our ISO-certified processes ensure consistent, secure, and high-quality service delivery.
-                                </p>
-                                <p>
-                                    Through continuous innovation, operational excellence, and a customer-first approach, <strong>YGR Gobal IT Services</strong> has become a trusted technology partner for organizations seeking the best IT services in Hyderabad and scalable digital solutions.
-                                </p>
-                            </div>
-                        </div>
-                        
-                    </div>
-                </div>
-            </section>
-
-
-            {/* --- MISSION & VISION --- */}
-            <section className="corp-section corp-blueprint bg-white">
-                <div className="corp-container">
-                    <div className="corp-section-header center animate-fade-in-up">
-                        <h4 className="corp-eyebrow">The Corporate Blueprint</h4>
-                        <h2 className="corp-section-title">Vision & Mission</h2>
-                    </div>
-
-                    <div className="vision-mission-grid animate-fade-in-up delay-1">
-                        <div className="vm-card">
-                            <div className="vm-card-bg vision-bg"></div>
-                            <div className="vm-content">
-                                <div className="vm-icon"><i className="fas fa-eye"></i></div>
-                                <h3>Our IT Vision</h3>
-                                <p>To be the most trusted <span className="highlight-keyword-light">gobal technology partner</span>, providing innovative, <span className="highlight-keyword-light">future-proof IT solutions</span> and software engineering that foster a culture of technical excellence and sustainable digital growth for enterprises worldwide.</p>
-                            </div>
-                        </div>
-
-                        <div className="vm-card">
-                            <div className="vm-card-bg mission-bg"></div>
-                            <div className="vm-content">
-                                <div className="vm-icon"><i className="fas fa-rocket"></i></div>
-                                <h3>Our IT Mission</h3>
-                                <p>To design and deploy <span className="highlight-keyword-light">high-quality, secure digital ecosystems</span>, while concurrently delivering <span className="highlight-keyword-light">world-class IT training</span> that empowers modern enterprises and cultivates the next generation of top-tier software developers.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            {/* --- CORPORATE VALUES --- */}
-            <section className="corp-section corp-values bg-light-gray">
-                <div className="corp-container">
-                    <div className="corp-section-header center animate-fade-in-up">
-                        <h4 className="corp-eyebrow">Our Software Engineering DNA</h4>
-                        <h2 className="corp-section-title">Core IT Values</h2>
-                    </div>
-
-                    <div className="values-grid animate-fade-in-up delay-1">
-                        <div className="value-item">
-                            <div className="v-icon-wrap"><i className="fas fa-shield-alt"></i></div>
-                            <h4>Data Security & Integrity</h4>
-                            <p>Uncompromising compliance, <span className="highlight-keyword">cyber-security</span>, and code transparency in every deployment.</p>
-                        </div>
-                        <div className="value-item">
-                            <div className="v-icon-wrap"><i className="fas fa-gem"></i></div>
-                            <h4>Software Quality</h4>
-                            <p>Delivering bug-free, optimized code and flawless <span className="highlight-keyword">UX/UI design</span> without exception.</p>
-                        </div>
-                        <div className="value-item">
-                            <div className="v-icon-wrap"><i className="fas fa-hands-helping"></i></div>
-                            <h4>Gobal Collaboration</h4>
-                            <p>Building strong, long-term B2B partnerships through dedicated offshore and <span className="highlight-keyword">onshore IT teams</span>.</p>
-                        </div>
-                        <div className="value-item">
-                            <div className="v-icon-wrap"><i className="fas fa-bolt"></i></div>
-                            <h4>Agile Development</h4>
-                            <p>Adapting swiftly to technological shifts using Scrum and <span className="highlight-keyword">Agile project management</span> methodologies.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            {/* --- THE JOURNEY --- */}
-            <section className="corp-section corp-journey bg-white">
-                <div className="corp-container">
-                    <div className="corp-section-header center animate-fade-in-up">
-                        <h4 className="corp-eyebrow">Company History</h4>
-                        <h2 className="corp-section-title">Our Evolution as an IT Hub</h2>
-                    </div>
-
-                    <div className="journey-timeline animate-fade-in-up delay-1">
-                        <div className="journey-track"></div>
-                        
-                        <div className="journey-node">
-                            <div className="j-year">2023</div>
-                            <div className="j-content">
-                                <h4>Foundation & Consultancy</h4>
-                                <p>Started as a premier overseas consultancy, laying the crucial groundwork for our gobal vision and establishing strong international relationships.</p>
-                            </div>
-                        </div>
-
-                        <div className="journey-node">
-                            <div className="j-year">2024</div>
-                            <div className="j-content">
-                                <h4>The Tech Pivot</h4>
-                                <p>Expanded aggressively into comprehensive IT services, providing <span className="highlight-keyword">web development</span>, mobile apps, and digital marketing to startups and Fortune 500 enterprises gobally.</p>
-                            </div>
-                        </div>
-
-                        <div className="journey-node">
-                            <div className="j-year">2025</div>
-                            <div className="j-content">
-                                <h4>Ecosystem Expansion & Training</h4>
-                                <p>Launched specialized <span className="highlight-keyword">IT training programs</span>, advanced tech bootcamps, and modern co-working innovation spaces in KPHB, Hyderabad to bridge the industry skill gap.</p>
-                            </div>
-                        </div>
-
-                        <div className="journey-node active">
-                            <div className="j-year">2026+</div>
-                            <div className="j-content">
-                                <h4>Gobal Future & AI Integration</h4>
-                                <p>Preparing for advanced Artificial Intelligence (<span className="highlight-keyword">AI</span>) integrations, <span className="highlight-keyword">Blockchain development</span>, and launching proprietary <span className="highlight-keyword">enterprise SaaS solutions</span>.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
+  return (
+    <div className="corporate-about-page">
+      {/* ── 1. ABOUT HERO SECTION ── */}
+      <section className="about-hero-section" ref={heroRef}>
+        <div className="about-hero-bg-canvas">
+          <div className="about-blueprint-grid"></div>
+          <div className="about-radial-glow blue-glow"></div>
+          <div className="about-radial-glow green-glow"></div>
         </div>
-    );
+
+        <div className="about-hero-container">
+          <motion.div
+            className="about-hero-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isHeroInView ? 'visible' : 'hidden'}
+          >
+            {/* Left Column */}
+            <div className="about-hero-left">
+              <motion.div className="about-eyebrow" variants={fadeUpVariant}>
+                <span className="eyebrow-dot"></span>
+                <span className="eyebrow-title">ABOUT YGR GLOBAL IT SERVICES</span>
+              </motion.div>
+
+              <motion.h1 className="about-hero-heading" variants={fadeUpVariant}>
+                Engineering Innovation. <br />
+                <span className="ygr-green-highlight">Building Long-Term Digital Partnerships.</span>
+              </motion.h1>
+
+              <motion.p className="about-hero-description" variants={fadeUpVariant}>
+                YGR Global IT Services is a technology-driven software engineering company delivering enterprise applications, cloud-native solutions, AI-powered innovation, and digital transformation services for businesses worldwide. We combine engineering excellence, modern technologies, and customer-first thinking to create secure, scalable, and future-ready digital products.
+              </motion.p>
+
+              <motion.div className="about-hero-buttons" variants={fadeUpVariant}>
+                <a href="#our-story" className="btn-about-primary">
+                  <span>Explore Our Story</span>
+                  <span className="cta-arrow-circle">
+                    <i className="fas fa-arrow-right"></i>
+                  </span>
+                </a>
+
+                <Link to="/contact" className="btn-about-secondary">
+                  <span>Contact Us</span>
+                </Link>
+              </motion.div>
+
+              <motion.div className="about-hero-stats-row" variants={fadeUpVariant}>
+                {ABOUT_STATS.map((stat) => (
+                  <div key={stat.label} className="stat-item">
+                    <AnimatedNumber value={stat.value} suffix={stat.suffix} />
+                    <span className="stat-label">{stat.label}</span>
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Right Column Visual Composition */}
+            <motion.div className="about-hero-right" variants={fadeUpVariant}>
+              <div className="about-visual-canvas">
+                <div className="about-graphic-halo"></div>
+
+                <motion.div
+                  className="about-command-panel"
+                  style={{ x: card1X, y: card1Y }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <div className="panel-header">
+                    <div className="window-dots">
+                      <span className="dot dot-red"></span>
+                      <span className="dot dot-yellow"></span>
+                      <span className="dot dot-green"></span>
+                    </div>
+                    <span className="panel-tag">YGR Global Architecture Mesh</span>
+                    <span className="status-pill">
+                      <span className="live-dot"></span> Active
+                    </span>
+                  </div>
+
+                  <div className="panel-architecture-grid">
+                    <div className="arch-card">
+                      <i className="fas fa-cloud text-blue"></i>
+                      <span>Cloud Native</span>
+                    </div>
+                    <div className="arch-card">
+                      <i className="fas fa-layer-group text-green"></i>
+                      <span>Enterprise Core</span>
+                    </div>
+                    <div className="arch-card">
+                      <i className="fas fa-brain text-orange"></i>
+                      <span>AI Intelligence</span>
+                    </div>
+                    <div className="arch-card">
+                      <i className="fas fa-shield-halved text-blue"></i>
+                      <span>Zero Trust QA</span>
+                    </div>
+                  </div>
+
+                  <div className="panel-telemetry-banner">
+                    <div className="telemetry-info">
+                      <span className="telemetry-lbl">Global Throughput</span>
+                      <span className="telemetry-val">99.99% Availability • Multi-Region</span>
+                    </div>
+                    <div className="mini-pulse-bars">
+                      <span className="p-bar b1"></span>
+                      <span className="p-bar b2"></span>
+                      <span className="p-bar b3"></span>
+                      <span className="p-bar b4"></span>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {FLOATING_TECH_BADGES.map((badge, i) => (
+                  <motion.div
+                    key={badge.label}
+                    className={`floating-about-badge badge-${badge.position}`}
+                    style={{ x: card2X, y: card2Y }}
+                    animate={{ y: [0, (i % 2 === 0 ? -6 : 6), 0] }}
+                    whileHover={{ y: -4, scale: 1.03 }}
+                    transition={{ duration: 4 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
+                  >
+                    <i className={`fas ${badge.icon} badge-icon`}></i>
+                    <span className="badge-text">{badge.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 2. OUR STORY SECTION ── */}
+      <section id="our-story" className="our-story-section" ref={storyRef}>
+        <div className="story-bg-canvas">
+          <div className="story-blueprint-grid"></div>
+          <div className="story-radial-glow blue-glow"></div>
+          <div className="story-radial-glow green-glow"></div>
+        </div>
+
+        <div className="story-container">
+          <motion.div
+            className="story-two-column-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isStoryInView ? 'visible' : 'hidden'}
+          >
+            {/* Left Side */}
+            <div className="story-left-content">
+              <motion.div className="story-eyebrow" variants={fadeUpVariant}>
+                <span className="eyebrow-dot"></span>
+                <span className="eyebrow-title">OUR STORY</span>
+              </motion.div>
+
+              <motion.h2 className="story-heading" variants={fadeUpVariant}>
+                Transforming Ideas Into <br />
+                <span className="ygr-green-highlight">Digital Excellence</span>
+              </motion.h2>
+
+              <motion.p className="story-subtitle" variants={fadeUpVariant}>
+                Driven by Innovation. Built on Trust. Focused on the Future.
+              </motion.p>
+
+              <motion.div className="story-paragraphs-block" variants={fadeUpVariant}>
+                <p>
+                  YGR Global IT Services was established with a vision to help businesses embrace digital transformation through innovative software solutions.
+                </p>
+                <p>
+                  From our early projects to enterprise-scale digital platforms, we have remained committed to engineering excellence, customer success, and continuous innovation.
+                </p>
+                <p>
+                  Our journey is defined by long-term partnerships, modern technologies, agile delivery, and measurable business outcomes rather than simply delivering software.
+                </p>
+              </motion.div>
+
+              <motion.div className="founder-quote-block" variants={fadeUpVariant}>
+                <div className="quote-mark-icon">
+                  <i className="fas fa-quote-left"></i>
+                </div>
+                <p className="quote-statement">
+                  &ldquo;Technology should empower businesses, simplify complexity, and create opportunities for sustainable growth.&rdquo;
+                </p>
+                <span className="quote-author">— Founder&apos;s Vision</span>
+              </motion.div>
+            </div>
+
+            {/* Right Side */}
+            <motion.div className="story-right-timeline" variants={fadeUpVariant}>
+              <div className="vertical-timeline-track">
+                <div className="timeline-line-background">
+                  <motion.div
+                    className="timeline-line-fill"
+                    initial={{ scaleY: 0 }}
+                    animate={isStoryInView ? { scaleY: 1 } : { scaleY: 0 }}
+                    transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                  />
+                </div>
+
+                <div className="timeline-milestones-list">
+                  {TIMELINE_MILESTONES.map((milestone) => (
+                    <div key={milestone.step} className="milestone-item">
+                      <div className="milestone-icon-node">
+                        <i className={`fas ${milestone.icon}`}></i>
+                      </div>
+                      <div className="milestone-card">
+                        <div className="milestone-header">
+                          <h4 className="milestone-title">{milestone.title}</h4>
+                          <span className="milestone-step">Step {milestone.step}</span>
+                        </div>
+                        <p className="milestone-desc">{milestone.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Bottom Highlight Cards */}
+          <motion.div
+            className="story-highlight-cards-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isStoryInView ? 'visible' : 'hidden'}
+          >
+            {STORY_HIGHLIGHT_CARDS.map((card) => (
+              <motion.div
+                key={card.id}
+                className="story-highlight-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="highlight-icon-box">
+                  <i className={`fas ${card.icon}`}></i>
+                </div>
+                <h3 className="highlight-card-title">{card.title}</h3>
+                <p className="highlight-card-desc">{card.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 3. OUR FOUNDATION SECTION ── */}
+      <section className="our-foundation-section" ref={foundationRef}>
+        <div className="foundation-bg-canvas">
+          <div className="foundation-blueprint-grid"></div>
+          <div className="foundation-radial-glow blue-glow"></div>
+          <div className="foundation-radial-glow green-glow"></div>
+        </div>
+
+        <div className="foundation-container">
+          <motion.div
+            className="foundation-header-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isFoundationInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="foundation-eyebrow">
+              <span className="eyebrow-dot"></span>
+              <span className="eyebrow-title">OUR FOUNDATION</span>
+            </div>
+
+            <h2 className="foundation-heading">
+              Driven by Purpose. <br />
+              <span className="ygr-green-highlight">Guided by Innovation.</span>
+            </h2>
+
+            <p className="foundation-description">
+              Our vision, mission, and values define every solution we build, every partnership we establish, and every innovation we pursue. These principles inspire our teams to deliver technology that creates measurable business value and long-term success.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="foundation-bento-layout"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isFoundationInView ? 'visible' : 'hidden'}
+          >
+            {/* Top Large Card: Our Vision */}
+            <motion.div
+              className="foundation-card vision-large-card"
+              variants={fadeUpVariant}
+              whileHover={{ y: -8, scale: 1.015 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="card-top-gradient-line"></div>
+              <div className="card-header-bar">
+                <div className="card-icon-box text-blue">
+                  <i className="fas fa-eye"></i>
+                </div>
+                <span className="card-tag">PURPOSE & HORIZON</span>
+              </div>
+
+              <h3 className="bento-title">Our Vision</h3>
+              <p className="bento-text large">
+                To become a globally trusted technology partner delivering innovative, scalable, and future-ready digital solutions that empower businesses to thrive in a rapidly evolving world.
+              </p>
+
+              <div className="card-abstract-visual">
+                <div className="mini-orbit-ring">
+                  <span className="orbit-dot dot-1"></span>
+                  <span className="orbit-dot dot-2"></span>
+                </div>
+                <span className="visual-badge-pill">Future-Ready Architecture</span>
+              </div>
+            </motion.div>
+
+            {/* Bottom Row Grid */}
+            <div className="foundation-bottom-grid">
+              <motion.div
+                className="foundation-card mission-medium-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.015 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="card-top-gradient-line green-gradient"></div>
+                <div className="card-header-bar">
+                  <div className="card-icon-box text-green">
+                    <i className="fas fa-bullseye"></i>
+                  </div>
+                  <span className="card-tag">MISSION & EXECUTION</span>
+                </div>
+
+                <h3 className="bento-title">Our Mission</h3>
+                <p className="bento-text">
+                  To combine engineering excellence, customer-centric thinking, and modern technologies to build secure, intelligent, and high-performing digital products that create lasting business impact.
+                </p>
+              </motion.div>
+
+              <motion.div
+                className="foundation-card values-medium-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.015 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="card-top-gradient-line orange-gradient"></div>
+                <div className="card-header-bar">
+                  <div className="card-icon-box text-orange">
+                    <i className="fas fa-gem"></i>
+                  </div>
+                  <span className="card-tag">PRINCIPLES & CULTURE</span>
+                </div>
+
+                <h3 className="bento-title">Our Core Values</h3>
+                
+                <div className="values-chips-grid">
+                  {CORE_VALUE_CHIPS.map((chip) => (
+                    <motion.div
+                      key={chip}
+                      className="value-chip-item"
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <i className="fas fa-check-circle chip-check-icon"></i>
+                      <span>{chip}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 4. COMPANY JOURNEY SECTION ── */}
+      <section className="company-journey-section" ref={journeyRef}>
+        <div className="journey-bg-canvas">
+          <div className="journey-blueprint-grid"></div>
+          <div className="journey-radial-glow blue-glow"></div>
+          <div className="journey-radial-glow green-glow"></div>
+        </div>
+
+        <div className="journey-container">
+          <motion.div
+            className="journey-header-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isJourneyInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="journey-eyebrow">
+              <span className="eyebrow-dot"></span>
+              <span className="eyebrow-title">OUR JOURNEY</span>
+            </div>
+
+            <h2 className="journey-heading">
+              Every Milestone <br />
+              <span className="ygr-green-highlight">Shapes Our Future</span>
+            </h2>
+
+            <p className="journey-description">
+              Our journey reflects continuous innovation, engineering excellence, and a commitment to helping businesses succeed through technology. Every milestone represents growth, learning, stronger partnerships, and greater impact.
+            </p>
+          </motion.div>
+
+          <div className="horizontal-journey-track-wrapper">
+            <div className="horizontal-journey-connecting-line">
+              <motion.div
+                className="horizontal-journey-progress-fill"
+                initial={{ scaleX: 0 }}
+                animate={isJourneyInView ? { scaleX: 1 } : { scaleX: 0 }}
+                transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+              />
+            </div>
+
+            <div className="horizontal-journey-nodes-row">
+              {COMPANY_JOURNEY_MILESTONES.map((item) => (
+                <div key={item.year} className="journey-node-item">
+                  <span className="glowing-node-circle">
+                    <span className="inner-pulse-dot"></span>
+                  </span>
+                  <span className="node-year-tag">{item.year}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div
+            className="journey-milestones-cards-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isJourneyInView ? 'visible' : 'hidden'}
+          >
+            {COMPANY_JOURNEY_MILESTONES.map((m) => (
+              <motion.div
+                key={m.year}
+                className="journey-milestone-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="journey-card-top">
+                  <span className="journey-year-text">{m.year}</span>
+                  <div className="journey-icon-box">
+                    <i className={`fas ${m.icon}`}></i>
+                  </div>
+                </div>
+
+                <h3 className="journey-card-title">{m.title}</h3>
+                <p className="journey-card-desc">{m.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="journey-bottom-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isJourneyInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <p className="bottom-journey-statement">
+              &ldquo;Our journey is only the beginning. Every milestone strengthens our commitment to engineering excellence and long-term client success.&rdquo;
+            </p>
+
+            <Link to="/services" className="btn-explore-expertise">
+              <span>Explore Our Expertise</span>
+              <span className="cta-arrow-circle">
+                <i className="fas fa-arrow-right"></i>
+              </span>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 5. LEADERSHIP & TEAM SECTION ── */}
+      <section className="leadership-team-section" ref={leadershipRef}>
+        <div className="leadership-bg-canvas">
+          <div className="leadership-blueprint-grid"></div>
+          <div className="leadership-radial-glow blue-glow"></div>
+          <div className="leadership-radial-glow green-glow"></div>
+        </div>
+
+        <div className="leadership-container">
+          <motion.div
+            className="leadership-header-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isLeadershipInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="leadership-eyebrow">
+              <span className="eyebrow-dot"></span>
+              <span className="eyebrow-title">OUR LEADERSHIP</span>
+            </div>
+
+            <h2 className="leadership-heading">
+              Driven by Vision. <br />
+              <span className="ygr-green-highlight">Powered by People.</span>
+            </h2>
+
+            <p className="leadership-description">
+              Behind every successful digital solution is a passionate team of engineers, designers, architects, and innovators committed to delivering exceptional technology experiences.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="featured-leadership-card"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLeadershipInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+            whileHover={{ y: -6 }}
+          >
+            <div className="featured-leader-badge-row">
+              <span className="experience-badge">
+                <i className="fas fa-certificate"></i> 12+ Years IT Leadership
+              </span>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="leader-linkedin-btn"
+                aria-label="LinkedIn Profile"
+              >
+                <i className="fab fa-linkedin-in"></i>
+              </a>
+            </div>
+
+            <div className="featured-leader-body">
+              <div className="leader-avatar-wrapper">
+                <div className="leader-avatar-graphic">
+                  <span>MV</span>
+                </div>
+                <div className="avatar-live-badge">
+                  <span className="live-dot"></span> Executive
+                </div>
+              </div>
+
+              <div className="leader-info-content">
+                <h3 className="leader-name">RavindraReddy Yanna</h3>
+                <span className="leader-title">Founder & Chief Executive Officer</span>
+
+                <blockquote className="leader-quote">
+                  &ldquo;We believe technology should simplify complexity and create measurable business value for every client.&rdquo;
+                </blockquote>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="team-members-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isLeadershipInView ? 'visible' : 'hidden'}
+          >
+            {TEAM_MEMBERS.map((member) => (
+              <motion.div
+                key={member.name}
+                className="team-member-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="team-card-header">
+                  <div className="team-avatar-graphic" style={{ background: member.avatarBg }}>
+                    <span>{member.initials}</span>
+                  </div>
+                  <a
+                    href={member.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="team-linkedin-link"
+                    aria-label={`${member.name} LinkedIn`}
+                  >
+                    <i className="fab fa-linkedin-in"></i>
+                  </a>
+                </div>
+
+                <div className="team-card-body">
+                  <h4 className="team-member-name">{member.name}</h4>
+                  <span className="team-member-role">{member.role}</span>
+                  <div className="team-specs-chip">
+                    <i className="fas fa-microchip"></i>
+                    <span>{member.specs}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="leadership-bottom-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isLeadershipInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <p className="bottom-team-statement">
+              Engineering is a team effort. Every successful solution is built through collaboration, creativity, and continuous learning.
+            </p>
+
+            <Link to="/careers" className="btn-join-our-team">
+              <span>Join Our Team</span>
+              <span className="cta-arrow-circle">
+                <i className="fas fa-arrow-right"></i>
+              </span>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 6. ENGINEERING EXCELLENCE SECTION ── */}
+      <section className="engineering-excellence-section" ref={engineeringRef}>
+        <div className="eng-bg-canvas">
+          <div className="eng-blueprint-grid"></div>
+          <div className="eng-radial-glow blue-glow"></div>
+          <div className="eng-radial-glow green-glow"></div>
+        </div>
+
+        <div className="eng-container">
+          <motion.div
+            className="eng-split-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isEngineeringInView ? 'visible' : 'hidden'}
+          >
+            <div className="eng-left-content">
+              <motion.div className="eng-eyebrow" variants={fadeUpVariant}>
+                <span className="eyebrow-dot"></span>
+                <span className="eyebrow-title">ENGINEERING EXCELLENCE</span>
+              </motion.div>
+
+              <motion.h2 className="eng-heading" variants={fadeUpVariant}>
+                Building Software <br />
+                That Performs Today <br />
+                <span className="ygr-green-highlight">And Scales Tomorrow</span>
+              </motion.h2>
+
+              <motion.p className="eng-description" variants={fadeUpVariant}>
+                At YGR Global IT Services, engineering is more than writing code. Every solution is designed with scalability, security, maintainability, performance, and long-term business value in mind. We follow modern engineering principles to ensure every application is reliable, future-ready, and built for growth.
+              </motion.p>
+
+              <motion.div className="eng-principles-grid" variants={fadeUpVariant}>
+                {ENGINEERING_PRINCIPLES.map((principle) => (
+                  <motion.div
+                    key={principle.title}
+                    className="eng-principle-card"
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <div className="principle-icon-box">
+                      <i className={`fas ${principle.icon}`}></i>
+                    </div>
+                    <h3 className="principle-card-title">{principle.title}</h3>
+                    <p className="principle-card-desc">{principle.desc}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+
+            <motion.div className="eng-right-visual" variants={fadeUpVariant}>
+              <div className="architecture-pipeline-panel">
+                <div className="panel-header">
+                  <div className="window-dots">
+                    <span className="dot dot-red"></span>
+                    <span className="dot dot-yellow"></span>
+                    <span className="dot dot-green"></span>
+                  </div>
+                  <span className="panel-tag">YGR Enterprise Architecture Pipeline</span>
+                  <span className="status-pill">
+                    <span className="live-dot"></span> Verified
+                  </span>
+                </div>
+
+                <div className="pipeline-nodes-stack">
+                  {ARCHITECTURE_LAYERS.map((layer, index) => (
+                    <motion.div
+                      key={layer.step}
+                      className="pipeline-layer-node"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={isEngineeringInView ? { opacity: 1, x: 0 } : {}}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02, x: 6 }}
+                    >
+                      <span className="layer-step-num">{layer.step}</span>
+                      <div className="layer-icon-box">
+                        <i className={`fas ${layer.icon}`}></i>
+                      </div>
+                      <span className="layer-title-text">{layer.title}</span>
+                      <span className="layer-connector-arrow">
+                        <i className="fas fa-chevron-right"></i>
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="eng-bottom-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isEngineeringInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <p className="bottom-eng-statement">
+              &ldquo;Engineering excellence is not a destination. It is a continuous commitment to innovation, quality, and customer success.&rdquo;
+            </p>
+
+            <Link to="/services" className="btn-explore-engineering">
+              <span>Explore Our Engineering</span>
+              <span className="cta-arrow-circle">
+                <i className="fas fa-arrow-right"></i>
+              </span>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 7. TECHNOLOGY STACK & INNOVATION ECOSYSTEM SECTION ── */}
+      <section className="technology-ecosystem-section" ref={techRef}>
+        <div className="tech-bg-canvas">
+          <div className="tech-blueprint-grid"></div>
+          <div className="tech-radial-glow blue-glow"></div>
+          <div className="tech-radial-glow green-glow"></div>
+        </div>
+
+        <div className="tech-container">
+          <motion.div
+            className="tech-header-stack"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isTechInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="tech-eyebrow">
+              <span className="eyebrow-dot"></span>
+              <span className="eyebrow-title">TECHNOLOGY ECOSYSTEM</span>
+            </div>
+
+            <h2 className="tech-heading">
+              Powered by Modern Technologies. <br />
+              <span className="ygr-green-highlight">Driven by Continuous Innovation.</span>
+            </h2>
+
+            <p className="tech-description">
+              We leverage proven enterprise technologies, cloud platforms, modern frameworks, and engineering best practices to build scalable, secure, and future-ready digital solutions.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="tech-ecosystem-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isTechInView ? 'visible' : 'hidden'}
+          >
+            {TECH_GROUPS.map((group) => (
+              <motion.div
+                key={group.title}
+                className="tech-group-card"
+                variants={fadeUpVariant}
+                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="tech-card-header">
+                  <div className="tech-icon-box" style={{ color: group.iconColor }}>
+                    <i className={`fas ${group.icon}`}></i>
+                  </div>
+                  <span className="tech-group-tag">{group.tag}</span>
+                </div>
+
+                <h3 className="tech-group-title">{group.title}</h3>
+
+                <div className="tech-chips-list">
+                  {group.chips.map((chip) => (
+                    <motion.span
+                      key={chip}
+                      className="tech-chip"
+                      whileHover={{ scale: 1.06, y: -2 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {chip}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+
+            <motion.div
+              className="tech-group-card featured-innovation-card"
+              variants={fadeUpVariant}
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="tech-card-header">
+                <div className="tech-icon-box text-green">
+                  <i className="fas fa-lightbulb"></i>
+                </div>
+                <span className="tech-group-tag tag-green">R&D & INNOVATION</span>
+              </div>
+
+              <h3 className="tech-group-title">Always Learning. Always Evolving.</h3>
+
+              <p className="innovation-card-text">
+                Our engineering teams continuously evaluate emerging technologies, frameworks, and cloud platforms to deliver solutions that remain relevant, secure, and scalable for the future.
+              </p>
+
+              <div className="innovation-footer-pill">
+                <span className="pill-dot"></span>
+                <span>Continuous R&D • AI Integration • Cloud Native</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 8. COMPANY CULTURE SECTION ── */}
+      <section className="company-culture-section" ref={cultureRef}>
+        <div className="culture-bg-canvas">
+          <div className="culture-blueprint-grid"></div>
+          <div className="culture-radial-glow blue-glow"></div>
+          <div className="culture-radial-glow green-glow"></div>
+        </div>
+
+        <div className="culture-container">
+          <motion.div
+            className="culture-split-grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isCultureInView ? 'visible' : 'hidden'}
+          >
+            <div className="culture-left-content">
+              <motion.div className="culture-eyebrow" variants={fadeUpVariant}>
+                <span className="eyebrow-dot"></span>
+                <span className="eyebrow-title">OUR CULTURE</span>
+              </motion.div>
+
+              <motion.h2 className="culture-heading" variants={fadeUpVariant}>
+                Where Innovation <br />
+                <span className="ygr-green-highlight">Meets Collaboration</span>
+              </motion.h2>
+
+              <motion.p className="culture-description" variants={fadeUpVariant}>
+                At YGR Global IT Services, we believe great technology is built by empowered people. Our culture encourages curiosity, continuous learning, collaboration, ownership, and innovation while maintaining a strong commitment to quality and customer success.
+              </motion.p>
+
+              <motion.div className="culture-highlights-grid" variants={fadeUpVariant}>
+                {CULTURE_HIGHLIGHTS.map((item) => (
+                  <motion.div
+                    key={item.title}
+                    className="culture-highlight-card"
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <div className="culture-icon-box">
+                      <i className={`fas ${item.icon}`}></i>
+                    </div>
+                    <h3 className="culture-card-title">{item.title}</h3>
+                    <p className="culture-card-desc">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              <motion.div className="culture-featured-quote-card" variants={fadeUpVariant}>
+                <div className="quote-icon-bar">
+                  <i className="fas fa-quote-left"></i>
+                </div>
+                <p className="quote-body-text">
+                  &ldquo;Strong technology is built by strong teams working with a shared vision.&rdquo;
+                </p>
+              </motion.div>
+
+              <motion.div className="culture-cta-wrapper" variants={fadeUpVariant}>
+                <Link to="/careers" className="btn-explore-careers">
+                  <span>Explore Career Opportunities</span>
+                  <span className="cta-arrow-circle">
+                    <i className="fas fa-arrow-right"></i>
+                  </span>
+                </Link>
+              </motion.div>
+            </div>
+
+            <motion.div className="culture-right-visual" variants={fadeUpVariant}>
+              <div className="culture-workspace-panel">
+                <div className="panel-header">
+                  <div className="window-dots">
+                    <span className="dot dot-red"></span>
+                    <span className="dot dot-yellow"></span>
+                    <span className="dot dot-green"></span>
+                  </div>
+                  <span className="panel-tag">YGR Collaborative Workspace Mesh</span>
+                  <span className="status-pill">
+                    <span className="live-dot"></span> Empowered
+                  </span>
+                </div>
+
+                <div className="workspace-nodes-grid">
+                  {WORKspace_NODES.map((node) => (
+                    <motion.div
+                      key={node.label}
+                      className="workspace-node-card"
+                      whileHover={{ scale: 1.03, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="workspace-icon-wrapper">
+                        <i className={`fas ${node.icon} ${node.color}`}></i>
+                      </div>
+                      <span className="workspace-node-label">{node.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="culture-collaboration-footer">
+                  <div className="collab-pulse-indicator">
+                    <span className="pulse-wave"></span>
+                    <span className="collab-text">Cross-Functional Agile Squads • 100% Ownership</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 9. FINAL CALL TO ACTION SECTION (Centered Premium Container Layout) ── */}
+      <section className="about-final-cta-section" ref={ctaRef}>
+        <div className="cta-container">
+          <motion.div
+            className="about-cta-card-container"
+            initial={{ opacity: 0, y: 30 }}
+            animate={isCtaInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* Background Atmosphere */}
+            <div className="cta-bg-canvas">
+              <div className="cta-blueprint-grid"></div>
+              <div className="cta-radial-glow blue-glow"></div>
+              <div className="cta-radial-glow green-glow"></div>
+            </div>
+
+            <div className="cta-centered-content">
+              {/* Premium Badge */}
+              <motion.div className="cta-eyebrow" variants={fadeUpVariant}>
+                <span className="eyebrow-dot"></span>
+                <span className="eyebrow-title">LET&apos;S BUILD THE FUTURE TOGETHER</span>
+              </motion.div>
+
+              {/* Large Centered Heading */}
+              <motion.h2 className="cta-heading" variants={fadeUpVariant}>
+                Ready to Transform <br />
+                <span className="ygr-green-highlight">Your Business?</span>
+              </motion.h2>
+
+              {/* Concise Description (Max 3 lines) */}
+              <motion.p className="cta-description" variants={fadeUpVariant}>
+                Whether you&apos;re launching a new product, modernizing existing systems, or planning your next digital transformation initiative, YGR Global IT Services is ready to become your trusted technology partner. Let&apos;s build secure, scalable, and future-ready digital solutions together.
+              </motion.p>
+
+              {/* Two CTA Buttons Stack (58px Height, Rounded Full) */}
+              <motion.div className="cta-buttons-group" variants={fadeUpVariant}>
+                <Link to="/contact" className="btn-cta-primary">
+                  <span>Start Your Project</span>
+                  <span className="cta-arrow-circle">
+                    <i className="fas fa-arrow-right"></i>
+                  </span>
+                </Link>
+
+                <Link to="/contact" className="btn-cta-secondary">
+                  <span>Schedule a Free Consultation</span>
+                </Link>
+              </motion.div>
+
+              {/* Small Glass Trust Chips */}
+              <motion.div className="cta-trust-chips-row" variants={fadeUpVariant}>
+                {TRUST_INDICATORS.map((indicator) => (
+                  <motion.div
+                    key={indicator}
+                    className="trust-chip-item"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <i className="fas fa-check-circle trust-check-icon"></i>
+                    <span>{indicator}</span>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </div>
+  );
 };
 
 export default Aboutus;

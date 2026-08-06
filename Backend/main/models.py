@@ -10,22 +10,93 @@ class Project(models.Model):
     name = models.CharField(max_length=200)
     time_taken = models.CharField(max_length=100)
     link = models.URLField()
-    image1 = models.ImageField(upload_to='projects/')
-    image2 = models.ImageField(upload_to='projects/')
+    image1 = models.ImageField(upload_to='projects/', blank=True, null=True)
+    image2 = models.ImageField(upload_to='projects/', blank=True, null=True)
     image3 = models.ImageField(upload_to='projects/', blank=True, null=True)
     image4 = models.ImageField(upload_to='projects/', blank=True, null=True)
+    category = models.CharField(max_length=100, blank=True, default='Web Applications')
+    tech_stack = models.CharField(max_length=255, blank=True, default='React, Python, AWS')
+    case_study = models.TextField(blank=True, default='')
+    github_url = models.URLField(blank=True, null=True, default='')
+    is_featured = models.BooleanField(default=False)
+    meta_title = models.CharField(max_length=255, blank=True, default='')
+    meta_description = models.TextField(blank=True, default='')
 
     def __str__(self):
         return self.name
         
+class BlogCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    icon = models.CharField(max_length=50, blank=True, default='fa-layer-group')
+    description = models.TextField(blank=True, default='')
+
+    def __str__(self):
+        return self.name
+
+class BlogAuthor(models.Model):
+    name = models.CharField(max_length=100)
+    role = models.CharField(max_length=100, default='Tech Writer')
+    avatar = models.ImageField(upload_to='blog_authors/', blank=True, null=True)
+    bio = models.TextField(blank=True, default='')
+    linkedin = models.CharField(max_length=200, blank=True, default='')
+    twitter = models.CharField(max_length=200, blank=True, default='')
+
+    def __str__(self):
+        return self.name
+
+class BlogTag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=50, unique=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
 class Blog(models.Model):
-    title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to='blog_images/')
-    description = models.TextField()
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    short_description = models.TextField(blank=True, default='')
+
+    content = models.TextField(help_text="Rich content string or JSON", blank=True, default='')
+    image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
+    image_url = models.CharField(max_length=500, blank=True, null=True)
+    
+    category = models.ForeignKey(BlogCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='blogs')
+    author = models.ForeignKey(BlogAuthor, on_delete=models.SET_NULL, null=True, blank=True, related_name='blogs')
+    author_name = models.CharField(max_length=100, blank=True, default='YGR Tech Team')
+    author_role = models.CharField(max_length=100, blank=True, default='Engineering Team')
+    
+    tags = models.ManyToManyField(BlogTag, blank=True, related_name='blogs')
+    reading_time = models.CharField(max_length=30, default='5 min read')
+    
+    is_featured = models.BooleanField(default=False)
+    is_trending = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
+    views_count = models.PositiveIntegerField(default=0)
+    
+    meta_title = models.CharField(max_length=255, blank=True, default='')
+    meta_description = models.TextField(blank=True, default='')
+    
+    youtube_url = models.CharField(max_length=255, blank=True, null=True)
+    pdf_url = models.CharField(max_length=500, blank=True, null=True)
+    attachments_json = models.TextField(blank=True, default='[]')
+    
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.title
+
+class NewsletterSubscription(models.Model):
+    email = models.EmailField(unique=True)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
     
 
 from django.db import models
@@ -388,3 +459,48 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ServiceCategory(models.Model):
+    name = models.CharField(max_length=150, unique=True)
+    slug = models.SlugField(max_length=150, blank=True, null=True)
+    description = models.TextField(blank=True, default='')
+    icon = models.CharField(max_length=50, blank=True, default='fa-laptop-code')
+    order = models.IntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class ContactEnquiry(models.Model):
+    STATUS_CHOICES = [
+        ('New', 'New'),
+        ('Read', 'Read'),
+        ('Assigned', 'Assigned'),
+        ('Replied', 'Replied'),
+        ('Archived', 'Archived'),
+    ]
+
+    name = models.CharField(max_length=150)
+    company = models.CharField(max_length=150, blank=True, default='')
+    email = models.EmailField()
+    phone = models.CharField(max_length=30, blank=True, default='')
+    service = models.CharField(max_length=150, blank=True, default='')
+    budget = models.CharField(max_length=100, blank=True, default='')
+    timeline = models.CharField(max_length=100, blank=True, default='')
+    message = models.TextField()
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    assigned_sales_person = models.CharField(max_length=100, blank=True, default='')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='New')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.company or self.email}) - {self.service}"

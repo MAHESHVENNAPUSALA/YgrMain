@@ -1,6 +1,20 @@
+@import "tailwindcss";
+
 :root {
-    --font-primary: 'Plus Jakarta Sans', 'Inter', sans-serif;
-    --font-display: 'Outfit', sans-serif;
+    --ygr-primary: #2D4A6D;
+    --ygr-secondary: #5E9133;
+    --ygr-accent: #D36B1C;
+    --ygr-bg: #F8FAFC;
+    --ygr-surface: #FFFFFF;
+    --ygr-text: #0F172A;
+    --ygr-muted: #64748B;
+
+    --font-poppins: 'Poppins', sans-serif;
+    --font-inter: 'Inter', sans-serif;
+    --font-manrope: 'Manrope', sans-serif;
+    
+    --font-primary: 'Inter', 'Plus Jakarta Sans', sans-serif;
+    --font-display: 'Poppins', 'Outfit', sans-serif;
     
     --bg-base: #f8fafc;
     --bg-surface: #ffffff;

@@ -16,9 +16,38 @@ class AddCarouselImagesAdmin(admin.ModelAdmin):
  
 admin.site.register(AddCarouselImages, AddCarouselImagesAdmin)
 
+@admin.register(BlogCategory)
+class BlogCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'icon')
+
+@admin.register(BlogAuthor)
+class BlogAuthorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'role')
+
 @admin.register(Blog)
 class BlogAdmin(admin.ModelAdmin):
-    list_display = ('title','description', 'created_at')
+    list_display = ('title', 'category', 'reading_time', 'is_published', 'is_featured', 'created_at')
+    list_filter = ('is_published', 'is_featured', 'category')
+    search_fields = ('title', 'short_description', 'content')
+
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'order', 'is_hidden', 'created_at')
+    list_editable = ('order', 'is_hidden')
+    search_fields = ('name', 'description')
+    ordering = ('order', 'name')
+
+
+@admin.register(ContactEnquiry)
+class ContactEnquiryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'company', 'email', 'phone', 'service', 'budget', 'timeline', 'status', 'assigned_sales_person', 'created_at')
+    list_filter = ('status', 'service', 'created_at')
+    search_fields = ('name', 'company', 'email', 'phone', 'message')
+    list_editable = ('status', 'assigned_sales_person')
+    ordering = ('-created_at',)
+
+
 
 
 @admin.register(Project)

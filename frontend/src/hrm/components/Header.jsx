@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/context/AuthContext';
 import { useTheme } from '../../shared/context/ThemeContext';
 import api from '../../services/api';
@@ -7,12 +7,16 @@ import api from '../../services/api';
 const Header = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
   const [dropdownActive, setDropdownActive] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   if (!user) return null;
 
   const getDashboardTitle = () => {
+    if (location.pathname.startsWith('/admin/website') || location.pathname.startsWith('/projects/admin')) {
+      return 'Website CMS Administration';
+    }
     switch (user.role) {
       case 'MD':
         return 'Managing Director Dashboard';

@@ -20,21 +20,21 @@
         }
 
         .blog-card-modern {
-            background: var(--white);
+            background: #FFFFFF;
             border-radius: 30px;
             overflow: hidden;
-            transition: var(--transition-slow);
+            transition: all 0.4s ease;
             position: relative;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.02);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.04);
             border: 1px solid #f0f0f0;
         }
 
         .blog-card-modern:hover {
-            transform: translateY(-15px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--accent-gold);
+            transform: translateY(-12px);
+            box-shadow: 0 24px 60px rgba(15,23,42,0.1);
+            border-color: #F59E0B;
         }
 
         .blog-image-wrapper {
@@ -63,7 +63,7 @@
 
         .blog-date {
             font-size: 12px;
-            color: var(--accent-gold);
+            color: #D97706;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -73,7 +73,7 @@
 
         .blog-card-modern h3 {
             font-size: 22px;
-            color: var(--primary-navy);
+            color: #1E3A8A;
             margin-bottom: 15px;
             line-height: 1.4;
             display: -webkit-box;
@@ -85,7 +85,7 @@
         .blog-card-modern p {
             font-size: 15px;
             line-height: 1.6;
-            color: var(--text-muted);
+            color: #64748B;
             margin-bottom: 25px;
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -95,17 +95,17 @@
 
         .blog-link {
             margin-top: auto;
-            color: var(--primary-navy);
+            color: #1E3A8A;
             font-weight: 700;
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
-            transition: var(--transition-fast);
+            transition: all 0.2s ease;
         }
 
         .blog-link:hover {
-            color: var(--rich-gold);
+            color: #D97706;
             gap: 15px;
             text-decoration: none;
         }

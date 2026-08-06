@@ -47,13 +47,14 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
   }, []);
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', backgroundColor: '#0f172a' }}>
+    <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {!hideHeaderFooter && <PublicHeader />}
-      <main>
+      <main style={{ flex: 1, width: '100%' }}>
         <Outlet />
       </main>
       {!hideHeaderFooter && <PublicFooter />}
     </div>
+
   );
 };
 

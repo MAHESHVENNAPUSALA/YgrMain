@@ -1,107 +1,291 @@
-/* ================= PREMIUM TESTIMONIALS (LIGHT) ================= */
-.premium-testi-section {
-  padding: 140px 0;
-  background-color: var(--clr-bg);
-}
+/* ============================================================
+   INDUSTRIES WE SERVE — Premium Enterprise Bento Grid
+   ============================================================ */
 
-.pt-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 30px;
-}
-
-.pt-card {
+.industries-serve-section {
   position: relative;
-  border-radius: var(--rad-xl);
-  padding: 40px;
+  width: 100%;
+  background: #FFFFFF;
+  padding: 100px 0; /* Exactly 100px Top & 100px Bottom Padding */
+  overflow: hidden;
+  font-family: var(--font-inter), sans-serif;
+  color: #0F172A;
+}
+
+/* ── 1. Background Atmosphere ── */
+.industries-bg-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.industries-blueprint-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(45, 74, 109, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 74, 109, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
+}
+
+.industries-radial-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.blue-glow {
+  width: 600px;
+  height: 600px;
+  background: rgba(45, 74, 109, 0.14);
+  top: 10%;
+  left: -80px;
+}
+
+.green-glow {
+  width: 480px;
+  height: 480px;
+  background: rgba(94, 145, 51, 0.12);
+  bottom: 5%;
+  right: -60px;
+}
+
+/* ── 2. Container (1320px Max Width) ── */
+.industries-container {
+  max-width: 1320px; /* Exactly 1320px Container Max Width */
+  width: 92%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+/* Header Stack */
+.industries-header-stack {
   display: flex;
   flex-direction: column;
-  transition: var(--transition-bounce);
-  background: var(--clr-white);
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: var(--shadow-sm);
+  align-items: center;
+  text-align: center;
+  margin-bottom: 48px;
 }
 
-.pt-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(37,99,235,0.1);
+.industries-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 6px 16px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  margin-bottom: 16px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
-.pt-quote-icon {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  font-size: 4.5rem;
-  color: rgba(37, 99, 235, 0.04);
-  line-height: 1;
+.eyebrow-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5E9133;
+  box-shadow: 0 0 6px rgba(94, 145, 51, 0.8);
 }
 
-.pt-stars {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 24px;
-  font-size: 1rem;
+.eyebrow-title {
+  color: #2D4A6D;
 }
 
-.text-gold {
-  color: #f59e0b;
+.industries-heading {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 900;
+  font-size: 3.2rem;
+  line-height: 1.10;
+  letter-spacing: -2px;
+  color: #0F172A;
+  margin: 0 0 16px 0;
+  text-align: center;
 }
 
-.pt-quote-text {
-  font-size: 1.15rem;
-  line-height: 1.75;
-  color: var(--clr-text);
-  font-style: italic;
-  margin-bottom: 30px;
-  flex: 1;
+.industries-description {
+  font-size: 1.05rem;
+  line-height: 1.60;
+  color: #64748B;
+  max-width: 680px; /* Concise 2-3 lines description */
+  margin: 0 auto;
+  font-weight: 450;
+  text-align: center;
+}
+
+/* ── 3. Bento Grid of 10 Industries (24px Gap) ── */
+.industries-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3-Column Desktop Grid */
+  gap: 24px; /* Exactly 24px Card Gap */
+  width: 100%;
+  margin-bottom: 56px;
+}
+
+.industry-bento-card {
   position: relative;
-  z-index: 1;
+  background: #FFFFFF;
+  border-radius: 28px; /* Rounded 28px */
+  padding: 26px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  overflow: hidden;
 }
 
-.pt-author-row {
+.industry-bento-card:hover {
+  background: #FFFFFF;
+  border-color: rgba(94, 145, 51, 0.5);
+  box-shadow: 0 18px 40px -8px rgba(15, 23, 42, 0.10);
+}
+
+.card-top-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  padding-top: 24px;
+  justify-content: space-between;
+  margin-bottom: 16px;
 }
 
-.pt-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
+.industry-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 1.1rem;
-  box-shadow: var(--shadow-xs);
+  font-size: 1.2rem;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: transform 0.25s ease;
 }
 
-.pt-author-info h4 {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--clr-text);
-  margin-bottom: 4px;
+.industry-bento-card:hover .industry-icon-box {
+  transform: scale(1.08);
 }
 
-.pt-author-info p {
-  font-size: 0.85rem;
-  color: var(--clr-muted);
+.card-arrow-icon {
+  font-size: 0.88rem;
+  color: #94A3B8;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+
+.industry-bento-card:hover .card-arrow-icon {
+  transform: translate(3px, -3px);
+  color: #5E9133;
+}
+
+.industry-card-title {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0F172A;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.industry-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #64748B;
   margin: 0;
-  line-height: 1.5;
 }
 
-.pt-author-info p span {
+/* ── 4. Bottom Statement & Primary CTA ── */
+.industries-bottom-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+}
+
+.bottom-statement-text {
+  font-family: var(--font-poppins), sans-serif;
   font-weight: 700;
-  color: var(--clr-primary-light);
+  font-size: 1.25rem;
+  color: #2D4A6D;
+  font-style: italic;
+  margin: 0;
+  max-width: 720px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .pt-grid {
-    grid-template-columns: 1fr;
+.btn-discuss-industry {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px; /* Exactly 56px Height */
+  background: #2D4A6D;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 0 36px;
+  border-radius: 9999px; /* Rounded Full */
+  text-decoration: none;
+  box-shadow: 0 10px 25px -5px rgba(45, 74, 109, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-discuss-industry:hover {
+  background: #5E9133;
+  box-shadow: 0 14px 32px -4px rgba(94, 145, 51, 0.45);
+  transform: translateY(-2px);
+  color: #FFFFFF !important;
+}
+
+.cta-arrow-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  transition: transform 0.25s ease;
+}
+
+.btn-discuss-industry:hover .cta-arrow-circle {
+  transform: translateX(4px);
+}
+
+/* ── 5. Responsive Media Queries ── */
+@media (max-width: 1024px) {
+  .industries-serve-section {
+    padding: 75px 0;
+  }
+  .industries-bento-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2-Column Layout on Tablet */
+  }
+  .industries-heading {
+    font-size: 2.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .industries-bento-grid {
+    grid-template-columns: 1fr; /* 1-Column Layout on Mobile */
+  }
+  .btn-discuss-industry {
+    width: 100%;
+    justify-content: center;
+  }
+  .industries-heading {
+    font-size: 2.1rem;
+    letter-spacing: -1px;
+  }
+  .bottom-statement-text {
+    font-size: 1.05rem;
   }
 }

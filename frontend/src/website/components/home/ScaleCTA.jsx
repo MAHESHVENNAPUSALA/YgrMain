@@ -1,108 +1,167 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './ScaleCTA.css';
 
-const TIMELINE_STEPS = [
-  { id: 1, title: "Discovery", desc: "We analyze your architecture and business goals.", icon: "fa-magnifying-glass" },
-  { id: 2, title: "Blueprint", desc: "Our architects design a scalable, secure roadmap.", icon: "fa-compass-drafting" },
-  { id: 3, title: "Execution", desc: "Agile sprints deliver rapid, high-quality results.", icon: "fa-rocket" }
+const PROCESS_STEPS = [
+  {
+    step: '01',
+    title: 'Discovery & Consultation',
+    desc: 'Understand business goals, users, challenges, and project requirements.',
+    icon: 'fa-magnifying-glass-chart'
+  },
+  {
+    step: '02',
+    title: 'Strategy & Planning',
+    desc: 'Define architecture, technology stack, roadmap, and milestones.',
+    icon: 'fa-diagram-project'
+  },
+  {
+    step: '03',
+    title: 'UI / UX Design',
+    desc: 'Design intuitive, user-friendly interfaces and interactive prototypes.',
+    icon: 'fa-pen-ruler'
+  },
+  {
+    step: '04',
+    title: 'Development',
+    desc: 'Build secure, scalable, and high-performance applications.',
+    icon: 'fa-code'
+  },
+  {
+    step: '05',
+    title: 'Testing & Quality Assurance',
+    desc: 'Perform functional, performance, security, and usability testing.',
+    icon: 'fa-vial-circle-check'
+  },
+  {
+    step: '06',
+    title: 'Deployment & Support',
+    desc: 'Deploy, monitor, optimize, and provide continuous support.',
+    icon: 'fa-rocket'
+  }
 ];
 
 const ScaleCTA = () => {
-  const ctaRef = useRef(null);
-  const isInView = useInView(ctaRef, { once: true, margin: "-10%" });
-  
-  const { scrollYProgress } = useScroll({
-    target: ctaRef,
-    offset: ["start end", "end start"]
-  });
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: '-10%' });
 
-  const y1 = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
-  const y2 = useTransform(scrollYProgress, [0, 1], ["20%", "-20%"]);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    }
+  };
+
+  const cardVariant = {
+    hidden: { opacity: 0, y: 24 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+  };
 
   return (
-    <section className="premium-cta-section" ref={ctaRef}>
-      <div className="corp-container">
-        
-        <motion.div 
-          className="premium-cta-wrapper"
-          initial={{ opacity: 0, y: 40 }}
+    <section className="our-process-section" ref={sectionRef}>
+      {/* Background Atmosphere: Subtle Blueprint Grid & Radial Glows */}
+      <div className="process-bg-canvas">
+        <div className="process-blueprint-grid"></div>
+        <div className="process-radial-glow blue-glow"></div>
+        <div className="process-radial-glow green-glow"></div>
+      </div>
+
+      <div className="process-container">
+        {/* ── 1. Header Stack ── */}
+        <motion.div
+          className="process-header-stack"
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Animated Background Mesh */}
-          <div className="pcta-mesh-bg">
-            <motion.div className="pcta-orb pcta-orb-1" style={{ y: y1 }} />
-            <motion.div className="pcta-orb pcta-orb-2" style={{ y: y2 }} />
-            <div className="pcta-grid-overlay"></div>
+          <div className="process-eyebrow">
+            <span className="eyebrow-dot"></span>
+            <span className="eyebrow-title">OUR PROCESS</span>
           </div>
 
-          <div className="pcta-content-grid">
-            <div className="pcta-text-col">
-              <motion.div 
-                className="eyebrow-badge pcta-eyebrow"
-                initial={{ opacity: 0, x: -20 }}
-                animate={isInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <i className="fas fa-sparkles"></i>
-                <span>Our Proven Process</span>
-              </motion.div>
+          <h2 className="process-heading">
+            A Proven Process <br />
+            For Building Digital Excellence
+          </h2>
 
-              <motion.h2 
-                className="pcta-heading"
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.3 }}
-              >
-                Ready to Architect Your <br/>
-                <span className="text-gradient">Digital Future?</span>
-              </motion.h2>
-
-              <motion.div 
-                className="pcta-timeline"
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                {TIMELINE_STEPS.map((step, index) => (
-                  <div className="pcta-timeline-item" key={step.id}>
-                    <div className="pcta-step-indicator">
-                      <div className="pcta-step-icon"><i className={`fas ${step.icon}`}></i></div>
-                      {index !== TIMELINE_STEPS.length - 1 && <div className="pcta-step-line"></div>}
-                    </div>
-                    <div className="pcta-step-content">
-                      <h4>{step.title}</h4>
-                      <p>{step.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            </div>
-
-            <motion.div 
-              className="pcta-action-col"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.8, delay: 0.5 }}
-            >
-              <div className="pcta-action-card glass-dark">
-                <h3 className="pcta-card-title">Free Architecture Review</h3>
-                <p className="pcta-card-desc">Consult with our senior enterprise architects and receive a tailored scalability roadmap for your company.</p>
-                <Link to="/contact" className="btn-primary-glow pcta-main-btn">
-                  <span>Start Your Project</span>
-                  <i className="fas fa-arrow-right"></i>
-                </Link>
-                <Link to="/services" className="btn-outline-light-glow pcta-sec-btn" style={{ color: '#fff' }}>
-                  <span>Explore Services</span>
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-          
+          <p className="process-description">
+            Every successful digital product begins with a clear strategy. Our collaborative and agile development process ensures transparency, quality, faster delivery, and scalable outcomes from concept to deployment.
+          </p>
         </motion.div>
 
+        {/* ── 2. Premium Horizontal Timeline Track ── */}
+        <div className="timeline-track-wrapper">
+          <div className="timeline-connecting-line">
+            <motion.div
+              className="timeline-progress-fill"
+              initial={{ scaleX: 0 }}
+              animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+            />
+          </div>
+
+          <div className="timeline-nodes-row">
+            {PROCESS_STEPS.map((item, idx) => (
+              <div key={item.step} className="timeline-node-item">
+                <span className="node-circle">
+                  <span className="inner-pulse-dot"></span>
+                </span>
+                <span className="node-step-tag">Step {item.step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 3. 6-Step Process Cards Grid (24px Gap, Glassmorphism, Hover Lift) ── */}
+        <motion.div
+          className="process-cards-grid"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+        >
+          {PROCESS_STEPS.map((step) => (
+            <motion.div
+              key={step.step}
+              className="process-step-card"
+              variants={cardVariant}
+              whileHover={{ y: -8, scale: 1.015 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="card-header-row">
+                <span className="step-number-text">{step.step}</span>
+                <div className="step-icon-box">
+                  <i className={`fas ${step.icon}`}></i>
+                </div>
+              </div>
+
+              <h3 className="step-card-title">{step.title}</h3>
+              <p className="step-card-desc">{step.desc}</p>
+
+              <div className="card-hover-border"></div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── 4. Bottom Centered Statement & Primary CTA ── */}
+        <motion.div
+          className="process-bottom-stack"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, delay: 0.4 }}
+        >
+          <p className="bottom-statement-text">
+            &ldquo;Your vision. Our process. One successful digital transformation.&rdquo;
+          </p>
+
+          <Link to="/contact" className="btn-start-project">
+            <span>Start Your Project</span>
+            <span className="cta-arrow-circle">
+              <i className="fas fa-arrow-right"></i>
+            </span>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );

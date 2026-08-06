@@ -7,7 +7,6 @@ import ScaleCTA from '../components/home/ScaleCTA';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import Testimonials from '../components/home/Testimonials';
 import ImpactStats from '../components/home/ImpactStats';
-import GlobalPresence from '../components/home/GlobalPresence';
 
 const Home = () => {
     
@@ -51,7 +50,6 @@ const Home = () => {
                 <WhyChooseUs />
                 <Testimonials />
                 <ImpactStats />
-                <GlobalPresence />
             </main>
         </ReactLenis>
     );

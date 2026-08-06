@@ -3,6 +3,7 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/context/AuthContext';
 import { attendanceApi } from '../../services/api';
 import { useToast } from '../../shared/context/ToastContext';
+import { ROUTES } from '../../shared/constants/routes';
 
 const Sidebar = () => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ const Sidebar = () => {
     hrMenu: false,
     attendanceMenu: false,
     financeMenu: false,
+    websiteCmsMenu: false,
   });
 
   // Unread messages count badge
@@ -366,6 +368,18 @@ const Sidebar = () => {
             <i className="fa-solid fa-umbrella" style={{ color: '#f59e0b' }}></i>
             <span>Holiday Approvals</span>
           </NavLink>
+
+          <div className="menu-item" onClick={() => toggleMenu('websiteCmsMenu')}>
+            <span><i className="fa-solid fa-globe" style={{ color: '#0284c7' }}></i> Website CMS</span>
+            <i className={`fa-solid fa-angle-down ${menus.websiteCmsMenu ? 'fa-rotate-180' : ''}`} style={{ marginLeft: 'auto', transition: 'transform 0.2s' }}></i>
+          </div>
+          <div className={`dropdown ${menus.websiteCmsMenu ? 'active' : ''}`}>
+            <NavLink to={ROUTES.ADMIN_CMS_CAROUSEL} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-images"></i> Hero Banners</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_PROJECTS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-layer-group"></i> Portfolio</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_BLOGS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-newspaper"></i> Blog Management</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_TEAM} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-people-group"></i> Team Members</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_TESTIMONIALS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-quote-left"></i> Testimonials</NavLink>
+          </div>
         </>
       )}
 
@@ -432,6 +446,18 @@ const Sidebar = () => {
             <i className="fa-solid fa-list-check" style={{ color: '#22c55e' }}></i>
             <span>Tasks & Reports</span>
           </NavLink>
+
+          <div className="menu-item" onClick={() => toggleMenu('websiteCmsMenu')}>
+            <span><i className="fa-solid fa-globe" style={{ color: '#0284c7' }}></i> Website CMS</span>
+            <i className={`fa-solid fa-angle-down ${menus.websiteCmsMenu ? 'fa-rotate-180' : ''}`} style={{ marginLeft: 'auto', transition: 'transform 0.2s' }}></i>
+          </div>
+          <div className={`dropdown ${menus.websiteCmsMenu ? 'active' : ''}`}>
+            <NavLink to={ROUTES.ADMIN_CMS_CAROUSEL} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-images"></i> Hero Banners</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_PROJECTS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-layer-group"></i> Portfolio</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_BLOGS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-newspaper"></i> Blog Management</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_TEAM} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-people-group"></i> Team Members</NavLink>
+            <NavLink to={ROUTES.ADMIN_CMS_TESTIMONIALS} className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-quote-left"></i> Testimonials</NavLink>
+          </div>
         </>
       )}
 

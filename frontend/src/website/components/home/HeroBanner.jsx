@@ -1,193 +1,260 @@
-import React, { useRef, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { motion, useSpring, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './HeroBanner.css';
 
-const SERVICES_PILLS = [
-  { id: '01', title: 'Web Development', icon: 'fa-globe' },
-  { id: '02', title: 'Software Engineering', icon: 'fa-code' },
-  { id: '03', title: 'Mobile Apps', icon: 'fa-mobile-screen' },
-  { id: '04', title: 'UI/UX Design', icon: 'fa-pen-nib' }
+const TRUST_BADGES = [
+  { value: '99.8%', label: 'Client Satisfaction', icon: 'fa-award' },
+  { value: '8+ Yrs', label: 'Tech Excellence', icon: 'fa-shield-halved' },
+  { value: '250+', label: 'Global Deployments', icon: 'fa-rocket' },
+];
+
+const SERVICE_PILLS = [
+  { id: 'cloud', label: 'Cloud Architecture', icon: 'fa-cloud' },
+  { id: 'ai', label: 'AI & Machine Learning', icon: 'fa-brain' },
+  { id: 'web', label: 'Enterprise Web Apps', icon: 'fa-layer-group' },
+  { id: 'mobile', label: 'iOS & Android Native', icon: 'fa-mobile-screen' },
 ];
 
 const HeroBanner = () => {
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-
-  // Mouse Parallax Effect
-  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+  // Mouse Parallax Physics
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
-      const x = (clientX / window.innerWidth - 0.5) * 40;
-      const y = (clientY / window.innerHeight - 0.5) * 40;
-      setMousePosition({ x, y });
+      const x = (clientX / window.innerWidth - 0.5) * 26;
+      const y = (clientY / window.innerHeight - 0.5) * 26;
+      setMousePos({ x, y });
     };
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const springX = useSpring(mousePosition.x, { stiffness: 50, damping: 20 });
-  const springY = useSpring(mousePosition.y, { stiffness: 50, damping: 20 });
+  const springX = useSpring(mousePos.x, { stiffness: 45, damping: 25 });
+  const springY = useSpring(mousePos.y, { stiffness: 45, damping: 25 });
+
+  const card1X = useTransform(springX, (v) => v * 1.3);
+  const card1Y = useTransform(springY, (v) => v * 1.3);
+  const card2X = useTransform(springX, (v) => v * -1.1);
+  const card2Y = useTransform(springY, (v) => v * -1.1);
+  const card3X = useTransform(springX, (v) => v * 0.8);
+  const card3Y = useTransform(springY, (v) => v * 0.8);
 
   return (
-    <section ref={containerRef} className="premium-hero">
-      
-      {/* --- Ambient Background --- */}
-      <div className="ph-background">
-        <div className="ph-grid"></div>
-        <motion.div 
-          className="ph-glow-orb orb-primary"
+    <section className="editorial-hero">
+      {/* ── Background: Subtle Blueprint Grid & Logo Color Mesh Blobs ── */}
+      <div className="hero-bg-canvas">
+        <div className="blueprint-grid"></div>
+        <motion.div
+          className="bg-blob blob-primary"
           style={{ x: springX, y: springY }}
         />
-        <motion.div 
-          className="ph-glow-orb orb-accent"
-          style={{ x: useTransform(springX, v => -v), y: useTransform(springY, v => -v) }}
+        <motion.div
+          className="bg-blob blob-secondary"
+          style={{ x: useTransform(springX, (v) => -v * 1.4), y: useTransform(springY, (v) => -v * 1.4) }}
+        />
+        <motion.div
+          className="bg-blob blob-accent"
+          style={{ x: useTransform(springX, (v) => v * 0.8), y: useTransform(springY, (v) => -v * 0.8) }}
         />
       </div>
 
-      <motion.div 
-        className="ph-content-wrapper"
-        style={{ y, opacity }}
-      >
-        <div className="corp-container ph-container">
-          
-          <div className="ph-content">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="ph-eyebrow"
-            >
-              <span className="ph-badge">YGR GLOBAL IT SERVICES</span>
-              <span className="ph-badge-text">Pioneering Digital Transformation</span>
-            </motion.div>
+      <div className="hero-container">
+        {/* ── Left Column: 45% Content (Left-Aligned, Perfect Vertical Axis) ── */}
+        <div className="hero-editorial-left">
+          {/* Eyebrow Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-eyebrow"
+          >
+            <span className="eyebrow-dot"></span>
+            <span className="eyebrow-brand">YGR GLOBAL IT SERVICES</span>
+            <span className="eyebrow-sep">•</span>
+            <span className="eyebrow-text">Digital Transformation</span>
+          </motion.div>
 
-            <motion.h1 
-              className="ph-title"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            >
-              Architecting <br />
-              <span className="ph-title-gradient">Scalable Enterprise</span> <br />
-              Software Solutions.
-            </motion.h1>
+          {/* Headline (font-weight:900, line-height:0.9, letter-spacing:-3px, max-width:650px) */}
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-headline"
+          >
+            TRANSFORMING <br />
+            BUSINESSES <br />
+            THROUGH <br />
+            INTELLIGENT <br />
+            DIGITAL <br />
+            <span className="headline-highlight">INNOVATION</span>
+          </motion.h1>
 
-            <motion.p 
-              className="ph-desc"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              Transforming complex business requirements into high-performance web, mobile, and cloud architectures. We engineer the technology that drives global business growth.
-            </motion.p>
+          {/* Description (max-width:520px, 28px margin-bottom) */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-description"
+          >
+            We engineer high-performance web applications, cloud infrastructure, and AI-driven enterprise software that accelerate global growth for forward-thinking organizations.
+          </motion.p>
 
-            <motion.div 
-              className="ph-actions"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <Link to="/services" className="ph-btn-primary">
-                <span>Explore Solutions</span>
+          {/* CTA Buttons (56px height, 20px gap, rounded-full) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="hero-cta-group"
+          >
+            <Link to="/services" className="hero-btn-primary">
+              <span>Explore Solutions</span>
+              <span className="btn-arrow-circle">
                 <i className="fas fa-arrow-right"></i>
-              </Link>
-              <Link to="/contact" className="ph-btn-secondary">
-                <span>Schedule Consultation</span>
-              </Link>
+              </span>
+            </Link>
+
+            <Link to="/contact" className="hero-btn-secondary">
+              <span>Schedule Consultation</span>
+              <i className="fas fa-calendar-check btn-sec-icon"></i>
+            </Link>
+          </motion.div>
+
+          {/* Trust Metric Row */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.9, delay: 0.45 }}
+            className="hero-trust-row"
+          >
+            {TRUST_BADGES.map((badge, idx) => (
+              <div key={badge.label} className="trust-item">
+                <div className="trust-icon-box">
+                  <i className={`fas ${badge.icon}`}></i>
+                </div>
+                <div className="trust-info">
+                  <span className="trust-num">{badge.value}</span>
+                  <span className="trust-lbl">{badge.label}</span>
+                </div>
+                {idx < TRUST_BADGES.length - 1 && <div className="trust-divider"></div>}
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* ── Right Column: 55% Illustration (Shifted Upward, 10% Larger) ── */}
+        <div className="hero-visual-right">
+          <div className="visual-canvas">
+            {/* Ambient Graphic Halo */}
+            <div className="graphic-halo"></div>
+
+            {/* Central Microservices Glass Card */}
+            <motion.div
+              style={{ x: card1X, y: card1Y }}
+              initial={{ opacity: 0, scale: 0.9, rotateX: 6, rotateY: -6 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0, rotateY: 0 }}
+              transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="glass-tech-card card-main-architecture"
+            >
+              <div className="card-top-bar">
+                <div className="window-dots">
+                  <span className="dot dot-red"></span>
+                  <span className="dot dot-yellow"></span>
+                  <span className="dot dot-green"></span>
+                </div>
+                <span className="card-title-tag">Enterprise Core System • v4.8</span>
+                <span className="status-pill-live">
+                  <span className="live-dot"></span> Operational
+                </span>
+              </div>
+
+              <div className="card-architecture-body">
+                <div className="node-grid">
+                  <div className="node-box node-cloud">
+                    <i className="fas fa-cloud-arrow-up"></i>
+                    <span>Cloud Native</span>
+                  </div>
+                  <div className="node-connector">
+                    <div className="connector-line"></div>
+                    <div className="pulse-signal"></div>
+                  </div>
+                  <div className="node-box node-ai">
+                    <i className="fas fa-microchip"></i>
+                    <span>AI Engine</span>
+                  </div>
+                  <div className="node-connector">
+                    <div className="connector-line"></div>
+                    <div className="pulse-signal delay"></div>
+                  </div>
+                  <div className="node-box node-app">
+                    <i className="fas fa-server"></i>
+                    <span>Enterprise Core</span>
+                  </div>
+                </div>
+
+                <div className="arch-metrics-row">
+                  <div className="metric-chip">
+                    <span className="m-label">Uptime</span>
+                    <span className="m-val val-green">99.99%</span>
+                  </div>
+                  <div className="metric-chip">
+                    <span className="m-label">Latency</span>
+                    <span className="m-val val-blue">&lt; 12ms</span>
+                  </div>
+                  <div className="metric-chip">
+                    <span className="m-label">Security</span>
+                    <span className="m-val val-orange">ISO 27001</span>
+                  </div>
+                </div>
+              </div>
             </motion.div>
 
-            {/* Floating Service Pills (Replacing Carousel) */}
-            <motion.div 
-              className="ph-services-row"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.5 }}
+            {/* Floating Card 2: AI Intelligence Widget */}
+            <motion.div
+              style={{ x: card2X, y: card2Y }}
+              initial={{ opacity: 0, x: 30, y: -16 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 1.1, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="glass-tech-card card-ai-widget"
             >
-              {SERVICES_PILLS.map((pill, i) => (
-                <motion.div 
-                  key={pill.id}
-                  className="ph-service-pill"
-                  whileHover={{ y: -5, scale: 1.05 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.6 + (i * 0.1) }}
-                >
-                  <i className={`fas ${pill.icon}`}></i>
-                  <span>{pill.title}</span>
-                </motion.div>
+              <div className="ai-widget-header">
+                <div className="ai-icon-circle">
+                  <i className="fas fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                  <div className="ai-widget-title">AI Automation Engine</div>
+                  <div className="ai-widget-sub">Real-Time Data Pipeline</div>
+                </div>
+              </div>
+              <div className="ai-waveform">
+                <span className="wave-bar bar-1"></span>
+                <span className="wave-bar bar-2"></span>
+                <span className="wave-bar bar-3"></span>
+                <span className="wave-bar bar-4"></span>
+                <span className="wave-bar bar-5"></span>
+              </div>
+            </motion.div>
+
+            {/* Floating Service Pills */}
+            <motion.div
+              style={{ x: card3X, y: card3Y }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="service-pills-float-wrapper"
+            >
+              {SERVICE_PILLS.map((pill) => (
+                <div key={pill.id} className="floating-service-pill">
+                  <i className={`fas ${pill.icon} pill-icon`}></i>
+                  <span className="pill-text">{pill.label}</span>
+                </div>
               ))}
             </motion.div>
           </div>
-
-          {/* Interactive Abstract Visual */}
-          <div className="ph-visual">
-            <motion.div 
-              className="ph-glass-panel panel-1"
-              style={{ x: useTransform(springX, v => v * 1.5), y: useTransform(springY, v => v * 1.5) }}
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="pg-header">
-                <div className="pg-dots"><span></span><span></span><span></span></div>
-                <div className="pg-title">deployment_status.json</div>
-              </div>
-              <div className="pg-body code-block">
-                <span className="c-blue">const</span> <span className="c-yellow">system</span> = {'{'} <br/>
-                &nbsp;&nbsp;uptime: <span className="c-green">"99.99%"</span>,<br/>
-                &nbsp;&nbsp;latency: <span className="c-green">"12ms"</span>,<br/>
-                &nbsp;&nbsp;status: <span className="c-green">"Operational"</span><br/>
-                {'}'};
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="ph-glass-panel panel-2"
-              style={{ x: useTransform(springX, v => v * -1), y: useTransform(springY, v => v * -1.5) }}
-              initial={{ opacity: 0, scale: 0.8, x: 50, rotate: 5 }}
-              animate={{ opacity: 1, scale: 1, x: 0, rotate: 0 }}
-              transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            >
-               <div className="pg-stat-flex">
-                 <div className="pg-stat-icon"><i className="fas fa-shield-check"></i></div>
-                 <div>
-                   <div className="pg-stat-label">Security Protocol</div>
-                   <div className="pg-stat-val">ISO 9001:2015</div>
-                 </div>
-               </div>
-            </motion.div>
-            
-            <motion.div 
-              className="ph-glass-panel panel-3"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            >
-               <div className="pg-stat-label">Global Scale</div>
-               <div className="pg-progress-bar">
-                 <motion.div 
-                    className="pg-progress-fill"
-                    initial={{ width: 0 }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 2, delay: 1, ease: "easeOut" }}
-                 />
-               </div>
-               <div className="pg-progress-text">Infrastructure Ready</div>
-            </motion.div>
-
-          </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 };

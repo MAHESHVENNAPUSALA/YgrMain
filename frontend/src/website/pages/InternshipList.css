@@ -19,10 +19,10 @@
         }
 
         .intern-card-modern {
-            background: var(--white);
+            background: #FFFFFF;
             border-radius: 30px;
             overflow: hidden;
-            transition: var(--transition-slow);
+            transition: all 0.4s ease;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -32,9 +32,9 @@
         }
 
         .intern-card-modern:hover {
-            transform: translateY(-15px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--accent-gold);
+            transform: translateY(-12px);
+            box-shadow: 0 24px 60px rgba(15,23,42,0.1);
+            border-color: #F59E0B;
         }
 
         .intern-image-wrapper {
@@ -47,7 +47,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: var(--transition-slow);
+            transition: all 0.4s ease;
         }
 
         .intern-card-modern:hover img {
@@ -64,14 +64,14 @@
 
         .intern-card-modern h3 {
             font-size: 22px;
-            color: var(--primary-navy);
+            color: #1E3A8A;
             margin-bottom: 15px;
             line-height: 1.4;
         }
 
         .intern-duration {
             font-size: 14px;
-            color: var(--text-muted);
+            color: #64748B;
             margin-bottom: 25px;
             display: flex;
             align-items: center;
@@ -80,7 +80,7 @@
         }
 
         .intern-duration i {
-            color: var(--accent-gold);
+            color: #D97706;
         }
 
         /* Modal Refinement */
@@ -104,7 +104,7 @@
         }
 
         .intern-modal-card {
-            background: var(--white);
+            background: #FFFFFF;
             width: 100%;
             max-width: 800px;
             max-height: 85vh;
@@ -112,12 +112,12 @@
             border-radius: 40px;
             padding: 60px;
             position: relative;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 24px 60px rgba(15,23,42,0.15);
             transform: translateY(50px);
             opacity: 0;
             transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
             scrollbar-width: thin;
-            scrollbar-color: var(--accent-gold) transparent;
+            scrollbar-color: #D97706 transparent;
         }
 
         .intern-modal-overlay.active .intern-modal-card {
@@ -127,9 +127,9 @@
 
         .intern-modal-card h2 {
             font-size: 32px;
-            color: var(--primary-navy);
+            color: #1E3A8A;
             margin-bottom: 30px;
-            border-bottom: 2px solid var(--accent-gold);
+            border-bottom: 2px solid #D97706;
             display: inline-block;
             padding-bottom: 10px;
         }
@@ -137,10 +137,10 @@
         .syllabus-content {
             font-size: 16px;
             line-height: 1.8;
-            color: var(--text-dark);
+            color: #0F172A;
             white-space: pre-line;
             margin-top: 25px;
-            padding: 40px; /* Increased padding */
+            padding: 40px;
             background: rgba(9, 42, 73, 0.02);
             border-radius: 30px;
             border: 1px solid rgba(9, 42, 73, 0.05);
@@ -148,7 +148,7 @@
         }
 
         .syllabus-content b {
-            color: var(--primary-navy);
+            color: #1E3A8A;
             display: block;
             margin-top: 20px;
             font-size: 18px;
@@ -172,11 +172,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: var(--transition-fast);
+            transition: all 0.2s ease;
         }
 
         .modal-close-btn:hover {
-            background: var(--accent-gold);
+            background: #D97706;
             transform: rotate(90deg);
         }
 

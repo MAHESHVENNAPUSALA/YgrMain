@@ -1,215 +1,361 @@
-/* ================= PREMIUM SCALE CTA ================= */
-.premium-cta-section {
-  padding: 80px 0 120px;
-  background-color: var(--clr-bg);
-}
+/* ============================================================
+   OUR PROCESS — Horizontal Timeline Showcase
+   ============================================================ */
 
-.premium-cta-wrapper {
+.our-process-section {
   position: relative;
-  background-color: var(--clr-dark);
-  border-radius: var(--rad-2xl);
+  width: 100%;
+  background: #FFFFFF;
+  padding: 110px 0; /* Exactly 110px Top & 110px Bottom Padding */
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  font-family: var(--font-inter), sans-serif;
+  color: #0F172A;
 }
 
-/* Background Effects */
-.pcta-mesh-bg {
+/* ── 1. Background Atmosphere ── */
+.process-bg-canvas {
   position: absolute;
   inset: 0;
-  overflow: hidden;
   pointer-events: none;
+  z-index: 0;
 }
 
-.pcta-orb {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.25;
-}
-
-.pcta-orb-1 {
-  background: var(--clr-primary-light);
-  top: -200px;
-  left: -100px;
-}
-
-.pcta-orb-2 {
-  background: var(--clr-secondary-light); /* Green orb for contrast */
-  bottom: -300px;
-  right: -100px;
-}
-
-.pcta-grid-overlay {
+.process-blueprint-grid {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
-  -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+    linear-gradient(to right, rgba(45, 74, 109, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(45, 74, 109, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 50%, black 40%, transparent 80%);
 }
 
-/* Layout Grid */
-.pcta-content-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 60px;
-  align-items: center;
-  padding: 80px;
+.process-radial-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.blue-glow {
+  width: 600px;
+  height: 600px;
+  background: rgba(45, 74, 109, 0.14);
+  top: 10%;
+  left: -80px;
+}
+
+.green-glow {
+  width: 480px;
+  height: 480px;
+  background: rgba(94, 145, 51, 0.12);
+  bottom: 5%;
+  right: -60px;
+}
+
+/* ── 2. Container (1320px Max Width) ── */
+.process-container {
+  max-width: 1320px; /* Exactly 1320px Container Max Width */
+  width: 92%;
+  margin: 0 auto;
   position: relative;
   z-index: 10;
 }
 
-/* Left Col: Text */
-.pcta-eyebrow {
-  margin-bottom: 24px;
-}
-
-.pcta-heading {
-  font-family: var(--font-head);
-  font-size: clamp(2.5rem, 4vw, 3.5rem);
-  font-weight: 800;
-  color: var(--clr-white);
-  line-height: 1.1;
-  margin-bottom: 40px;
-}
-
-/* Timeline */
-.pcta-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.pcta-timeline-item {
-  display: flex;
-  gap: 20px;
-}
-
-.pcta-step-indicator {
+/* Header Stack */
+.process-header-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  margin-bottom: 48px;
 }
 
-.pcta-step-icon {
-  width: 48px;
-  height: 48px;
-  background: rgba(37,99,235,0.15);
-  border: 1px solid rgba(37,99,235,0.3);
+.process-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 6px 16px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  margin-bottom: 16px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.eyebrow-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
+  background: #5E9133;
+  box-shadow: 0 0 6px rgba(94, 145, 51, 0.8);
+}
+
+.eyebrow-title {
+  color: #2D4A6D;
+}
+
+.process-heading {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 900;
+  font-size: 3.2rem;
+  line-height: 1.10;
+  letter-spacing: -2px;
+  color: #0F172A;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.process-description {
+  font-size: 1.05rem;
+  line-height: 1.60;
+  color: #64748B;
+  max-width: 680px; /* Concise 2-3 lines description */
+  margin: 0 auto;
+  font-weight: 450;
+  text-align: center;
+}
+
+/* ── 3. Premium Horizontal Timeline Track ── */
+.timeline-track-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 44px;
+}
+
+.timeline-connecting-line {
+  position: relative;
+  height: 3px;
+  background: #E2E8F0;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.timeline-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #2D4A6D 0%, #5E9133 100%);
+  transform-origin: left;
+}
+
+.timeline-nodes-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  width: 100%;
+  margin-top: -12px;
+}
+
+.timeline-node-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #5E9133;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--clr-primary-light);
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  z-index: 2;
+  box-shadow: 0 0 10px rgba(94, 145, 51, 0.3);
 }
 
-.pcta-step-line {
-  width: 2px;
-  flex-grow: 1;
-  background: linear-gradient(to bottom, rgba(37,99,235,0.3), rgba(37,99,235,0.1));
-  margin: 4px 0;
+.inner-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5E9133;
 }
 
-.pcta-step-content {
-  padding-bottom: 24px;
-}
-
-.pcta-step-content h4 {
-  font-size: 1.1rem;
+.node-step-tag {
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--clr-white);
-  margin-bottom: 6px;
-  margin-top: 10px;
+  color: #2D4A6D;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.pcta-step-content p {
-  font-size: 0.95rem;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.6;
+/* ── 4. 6-Step Process Cards Grid (24px Gap, Rounded 28px) ── */
+.process-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3-Column Grid on Desktop */
+  gap: 24px; /* Exactly 24px Card Gap */
+  width: 100%;
+  margin-bottom: 56px;
+}
+
+.process-step-card {
+  position: relative;
+  background: rgba(248, 250, 252, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 28px; /* Rounded 28px */
+  padding: 28px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  overflow: hidden;
+}
+
+.process-step-card:hover {
+  background: #FFFFFF;
+  border-color: rgba(94, 145, 51, 0.5);
+  box-shadow: 0 20px 48px -10px rgba(15, 23, 42, 0.10);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.step-number-text {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 900;
+  font-size: 2.2rem; /* Large Step Number */
+  color: #2D4A6D;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.step-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #5E9133;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: transform 0.3s ease;
+}
+
+.process-step-card:hover .step-icon-box {
+  transform: rotate(6deg) scale(1.08); /* Icon rotates slightly on hover */
+  color: #2D4A6D;
+  border-color: #5E9133;
+}
+
+.step-card-title {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #0F172A;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.step-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: #64748B;
   margin: 0;
 }
 
-/* Right Col: Action Card */
-.pcta-action-col {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.pcta-action-card {
-  padding: 40px;
-  border-radius: var(--rad-xl);
+/* ── 5. Bottom Centered Statement & Primary CTA ── */
+.process-bottom-stack {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 20px;
-  width: 100%;
-  max-width: 450px;
-  border: 1px solid rgba(255,255,255,0.1);
 }
 
-.pcta-card-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--clr-white);
-  margin-bottom: 8px;
+.bottom-statement-text {
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #2D4A6D;
+  font-style: italic;
+  margin: 0;
+  max-width: 680px;
 }
 
-.pcta-card-desc {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.7);
-  line-height: 1.6;
-  margin-bottom: 12px;
+.btn-start-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px; /* Exactly 56px Height */
+  background: #2D4A6D;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 0 36px;
+  border-radius: 9999px; /* Rounded Full */
+  text-decoration: none;
+  box-shadow: 0 10px 25px -5px rgba(45, 74, 109, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.pcta-main-btn {
-  width: 100%;
+.btn-start-project:hover {
+  background: #5E9133;
+  box-shadow: 0 14px 32px -4px rgba(94, 145, 51, 0.45);
+  transform: translateY(-2px);
+  color: #FFFFFF !important;
+}
+
+.cta-arrow-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 20px;
-  font-size: 1.1rem;
+  font-size: 0.8rem;
+  transition: transform 0.25s ease;
 }
 
-.pcta-sec-btn {
-  width: 100%;
-  justify-content: center;
-  padding: 20px;
-  font-size: 1.1rem;
-  color: #ffffff !important;
+.btn-start-project:hover .cta-arrow-circle {
+  transform: translateX(4px);
 }
 
-.pcta-sec-btn:hover {
-  background: rgba(255,255,255,0.15) !important;
-  color: #ffffff !important;
-}
-
-/* Responsive */
+/* ── 6. Responsive Media Queries ── */
 @media (max-width: 1024px) {
-  .pcta-content-grid {
-    grid-template-columns: 1fr;
-    gap: 50px;
-    padding: 60px 40px;
+  .our-process-section {
+    padding: 75px 0;
   }
-  
-  .pcta-action-col {
-    justify-content: flex-start;
+  .process-cards-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2-Column Layout on Tablet */
   }
-  
-  .pcta-action-card {
-    max-width: 100%;
+  .timeline-track-wrapper {
+    display: none; /* Hide horizontal track on tablet/mobile */
+  }
+  .process-heading {
+    font-size: 2.6rem;
   }
 }
 
-@media (max-width: 768px) {
-  .pcta-content-grid {
-    padding: 40px 20px;
+@media (max-width: 640px) {
+  .process-cards-grid {
+    grid-template-columns: 1fr; /* Vertical timeline on Mobile */
   }
-  
-  .pcta-action-card {
-    padding: 24px;
+  .btn-start-project {
+    width: 100%;
+    justify-content: center;
+  }
+  .process-heading {
+    font-size: 2.1rem;
+    letter-spacing: -1px;
+  }
+  .bottom-statement-text {
+    font-size: 1.05rem;
   }
 }

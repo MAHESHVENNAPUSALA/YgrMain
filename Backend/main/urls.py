@@ -21,6 +21,36 @@ urlpatterns = [
     path('api/public/internships/', public_api_views.public_internships, name='public_internships'),
     path('api/public/testimonials/', public_api_views.public_testimonials, name='public_testimonials'),
 
+    # ── BLOG MODULE DYNAMIC APIs ──
+    path('api/blogs', public_api_views.public_blogs, name='api_blogs_clean'),
+    path('api/blogs/', public_api_views.public_blogs, name='api_blogs'),
+    path('api/blogs/<str:slug>', public_api_views.public_blog_detail, name='api_blog_detail_clean'),
+    path('api/blogs/<str:slug>/', public_api_views.public_blog_detail, name='api_blog_detail'),
+    path('api/blog/categories', public_api_views.public_blog_categories, name='api_blog_categories_clean'),
+    path('api/blog/categories/', public_api_views.public_blog_categories, name='api_blog_categories'),
+    path('api/blog/trending', public_api_views.public_blog_trending, name='api_blog_trending_clean'),
+    path('api/blog/trending/', public_api_views.public_blog_trending, name='api_blog_trending'),
+    path('api/blog/newsletter/subscribe', public_api_views.public_newsletter_subscribe, name='api_newsletter_subscribe_clean'),
+    path('api/blog/newsletter/subscribe/', public_api_views.public_newsletter_subscribe, name='api_newsletter_subscribe'),
+
+    # ── BLOG ADMIN CMS APIs ──
+    path('api/admin/blogs/', views.admin_api_blogs_list, name='admin_api_blogs_list'),
+    path('api/admin/blogs/create/', views.admin_api_blog_create, name='admin_api_blog_create'),
+    path('api/admin/blogs/<int:blog_id>/update/', views.admin_api_blog_update, name='admin_api_blog_update'),
+    path('api/admin/blogs/<int:blog_id>/delete/', views.admin_api_blog_delete, name='admin_api_blog_delete'),
+    path('api/admin/blogs/<int:blog_id>/toggle-visibility/', views.admin_api_blog_toggle_visibility, name='admin_api_blog_toggle_visibility'),
+    path('api/admin/blogs/<int:blog_id>/toggle-featured/', views.admin_api_blog_toggle_featured, name='admin_api_blog_toggle_featured'),
+    path('api/admin/blog/categories/', views.admin_api_categories, name='admin_api_categories'),
+    path('api/admin/blog/authors/', views.admin_api_authors, name='admin_api_authors'),
+
+    # ── DYNAMIC SERVICES & CONTACT APIs ──
+    path('api/services', public_api_views.public_services, name='api_services_clean'),
+    path('api/services/', public_api_views.public_services, name='api_services'),
+    path('api/contact', public_api_views.public_contact_submit, name='api_contact_clean'),
+    path('api/contact/', public_api_views.public_contact_submit, name='api_contact'),
+
+
+
 
     # ================= HOME =================
     path("", views.home, name="home"),

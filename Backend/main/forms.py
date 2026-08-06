@@ -3,13 +3,14 @@ from django import forms
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['name', 'time_taken', 'link', 'image1', 'image2', 'image3', 'image4']
+        fields = '__all__'
  
 
 class BlogForm(forms.ModelForm):
     class Meta:
         model = Blog
-        fields = ['title', 'image', 'description']
+        fields = ['title', 'image', 'short_description', 'content', 'category', 'is_published', 'is_featured']
+
 
 from django import forms
 from .models import InternshipRegistration
