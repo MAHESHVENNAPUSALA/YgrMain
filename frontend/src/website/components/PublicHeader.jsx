@@ -49,6 +49,59 @@ const PublicHeader = () => {
     setActiveDropdown(null);
   }, [location.pathname]);
 
+  // Dynamically measure navbar unscrolled height and set --navbar-height CSS variable
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      const navEl = document.querySelector('.ygr-floating-navbar');
+      const annEl = document.querySelector('.ygr-announcement-bar');
+
+      let annHeight = 0;
+      if (annEl) {
+        const annDisplay = window.getComputedStyle(annEl).display;
+        if (annDisplay !== 'none') {
+          annHeight = annEl.offsetHeight;
+        }
+      }
+
+      let totalNavbarHeight = 0;
+      if (navEl && window.scrollY <= 20) {
+        const rect = navEl.getBoundingClientRect();
+        totalNavbarHeight = rect.bottom;
+      } else {
+        const w = window.innerWidth;
+        const unscrolledNavTop = w <= 375 ? 8 : (w <= 640 ? 28 : 34);
+        const unscrolledNavHeight = w <= 320 ? 60 : (w <= 375 ? 64 : (w <= 640 ? 72 : 82));
+        const effectiveAnn = w <= 375 ? 0 : annHeight;
+        totalNavbarHeight = Math.max(effectiveAnn, unscrolledNavTop) + unscrolledNavHeight;
+      }
+
+      const safeNavbarHeight = Math.max(totalNavbarHeight, 64);
+      document.documentElement.style.setProperty('--navbar-height', `${safeNavbarHeight}px`);
+    };
+
+    updateNavbarHeight();
+
+    window.addEventListener('resize', updateNavbarHeight, { passive: true });
+    window.addEventListener('orientationchange', updateNavbarHeight, { passive: true });
+
+    let observer;
+    if (window.ResizeObserver) {
+      observer = new ResizeObserver(() => {
+        updateNavbarHeight();
+      });
+      const navEl = document.querySelector('.ygr-floating-navbar');
+      const annEl = document.querySelector('.ygr-announcement-bar');
+      if (navEl) observer.observe(navEl);
+      if (annEl) observer.observe(annEl);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateNavbarHeight);
+      window.removeEventListener('orientationchange', updateNavbarHeight);
+      if (observer) observer.disconnect();
+    };
+  }, [location.pathname]);
+
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path) && path !== '#';

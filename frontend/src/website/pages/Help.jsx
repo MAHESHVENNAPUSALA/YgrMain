@@ -9,7 +9,7 @@ const Help = () => {
 
 
 
-<section className="help-top-sec">
+<section className="help-top-sec" style={{ paddingTop: 'calc(var(--navbar-height, 116px) + 28px)' }}>
     <div>
         <h1 className="top-heading">HELP</h1>
 

@@ -14,7 +14,7 @@ body {
 /* ===== FAQ Container ===== */
 .main {
     max-width: 900px;
-    margin: 40px auto;
+    margin: calc(var(--navbar-height, 116px) + 28px) auto 40px auto;
     padding: 30px;
     background: #ffffff;
     border: 1px solid #e0e0e0;

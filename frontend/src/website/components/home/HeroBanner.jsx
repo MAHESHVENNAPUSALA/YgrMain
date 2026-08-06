@@ -72,7 +72,7 @@ const HeroBanner = () => {
             className="hero-eyebrow"
           >
             <span className="eyebrow-dot"></span>
-            <span className="eyebrow-brand">YGR GLOBAL IT SERVICES</span>
+            <span className="eyebrow-brand">YGR GOBAL IT SERVICES</span>
             <span className="eyebrow-sep">•</span>
             <span className="eyebrow-text">Digital Transformation</span>
           </motion.div>

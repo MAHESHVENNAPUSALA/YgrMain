@@ -1,1 +1,0 @@
-import{f as e,p as t}from"./index-E7nG5Fmr.js";e();var n=t(),r=({children:e,variant:t=`primary`,size:r=`md`,onClick:i,disabled:a=!1,icon:o,type:s=`button`})=>(0,n.jsxs)(`button`,{type:s,className:`admin-btn ${`admin-btn-${t}`} ${r===`md`?``:`admin-btn-${r}`}`,onClick:i,disabled:a,children:[o&&(0,n.jsx)(`span`,{children:o}),e]});export{r as t};

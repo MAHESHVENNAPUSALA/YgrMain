@@ -1,0 +1,1 @@
+import{f as e,p as t}from"./index-DGWqTciu.js";e();var n=t(),r=({options:e=[],value:t=``,onChange:r,label:i=`Filter by`})=>(0,n.jsxs)(`select`,{className:`admin-select-filter`,value:t,onChange:e=>r(e.target.value),children:[(0,n.jsxs)(`option`,{value:``,children:[i,` (All)`]}),e.map((e,t)=>(0,n.jsx)(`option`,{value:e.value,children:e.label},t))]});export{r as t};

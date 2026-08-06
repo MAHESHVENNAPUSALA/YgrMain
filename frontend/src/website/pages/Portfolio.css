@@ -25,7 +25,7 @@
 .portfolio-hero-section {
   position: relative;
   width: 100%;
-  padding-top: 120px; /* Offset for sticky public navbar */
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
   padding-bottom: 50px;
   background: #F8FAFC;
   border-bottom: 1px solid rgba(226, 232, 240, 0.7);

@@ -237,33 +237,51 @@ img {
 }
 
 /* ── Scroll Reveal Animations ── */
-.reveal-up {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
-}
-.reveal-left {
-  opacity: 0;
-  transform: translateX(-40px);
-  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
-}
-.reveal-right {
-  opacity: 0;
-  transform: translateX(40px);
-  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
-}
-.reveal-scale {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.8s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1);
+/* ── Scroll Reveal Animations ── */
+@media (min-width: 1024px) {
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(40px);
+    will-change: opacity, transform;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    will-change: opacity, transform;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    will-change: opacity, transform;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    will-change: opacity, transform;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-up.active,
+  .reveal-left.active,
+  .reveal-right.active,
+  .reveal-scale.active {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
-.reveal-up.active,
-.reveal-left.active,
-.reveal-right.active,
-.reveal-scale.active {
-  opacity: 1;
-  transform: none;
+@media (max-width: 1023px) {
+  .reveal-up,
+  .reveal-left,
+  .reveal-right,
+  .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Stagger delay helpers */
@@ -287,4 +305,242 @@ img {
 @keyframes pulse-soft {
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* ==========================================================
+   ENTERPRISE MOTION SYSTEM (Desktop & Laptop Screens ≥ 1024px)
+   Apple/Stripe/Vercel/Linear Tier Smooth Motion (60 FPS)
+   ========================================================== */
+
+/* ── 1. Global Page Load Animation & Smooth Scrolling ── */
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes pageFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+body {
+  animation: pageFadeIn 500ms ease-out forwards;
+}
+
+/* ── 2. Desktop-Only Motion Overrides (1024px+) ── */
+@media (min-width: 1024px) {
+
+  /* GPU-Accelerated Hardware Layer Hints */
+  .reveal-up,
+  .reveal-left,
+  .reveal-right,
+  .reveal-scale,
+  .bento-card,
+  .process-step-card,
+  .project-showcase-card,
+  .industry-bento-card,
+  .pp-hub-card,
+  .btn-primary,
+  .btn-secondary,
+  .btn-start-project,
+  .btn-build-together,
+  .btn-why-choose-us,
+  .btn-build-it-together,
+  .btn-discuss-industry,
+  .btn-view-case-study,
+  .hero-btn-primary,
+  .hero-btn-secondary,
+  .btn-portal-cta {
+    will-change: transform, opacity;
+  }
+
+  /* ── Section Reveal System ── */
+  .reveal-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-up.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-left.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-right.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-scale.active {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ── Grid Stagger Animation Delays ── */
+  .expertise-bento-grid > *:nth-child(1),
+  .process-cards-grid > *:nth-child(1),
+  .portfolio-cards-grid > *:nth-child(1),
+  .industries-bento-grid > *:nth-child(1),
+  .pp-grid > *:nth-child(1) { transition-delay: 0ms; }
+
+  .expertise-bento-grid > *:nth-child(2),
+  .process-cards-grid > *:nth-child(2),
+  .portfolio-cards-grid > *:nth-child(2),
+  .industries-bento-grid > *:nth-child(2),
+  .pp-grid > *:nth-child(2) { transition-delay: 80ms; }
+
+  .expertise-bento-grid > *:nth-child(3),
+  .process-cards-grid > *:nth-child(3),
+  .portfolio-cards-grid > *:nth-child(3),
+  .industries-bento-grid > *:nth-child(3),
+  .pp-grid > *:nth-child(3) { transition-delay: 160ms; }
+
+  .expertise-bento-grid > *:nth-child(4),
+  .process-cards-grid > *:nth-child(4),
+  .portfolio-cards-grid > *:nth-child(4),
+  .industries-bento-grid > *:nth-child(4),
+  .pp-grid > *:nth-child(4) { transition-delay: 240ms; }
+
+  .expertise-bento-grid > *:nth-child(5),
+  .process-cards-grid > *:nth-child(5),
+  .portfolio-cards-grid > *:nth-child(5),
+  .industries-bento-grid > *:nth-child(5) { transition-delay: 320ms; }
+
+  .expertise-bento-grid > *:nth-child(6),
+  .process-cards-grid > *:nth-child(6),
+  .portfolio-cards-grid > *:nth-child(6),
+  .industries-bento-grid > *:nth-child(6) { transition-delay: 400ms; }
+
+  /* ── Button Hover & Click Interactions ── */
+  a.btn, button, .btn-primary, .btn-secondary, .btn-start-project,
+  .btn-build-together, .btn-why-choose-us, .btn-build-it-together,
+  .btn-discuss-industry, .btn-view-case-study, .hero-btn-primary,
+  .hero-btn-secondary, .btn-portal-cta, .btn-primary-glow, .btn-outline-glow {
+    transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 250ms ease,
+                border-color 250ms ease !important;
+  }
+
+  a.btn:hover, button:hover, .btn-primary:hover, .btn-secondary:hover,
+  .btn-start-project:hover, .btn-build-together:hover, .btn-why-choose-us:hover,
+  .btn-build-it-together:hover, .btn-discuss-industry:hover,
+  .btn-view-case-study:hover, .hero-btn-primary:hover,
+  .hero-btn-secondary:hover, .btn-portal-cta:hover, .btn-primary-glow:hover, .btn-outline-glow:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 14px 32px -6px rgba(15, 23, 42, 0.20) !important;
+  }
+
+  a.btn:active, button:active, .btn-primary:active, .btn-secondary:active,
+  .btn-start-project:active, .btn-build-together:active, .btn-why-choose-us:active,
+  .btn-build-it-together:active, .btn-discuss-industry:active,
+  .btn-view-case-study:active, .hero-btn-primary:active,
+  .hero-btn-secondary:active, .btn-portal-cta:active, .btn-primary-glow:active, .btn-outline-glow:active {
+    transform: translateY(-1px) scale(0.97) !important;
+  }
+
+  /* ── Card Hover Elevation & Smooth Border Glow ── */
+  .bento-card,
+  .process-step-card,
+  .project-showcase-card,
+  .industry-bento-card,
+  .pp-hub-card,
+  .command-center-panel,
+  .ai-analytics-panel {
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .bento-card:hover,
+  .process-step-card:hover,
+  .project-showcase-card:hover,
+  .industry-bento-card:hover,
+  .pp-hub-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 24px 50px -12px rgba(15, 23, 42, 0.12) !important;
+    border-color: rgba(94, 145, 51, 0.45) !important;
+  }
+
+  /* ── Image Hover Smooth Zoom ── */
+  .mockup-frame,
+  .project-image-wrapper img,
+  .bento-card img {
+    transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .project-showcase-card:hover .mockup-frame,
+  .bento-card:hover img {
+    transform: scale(1.04) !important;
+  }
+
+  /* ── Icon Micro-Interactions ── */
+  .icon-badge,
+  .step-icon-box,
+  .industry-icon-box,
+  .social-icon {
+    transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .bento-card:hover .icon-badge,
+  .process-step-card:hover .step-icon-box,
+  .industry-bento-card:hover .industry-icon-box,
+  .social-icon:hover {
+    transform: scale(1.1) rotate(6deg) !important;
+  }
+
+  .social-icon:hover {
+    background: #5E9133 !important;
+    color: #FFFFFF !important;
+  }
+
+  .cta-arrow-circle {
+    transition: transform 250ms ease !important;
+  }
+
+  a:hover .cta-arrow-circle,
+  button:hover .cta-arrow-circle {
+    transform: translateX(4px) !important;
+  }
+
+  /* ── Submitting / Floating Animation ── */
+  @keyframes float-subtle {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(1deg); }
+  }
+
+  .card-ai-widget,
+  .floating-service-pill {
+    animation: float-subtle 5.5s infinite ease-in-out;
+  }
+}
+
+/* ── 3. Accessibility: Prefers Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

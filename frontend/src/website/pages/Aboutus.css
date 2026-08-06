@@ -15,8 +15,8 @@
   position: relative;
   width: 100%;
   background: #FFFFFF;
-  padding: 90px 0; /* Exactly 90px Top & 90px Bottom Padding */
-  max-height: 700px; /* Maximum Section Height 700px on Desktop */
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
+  padding-bottom: 60px;
   overflow: hidden;
 }
 

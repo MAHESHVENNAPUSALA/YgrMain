@@ -333,29 +333,84 @@
     padding: 75px 0;
   }
   .process-cards-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2-Column Layout on Tablet */
+    grid-template-columns: repeat(2, 1fr);
   }
   .timeline-track-wrapper {
-    display: none; /* Hide horizontal track on tablet/mobile */
+    display: none;
   }
   .process-heading {
     font-size: 2.6rem;
   }
 }
 
-@media (max-width: 640px) {
-  .process-cards-grid {
-    grid-template-columns: 1fr; /* Vertical timeline on Mobile */
+@media (max-width: 768px) {
+  .our-process-section {
+    padding: 54px 0;
   }
-  .btn-start-project {
-    width: 100%;
-    justify-content: center;
+  .process-container {
+    width: 92%;
+  }
+  .process-header-stack {
+    margin-bottom: 32px;
   }
   .process-heading {
-    font-size: 2.1rem;
+    font-size: 2.2rem;
     letter-spacing: -1px;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .process-description {
+    font-size: 0.92rem;
+    text-align: center;
+  }
+  .process-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  .process-step-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .step-number-text {
+    font-size: 1.8rem;
   }
   .bottom-statement-text {
     font-size: 1.05rem;
+    text-align: center;
+  }
+  .btn-start-project {
+    width: 100%;
+    height: 52px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .our-process-section {
+    padding: 44px 0;
+  }
+  .process-heading {
+    font-size: 1.85rem;
+    letter-spacing: -0.5px;
+  }
+  .step-card-title {
+    font-size: 1.1rem;
+  }
+  .step-card-desc {
+    font-size: 0.85rem;
+  }
+  .bottom-statement-text {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .process-heading {
+    font-size: 1.7rem;
+  }
+  .process-step-card {
+    padding: 16px;
+    border-radius: 18px;
   }
 }

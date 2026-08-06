@@ -73,8 +73,8 @@
 .services-main-hero {
   position: relative;
   width: 100%;
-  padding-top: 115px; /* Offset for sticky public header */
-  padding-bottom: 40px; /* Reduced compact vertical height */
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
+  padding-bottom: 40px;
   background: #F8FAFC;
   overflow: hidden;
   border-bottom: 1px solid rgba(226, 232, 240, 0.7);

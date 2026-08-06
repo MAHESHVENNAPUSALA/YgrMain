@@ -5,7 +5,7 @@
    ========================================================== */
 
 .contact-hero-master {
-  padding-top: 90px;
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
   padding-bottom: 90px;
   background-color: #F8FAFC;
   background-image: 

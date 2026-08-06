@@ -22,7 +22,8 @@
 /* ── HERO SECTION ── */
 .blog-hero-section {
   position: relative;
-  padding: 100px 0 60px;
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
+  padding-bottom: 60px;
   text-align: center;
   overflow: hidden;
 }

@@ -1,11 +1,12 @@
 /* ================= INTERNSHIP PAGE REFINEMENTS ================= */
         .internship-main-container {
+            padding-top: calc(var(--navbar-height, 116px) + 28px);
             padding-bottom: 120px;
             min-height: 100vh;
         }
 
         .internship-hero {
-            padding: 100px 0 60px;
+            padding: 20px 0 60px;
             text-align: center;
         }
 

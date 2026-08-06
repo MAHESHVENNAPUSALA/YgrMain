@@ -64,7 +64,7 @@ const ClientForm = () => {
     };
 
     return (
-        <div style={{ minHeight: 'calc(100vh - 120px)', padding: '60px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #f8fafc, #edf2f7)' }}>
+        <div style={{ minHeight: 'calc(100vh - 120px)', paddingTop: 'calc(var(--navbar-height, 116px) + 28px)', paddingBottom: '60px', paddingLeft: '20px', paddingRight: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(135deg, #f8fafc, #edf2f7)' }}>
             <div style={{ width: '350px', background: '#fff', padding: '30px', borderRadius: '15px', boxShadow: '0 10px 40px rgba(0,0,0,0.06)', border: '1px solid #e2e8f0' }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#091c47', fontFamily: "'Oswald', sans-serif", textTransform: 'uppercase', letterSpacing: '1px' }}>Client Form</h2>
                 

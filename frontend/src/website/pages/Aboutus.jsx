@@ -396,7 +396,7 @@ const Aboutus = () => {
             <div className="about-hero-left">
               <motion.div className="about-eyebrow" variants={fadeUpVariant}>
                 <span className="eyebrow-dot"></span>
-                <span className="eyebrow-title">ABOUT YGR GLOBAL IT SERVICES</span>
+                <span className="eyebrow-title">ABOUT YGR GOBAL IT SERVICES</span>
               </motion.div>
 
               <motion.h1 className="about-hero-heading" variants={fadeUpVariant}>
@@ -405,7 +405,7 @@ const Aboutus = () => {
               </motion.h1>
 
               <motion.p className="about-hero-description" variants={fadeUpVariant}>
-                YGR Global IT Services is a technology-driven software engineering company delivering enterprise applications, cloud-native solutions, AI-powered innovation, and digital transformation services for businesses worldwide. We combine engineering excellence, modern technologies, and customer-first thinking to create secure, scalable, and future-ready digital products.
+                YGR Gobal IT Services is a technology-driven software engineering company delivering enterprise applications, cloud-native solutions, AI-powered innovation, and digital transformation services for businesses worldwide. We combine engineering excellence, modern technologies, and customer-first thinking to create secure, scalable, and future-ready digital products.
               </motion.p>
 
               <motion.div className="about-hero-buttons" variants={fadeUpVariant}>
@@ -448,7 +448,7 @@ const Aboutus = () => {
                       <span className="dot dot-yellow"></span>
                       <span className="dot dot-green"></span>
                     </div>
-                    <span className="panel-tag">YGR Global Architecture Mesh</span>
+                    <span className="panel-tag">YGR Gobal Architecture Mesh</span>
                     <span className="status-pill">
                       <span className="live-dot"></span> Active
                     </span>
@@ -539,7 +539,7 @@ const Aboutus = () => {
 
               <motion.div className="story-paragraphs-block" variants={fadeUpVariant}>
                 <p>
-                  YGR Global IT Services was established with a vision to help businesses embrace digital transformation through innovative software solutions.
+                  YGR Gobal IT Services was established with a vision to help businesses embrace digital transformation through innovative software solutions.
                 </p>
                 <p>
                   From our early projects to enterprise-scale digital platforms, we have remained committed to engineering excellence, customer success, and continuous innovation.
@@ -1001,7 +1001,7 @@ const Aboutus = () => {
               </motion.h2>
 
               <motion.p className="eng-description" variants={fadeUpVariant}>
-                At YGR Global IT Services, engineering is more than writing code. Every solution is designed with scalability, security, maintainability, performance, and long-term business value in mind. We follow modern engineering principles to ensure every application is reliable, future-ready, and built for growth.
+                At YGR Gobal IT Services, engineering is more than writing code. Every solution is designed with scalability, security, maintainability, performance, and long-term business value in mind. We follow modern engineering principles to ensure every application is reliable, future-ready, and built for growth.
               </motion.p>
 
               <motion.div className="eng-principles-grid" variants={fadeUpVariant}>
@@ -1204,7 +1204,7 @@ const Aboutus = () => {
               </motion.h2>
 
               <motion.p className="culture-description" variants={fadeUpVariant}>
-                At YGR Global IT Services, we believe great technology is built by empowered people. Our culture encourages curiosity, continuous learning, collaboration, ownership, and innovation while maintaining a strong commitment to quality and customer success.
+                At YGR Gobal IT Services, we believe great technology is built by empowered people. Our culture encourages curiosity, continuous learning, collaboration, ownership, and innovation while maintaining a strong commitment to quality and customer success.
               </motion.p>
 
               <motion.div className="culture-highlights-grid" variants={fadeUpVariant}>
@@ -1316,7 +1316,7 @@ const Aboutus = () => {
 
               {/* Concise Description (Max 3 lines) */}
               <motion.p className="cta-description" variants={fadeUpVariant}>
-                Whether you&apos;re launching a new product, modernizing existing systems, or planning your next digital transformation initiative, YGR Global IT Services is ready to become your trusted technology partner. Let&apos;s build secure, scalable, and future-ready digital solutions together.
+                Whether you&apos;re launching a new product, modernizing existing systems, or planning your next digital transformation initiative, YGR Gobal IT Services is ready to become your trusted technology partner. Let&apos;s build secure, scalable, and future-ready digital solutions together.
               </motion.p>
 
               {/* Two CTA Buttons Stack (58px Height, Rounded Full) */}

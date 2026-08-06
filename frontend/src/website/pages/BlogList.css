@@ -1,6 +1,7 @@
 
         /* ================= BLOG PAGE REFINEMENTS ================= */
         .blog-main-container {
+            padding-top: calc(var(--navbar-height, 116px) + 28px);
             padding-bottom: 20px;
             min-height: 100vh;
         }

@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import PublicHeader from './PublicHeader';
 import PublicFooter from './PublicFooter';
 
 const PublicLayout = ({ hideHeaderFooter = false }) => {
+  const location = useLocation();
+
   useEffect(() => {
     // Inject Bootstrap globally for Public Pages
     const bootstrapCss = document.createElement('link');
@@ -25,14 +27,13 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
     modernUiCss.id = 'modern-ui-css';
     if (!document.getElementById('modern-ui-css')) document.head.appendChild(modernUiCss);
 
-    // Allow native scrolling for public pages (fixes Lenis and Framer Motion window scroll)
+    // Allow native scrolling for public pages
     const originalOverflow = document.body.style.overflow;
     const originalHeight = document.body.style.height;
     document.body.style.overflow = 'auto';
     document.body.style.height = 'auto';
     
     return () => {
-      // Remove Bootstrap when leaving public layout so it doesn't break the HR Dashboard
       const css = document.getElementById('bootstrap-css');
       const icons = document.getElementById('bootstrap-icons');
       const modernUi = document.getElementById('modern-ui-css');
@@ -40,11 +41,72 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
       if (icons) icons.remove();
       if (modernUi) modernUi.remove();
 
-      // Restore body styles for the HR dashboard
       document.body.style.overflow = originalOverflow;
       document.body.style.height = originalHeight;
     };
   }, []);
+
+  // ── Global Scroll Reveal Engine (Site-wide Desktop Scroll Reveal Transitions) ──
+  useEffect(() => {
+    if (window.innerWidth < 1024) return; // Keep mobile instant & minimal
+
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    const initScrollReveals = () => {
+      const targetSelectors = [
+        'section',
+        '.reveal-up',
+        '.reveal-left',
+        '.reveal-right',
+        '.reveal-scale',
+        '.bento-card',
+        '.process-step-card',
+        '.project-showcase-card',
+        '.industry-bento-card',
+        '.pp-hub-card',
+        '.editorial-hero'
+      ];
+
+      const elements = document.querySelectorAll(targetSelectors.join(','));
+      elements.forEach((el) => {
+        if (
+          !el.classList.contains('reveal-up') &&
+          !el.classList.contains('reveal-left') &&
+          !el.classList.contains('reveal-right') &&
+          !el.classList.contains('reveal-scale')
+        ) {
+          el.classList.add('reveal-up');
+        }
+
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          el.classList.add('active');
+        } else {
+          revealObserver.observe(el);
+        }
+      });
+    };
+
+    initScrollReveals();
+    const timer1 = setTimeout(initScrollReveals, 200);
+    const timer2 = setTimeout(initScrollReveals, 600);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      revealObserver.disconnect();
+    };
+  }, [location.pathname]);
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -54,7 +116,6 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
       </main>
       {!hideHeaderFooter && <PublicFooter />}
     </div>
-
   );
 };
 

@@ -127,7 +127,7 @@ const CompanyIntro = () => {
               <motion.div
                 className="command-center-panel"
                 style={{ x: card1X, y: card1Y }}
-                animate={{ y: [0, -8, 0] }}
+                animate={{ y: [0, 8, 0] }}
                 transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
               >
                 {/* Top Control Bar */}
@@ -221,14 +221,47 @@ const CompanyIntro = () => {
                 </div>
               </motion.div>
 
+              {/* Secondary Widget: AI Analytics Panel */}
+              <motion.div
+                className="ai-analytics-panel"
+                style={{ x: card2X, y: card2Y }}
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              >
+                <div className="ai-header">
+                  <div className="ai-title-group">
+                    <div className="ai-icon-circle">
+                      <i className="fas fa-microchip"></i>
+                    </div>
+                    <div>
+                      <span className="ai-title">Global Cloud Infrastructure</span>
+                      <span className="ai-subtitle">Auto-Scaling & Load Balancing</span>
+                    </div>
+                  </div>
+                  <div className="ai-activity-ring"></div>
+                </div>
+                <div className="ai-chart-row">
+                  <div className="c-bar active" style={{ height: '40%' }}></div>
+                  <div className="c-bar" style={{ height: '60%' }}></div>
+                  <div className="c-bar active" style={{ height: '35%' }}></div>
+                  <div className="c-bar highlight" style={{ height: '90%' }}></div>
+                  <div className="c-bar active" style={{ height: '55%' }}></div>
+                  <div className="c-bar" style={{ height: '70%' }}></div>
+                  <div className="c-bar active" style={{ height: '45%' }}></div>
+                  <div className="c-bar highlight" style={{ height: '100%' }}></div>
+                  <div className="c-bar" style={{ height: '65%' }}></div>
+                  <div className="c-bar active" style={{ height: '50%' }}></div>
+                </div>
+              </motion.div>
+
               {/* Floating Glass Badges */}
               {FLOATING_TRUST_BADGES.map((badge, i) => (
                 <motion.div
                   key={badge.label}
                   className={`floating-trust-badge badge-${badge.position}`}
                   style={{ x: card2X, y: card2Y }}
-                  animate={{ y: [0, (i % 2 === 0 ? -6 : 6), 0] }}
-                  whileHover={{ y: -4, scale: 1.03 }}
+                  animate={{ y: [0, (i % 2 === 0 ? 6 : 10), 0] }}
+                  whileHover={{ y: 0, scale: 1.03 }}
                   transition={{ duration: 4 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}
                 >
                   <i className={`fas ${badge.icon} badge-icon`}></i>

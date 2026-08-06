@@ -15,7 +15,8 @@
   position: relative;
   width: 100%;
   background: #FFFFFF;
-  padding: 80px 0; /* Exactly 80px Top & 80px Bottom Padding */
+  padding-top: calc(var(--navbar-height, 116px) + 28px);
+  padding-bottom: 60px;
   overflow: hidden;
 }
 

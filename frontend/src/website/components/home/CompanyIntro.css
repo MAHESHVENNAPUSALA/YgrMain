@@ -6,9 +6,9 @@
   position: relative;
   width: 100%;
   background: #FFFFFF;
-  padding: 64px 0; /* Exactly 64px Top & 64px Bottom Padding */
-  max-height: 760px; /* Max 760px Desktop Height */
-  overflow: hidden;
+  padding: 120px 0 80px 0;
+  margin-top: 60px;
+  min-height: auto;
   font-family: var(--font-inter), sans-serif;
   color: #0F172A;
 }
@@ -43,8 +43,8 @@
   width: 540px;
   height: 540px;
   background: rgba(45, 74, 109, 0.14);
-  top: -40px;
-  left: -80px;
+  top: 0;
+  left: 0;
 }
 
 .green-glow {
@@ -52,12 +52,12 @@
   height: 440px;
   background: rgba(94, 145, 51, 0.12);
   top: 10%;
-  right: -60px;
+  right: 0;
 }
 
 /* ── 2. Grid Container Layout (1320px Max Width) ── */
 .why-container {
-  max-width: 1320px; /* Exactly 1320px Container Max Width */
+  max-width: 1440px;
   width: 92%;
   margin: 0 auto;
   position: relative;
@@ -84,19 +84,21 @@
   position: relative;
   width: 100%;
   max-width: 580px;
-  height: 500px;
+  height: 750px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 24px;
 }
 
 .graphic-halo {
   position: absolute;
-  width: 460px;
-  height: 460px;
+  width: 500px;
+  height: 600px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(45, 74, 109, 0.16) 0%, rgba(94, 145, 51, 0.10) 50%, transparent 80%);
-  filter: blur(28px);
+  filter: blur(34px);
 }
 
 .command-center-panel {
@@ -373,6 +375,98 @@
 .text-green { color: #5E9133; }
 .text-orange { color: #D36B1C; }
 
+/* ── Secondary Widget: AI Analytics Panel ── */
+.ai-analytics-panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  z-index: 2;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-icon-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(45, 74, 109, 0.1);
+  color: #2D4A6D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.ai-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.ai-subtitle {
+  font-size: 0.65rem;
+  color: #64748B;
+  display: block;
+}
+
+.ai-activity-ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(94, 145, 51, 0.3);
+  border-top-color: #5E9133;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.ai-chart-row {
+  display: flex;
+  align-items: flex-end;
+  height: 48px;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+
+.c-bar {
+  flex: 1;
+  background: #CBD5E1;
+  border-radius: 4px 4px 0 0;
+  min-height: 10%;
+  transition: all 0.5s ease;
+}
+
+.c-bar.active {
+  background: #2D4A6D;
+}
+.c-bar.highlight {
+  background: #5E9133;
+}
+
 /* Floating Glass Badges */
 .floating-trust-badge {
   position: absolute;
@@ -407,10 +501,10 @@
   color: #334155;
 }
 
-.badge-top-left { top: 0px; left: -15px; }
-.badge-top-right { top: 0px; right: -15px; }
-.badge-bottom-left { bottom: 20px; left: -20px; }
-.badge-bottom-right { bottom: 10px; right: -10px; }
+.badge-top-left { top: 10px; left: 10px; }
+.badge-top-right { top: 10px; right: 10px; }
+.badge-bottom-left { bottom: 20px; left: 10px; }
+.badge-bottom-right { bottom: 20px; right: 10px; }
 
 /* ── 4. Right Side Content Hierarchy ── */
 .why-right-content {
@@ -629,74 +723,190 @@
   transform: translateX(4px);
 }
 
-/* ── 5. Responsive Media Queries (64px Desktop, 48px Tablet, 34px Mobile) ── */
+/* ── 5. Responsive Media Queries — Mobile-First Redesign ── */
+
+/* ══════════════════════════════════════════════════════════════
+   WHY CHOOSE YGR — Mobile-First Responsive Redesign
+   Verified: 360 / 375 / 390 / 412 / 430 / 480 / 640 / 768 / 1024 / 1366px
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1366px ── */
 @media (max-width: 1366px) {
-  .why-choose-ygr-section {
-    max-height: 680px;
-    padding: 48px 0;
-  }
-  .why-heading {
-    font-size: 3.2rem;
-  }
+  .why-choose-ygr-section { padding: 80px 0 60px 0; }
+  .why-heading { font-size: 3.2rem; }
 }
 
+/* ── Tablet 1024px ── */
 @media (max-width: 1024px) {
-  .why-choose-ygr-section {
-    max-height: none;
-    padding: 56px 0;
-  }
+  .why-choose-ygr-section { padding: 60px 0; margin-top: 0; }
   .why-grid {
     grid-template-columns: 1fr;
     gap: 40px;
     text-align: center;
   }
-  .why-right-content {
-    align-items: center;
-    text-align: center;
-  }
-  .why-heading {
-    font-size: 3.0rem; /* 48px Tablet */
-    text-align: center;
-    line-height: 1.0;
-  }
-  .why-description-block p {
-    text-align: center;
-  }
+  .why-right-content { align-items: center; text-align: center; }
+  .why-heading { font-size: 3.0rem; text-align: center; line-height: 1.0; }
+  .why-description-block p { text-align: center; }
   .visual-trust-canvas {
     max-width: 500px;
-    height: 440px;
-  }
-  .why-left-visual {
-    justify-content: center;
-  }
-  .why-trust-metrics-container {
     height: auto;
-    padding: 16px;
+    min-height: 0;
+    flex-direction: column;
+    gap: 16px;
   }
-  .metrics-row {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .metric-vertical-divider {
-    display: none;
+  .why-left-visual { justify-content: center; }
+  .why-trust-metrics-container { height: auto; padding: 16px; }
+  .metrics-row { flex-wrap: wrap; gap: 12px; }
+  .metric-vertical-divider { display: none; }
+
+  /* Inline badges on tablet */
+  .floating-trust-badge {
+    position: relative;
+    top: auto; left: auto; right: auto; bottom: auto;
   }
 }
 
-@media (max-width: 640px) {
+/* ── Mobile 768px ── */
+@media (max-width: 768px) {
+  .why-choose-ygr-section {
+    padding: 60px 0 50px 0;
+    margin-top: 0;
+  }
+
+  .why-container { width: 92%; }
+
+  .why-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+
   .why-heading {
-    font-size: 2.12rem; /* 34px Mobile */
+    font-size: 2.2rem;
     letter-spacing: -1px;
     line-height: 1.05;
+    text-align: center;
+    max-width: 100%;
   }
-  .why-trust-points-grid {
-    grid-template-columns: 1fr;
-  }
-  .btn-why-choose-us {
+
+  /* Visual column: stacked flow */
+  .visual-trust-canvas {
+    position: relative;
     width: 100%;
-    justify-content: center;
+    max-width: 100%;
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0;
   }
+
+  /* Command center panel — full width, no absolute */
+  .command-center-panel {
+    position: relative;
+    max-width: 100%;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  /* AI Analytics panel — full width */
+  .ai-analytics-panel {
+    position: relative;
+    max-width: 100%;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  /* Floating badges → inline horizontal chip row */
   .floating-trust-badge {
-    padding: 6px 14px;
+    position: relative;
+    top: auto; left: auto; right: auto; bottom: auto;
+    flex-shrink: 0;
+    padding: 6px 12px;
     font-size: 0.74rem;
+    box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
   }
+  /* Wrap badges as an inline flex row */
+  .visual-trust-canvas::after {
+    content: '';
+    display: none;
+  }
+  /* Group badges below via a wrapper if needed */
+
+  /* Node boxes smaller */
+  .node-item { width: 80px; padding: 8px 6px; }
+  .node-icon { width: 28px; height: 28px; font-size: 0.9rem; }
+  .node-item span { font-size: 0.65rem; }
+
+  /* Trust points 2 cols still OK */
+  .why-trust-points-grid { gap: 8px 12px; }
+  .point-text { font-size: 0.8rem; }
+
+  /* Stats row wraps */
+  .metrics-row { flex-wrap: wrap; gap: 10px; }
+  .metric-vertical-divider { display: none; }
+  .metric-num { font-size: 1.1rem; }
+  .metric-desc { font-size: 0.64rem; }
+
+  /* CTA full width */
+  .btn-why-choose-us { width: 100%; justify-content: center; }
 }
+
+/* ── Small Phone 640px ── */
+@media (max-width: 640px) {
+  .why-heading {
+    font-size: 2.0rem;
+    letter-spacing: -0.8px;
+    line-height: 1.05;
+  }
+  .why-trust-points-grid { grid-template-columns: 1fr; gap: 8px; }
+  .btn-why-choose-us { width: 100%; justify-content: center; }
+
+  /* Badges: compact pill row */
+  .floating-trust-badge { padding: 5px 10px; font-size: 0.70rem; }
+  .badge-icon { font-size: 0.76rem; }
+
+  /* Command panel tighter */
+  .command-center-panel { padding: 14px; }
+  .command-security-banner { padding: 8px 10px; }
+  .banner-title { font-size: 0.74rem; }
+  .banner-subtitle { font-size: 0.62rem; }
+  .threat-zero-badge { font-size: 0.58rem; }
+
+  .command-traffic-row { padding: 8px 12px; }
+  .traffic-val { font-size: 0.78rem; }
+
+  .command-metrics-grid { gap: 6px; }
+  .m-lbl { font-size: 0.60rem; }
+  .m-val { font-size: 0.76rem; }
+
+  /* AI chart smaller */
+  .ai-chart-row { height: 38px; padding: 8px 10px; }
+}
+
+/* ── Extra Small 480px ── */
+@media (max-width: 480px) {
+  .why-heading { font-size: 1.85rem; }
+  .why-description-block p { font-size: 0.93rem; }
+  .why-trust-points-grid { gap: 6px; }
+  .trust-point-card { padding: 8px 10px; }
+  .point-check-icon { width: 20px; height: 20px; font-size: 0.72rem; }
+  .why-trust-metrics-container { padding: 12px; }
+}
+
+/* ── 375px ── */
+@media (max-width: 375px) {
+  .why-heading { font-size: 1.7rem; }
+  .why-container { width: 94%; }
+  .command-center-panel { padding: 12px; border-radius: 16px; }
+  .node-item { width: 70px; }
+}
+
+/* ── 360px ── */
+@media (max-width: 360px) {
+  .why-heading { font-size: 1.58rem; }
+  .command-nodes-row { gap: 0; }
+  .node-connector { margin: 0 2px; }
+  .node-item { width: 64px; padding: 6px 4px; }
+}
+

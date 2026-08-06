@@ -6,7 +6,7 @@ import ServicesSection from '../components/home/ServicesSection';
 import ScaleCTA from '../components/home/ScaleCTA';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import Testimonials from '../components/home/Testimonials';
-import ImpactStats from '../components/home/ImpactStats';
+
 
 const Home = () => {
     
@@ -49,7 +49,7 @@ const Home = () => {
                 <ScaleCTA />
                 <WhyChooseUs />
                 <Testimonials />
-                <ImpactStats />
+
             </main>
         </ReactLenis>
     );
