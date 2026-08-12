@@ -1,0 +1,9 @@
+Application saved successfully.
+Exception: cannot access local variable 'JsonResponse' where it is not associated with a value
+Traceback (most recent call last):
+  File "E:\YgrMain\Backend\main\views.py", line 1622, in job_application
+    return JsonResponse({'success': True, 'message': 'Application submitted'})
+           ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'JsonResponse' where it is not associated with a value
+
+Application saved successfully.

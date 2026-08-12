@@ -1,5 +1,5 @@
 /**
- * Centralized Route Constants for YGR Global IT Services
+ * Centralized Route Constants for YGR Gobal IT Services
  * Distinguishes Public Website, Website CMS, and HRMS Modules cleanly.
  */
 

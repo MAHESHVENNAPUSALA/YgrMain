@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../shared/context/ToastContext';
 
 const FALLBACK_TESTIMONIALS = [
-  { id: 1, name: 'Sanjay Verma', role: 'CTO, FinEdge Tech', quote: 'YGR Global delivered our multi-tenant application ahead of schedule. Outstanding engineering standard!', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80', rating: 5, status: 'Active' },
+  { id: 1, name: 'Sanjay Verma', role: 'CTO, FinEdge Tech', quote: 'YGR Gobal delivered our multi-tenant application ahead of schedule. Outstanding engineering standard!', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80', rating: 5, status: 'Active' },
   { id: 2, name: 'Dr. Meera Nambiar', role: 'Founder, HealthCare Plus', quote: 'Built a HIPAA-compliant telemedicine platform handling 10,000+ daily consultations effortlessly.', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80', rating: 5, status: 'Active' },
   { id: 3, name: 'Rajesh Kumar', role: 'VP Operations, LogisticsX', quote: 'Real-time fleet engine reduced dispatch latency by 45%. Highly recommended team!', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80', rating: 5, status: 'Active' }
 ];

@@ -9,10 +9,10 @@ const SeoAdminPage = () => {
   const { addToast } = useToast();
 
   const [formData, setFormData] = useState({
-    meta_title: 'YGR Global IT Services | Enterprise Solutions',
+    meta_title: 'YGR Gobal IT Services | Enterprise Solutions',
     meta_description: 'Premier custom software development, cloud engineering, mobile apps, and IT staffing services.',
     keywords: 'IT Services, Web Development, Cloud Engineering, Software Solutions',
-    open_graph_title: 'YGR Global IT Services',
+    open_graph_title: 'YGR Gobal IT Services',
     open_graph_image: '/images/og-banner.png',
     twitter_card: 'summary_large_image',
     robots: 'index, follow',

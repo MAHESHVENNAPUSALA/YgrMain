@@ -154,24 +154,32 @@ class ProjectSerializer(serializers.ModelSerializer):
     project_name = serializers.CharField(source='name')
     assigned_manager_name = serializers.SerializerMethodField()
     teams_count = serializers.SerializerMethodField()
+    assigned_team_member_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
         fields = [
-            'id', 'project_id', 'project_code', 'name', 'project_name', 'description',
-            'startdate', 'deadline', 'client_name', 'client_contact', 'client',
-            'project_category', 'priority', 'estimated_budget', 'technology_stack',
-            'project_logo', 'project_color', 'assigned_manager', 'assigned_manager_name',
-            'created_by', 'created_at', 'updated_at', 'status', 'is_archived', 'teams_count'
+            'id', 'project_id', 'project_code', 'name', 'project_name', 
+            'description', 'startdate', 'deadline', 'client_name', 
+            'client_contact', 'client', 'project_category', 'priority', 
+            'estimated_budget', 'technology_stack', 'project_logo', 
+            'project_color', 'assigned_manager', 'assigned_manager_name', 
+            'created_by', 'created_at', 'updated_at', 'status', 'is_archived', 'teams_count', 'assigned_team_member_ids'
         ]
 
     def get_assigned_manager_name(self, obj):
         if obj.assigned_manager:
-            return f"{obj.assigned_manager.first_name} {obj.assigned_manager.last_name}".strip() or obj.assigned_manager.username
+            return obj.assigned_manager.get_full_name() or obj.assigned_manager.username
         return None
-
+        
     def get_teams_count(self, obj):
         return obj.assigned_teams.count()
+        
+    def get_assigned_team_member_ids(self, obj):
+        # Return all member IDs from all teams assigned to this project
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return list(User.objects.filter(teams__projects=obj).values_list('id', flat=True).distinct())
 
 
 class TeamSerializer(serializers.ModelSerializer):

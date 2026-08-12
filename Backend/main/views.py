@@ -1,3 +1,4 @@
+import traceback
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
@@ -1545,19 +1546,25 @@ def job_application(request, job_id=None):
             first_name = request.POST.get("first_name")
             last_name = request.POST.get("last_name")
 
-            password = phone
             user = User.objects.filter(email=email).first()
 
             if not user:
                 user = User.objects.create_user(
-                    username=email,
+                    username=email.split('@')[0] + phone[-4:],
                     email=email,
-                    password=password
+                    password=phone
                 )
                 user.phone = phone
                 user.first_name = first_name
                 user.last_name = last_name
                 user.save()
+
+            def get_notice_period(val):
+                if not val: return None
+                if 'Immediate' in val: return 0
+                import re
+                match = re.search(r'\d+', val)
+                return int(match.group()) if match else None
 
             JobApplication.objects.create(
                 user=user,
@@ -1565,20 +1572,20 @@ def job_application(request, job_id=None):
                 first_name=first_name,
                 last_name=last_name,
                 dob=request.POST.get("dob"),
-                gender=request.POST.get("gender"),
+                gender=request.POST.get("gender") or "Not Specified",
                 phone=phone,
                 email=email,
-                current_city=request.POST.get("current_city"),
+                current_city=request.POST.get("current_city") or request.POST.get("current_address"),
                 current_address=request.POST.get("current_address"),
                 permanent_address=request.POST.get("permanent_address"),
                 department=request.POST.get("department"),
-                employment_type=request.POST.get("employment_type"),
-                preferred_work_mode=request.POST.get("preferred_work_mode"),
-                preferred_job_location=request.POST.get("preferred_job_location"),
+                employment_type=request.POST.get("employment_type") or "Full Time",
+                preferred_work_mode=request.POST.get("preferred_work_mode") or "Office",
+                preferred_job_location=request.POST.get("preferred_job_location") or request.POST.get("preferred_location"),
                 highest_qualification=request.POST.get("highest_qualification"),
                 college_university=request.POST.get("college_university"),
                 passout_year=empty_to_none(request.POST.get("passout_year")),
-                course=request.POST.get("course"),
+                course=request.POST.get("course") or request.POST.get("highest_qualification"),
                 ssc_marks=request.POST.get("ssc_marks"),
                 inter_diploma_marks=request.POST.get("inter_diploma_marks"),
                 higher_education_marks=empty_to_none(request.POST.get("higher_education_marks")),
@@ -1593,9 +1600,9 @@ def job_application(request, job_id=None):
                 relevant_experience=empty_to_none(request.POST.get("relevant_experience")),
                 current_company=empty_to_none(request.POST.get("current_company")),
                 current_designation=empty_to_none(request.POST.get("current_designation")),
-                current_ctc=empty_to_none(request.POST.get("current_ctc")),
-                expected_ctc=empty_to_none(request.POST.get("expected_ctc")),
-                notice_period=empty_to_none(request.POST.get("notice_period")),
+                current_ctc=empty_to_none(request.POST.get("current_ctc") or request.POST.get("current_salary")),
+                expected_ctc=empty_to_none(request.POST.get("expected_ctc") or request.POST.get("expected_salary")),
+                notice_period=get_notice_period(request.POST.get("notice_period")),
                 reason_for_job_change=empty_to_none(request.POST.get("reason_for_job_change")),
                 resume=request.FILES.get("resume"),
                 profile_photo=request.FILES.get("profile_photo"),
@@ -1604,13 +1611,23 @@ def job_application(request, job_id=None):
                 aadhaar_number=empty_to_none(request.POST.get("aadhaar_number")),
                 aadhaar_front_image=request.FILES.get("aadhaar_front_image"),   
                 aadhaar_back_image=request.FILES.get("aadhaar_back_image"), 
-                linkedin=empty_to_none(request.POST.get("linkedin")),
-                github=empty_to_none(request.POST.get("github")),
+                linkedin=empty_to_none(request.POST.get("linkedin") or request.POST.get("linkedin_url")),
+                github=empty_to_none(request.POST.get("github") or request.POST.get("portfolio_url")),
             )
 
+            with open("apply_debug.log", "a") as f:
+                f.write("Application saved successfully.\n")
+
+            if 'HTTP_X_CSRFTOKEN' in request.META or request.headers.get('Accept', '').startswith('application/json'):
+                return JsonResponse({'success': True, 'message': 'Application submitted'})
             return redirect("application_success")
 
         except Exception as e:
+            with open("apply_debug.log", "a") as f:
+                f.write(f"Exception: {str(e)}\\n")
+                f.write(traceback.format_exc() + "\\n")
+            if 'HTTP_X_CSRFTOKEN' in request.META or request.headers.get('Accept', '').startswith('application/json'):
+                return JsonResponse({"error": str(e)}, status=400)
             return render(request, "exampages/job_application.html", {"error": str(e), "job": job})
 
     return render(request, "exampages/job_application.html", {"job": job})
@@ -2161,27 +2178,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.text import slugify
 from .models import Blog, BlogCategory, BlogAuthor, BlogTag
 
-def blog_list(request):
-    """Fallback render view if accessed via legacy url"""
-    blogs = Blog.objects.filter(is_published=True).order_by('-created_at')
-    return render(request, 'blog_list.html', {'blogs': blogs})
 
-def admin_blog_list(request):
-    """Fallback render view if accessed via legacy admin url"""
-    blogs = Blog.objects.all().order_by('-created_at')
-    return render(request, 'admin_blog_list.html', {'blogs': blogs})
-
-def add_blog(request):
-    return render(request, 'add_blog.html')
-
-def edit_blog(request, blog_id):
-    blog = get_object_or_404(Blog, id=blog_id)
-    return render(request, 'edit_blog.html', {'blog': blog})
-
-def delete_blog(request, blog_id):
-    blog = get_object_or_404(Blog, id=blog_id)
-    blog.delete()
-    return redirect('admin_blog_list')
 
 
 @csrf_exempt
@@ -2451,4 +2448,4 @@ def admin_api_authors(request):
             return JsonResponse({'error': str(e)}, status=400)
 
     authors = BlogAuthor.objects.all().order_by('name')
-    return JsonResponse([{'id': a.id, 'name': a.name, 'role': a.role, 'bio': a.bio} for a in authors], safe=False)
+    return JsonResponse([{'id': a.id, 'name': a.name, 'role': a.role, 'bio': a.bio} for a in authors], safe=False)

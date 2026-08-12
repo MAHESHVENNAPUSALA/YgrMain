@@ -129,9 +129,19 @@
 
     <!-- Documents -->
     <h3>Documents</h3>
-    <p><strong>Resume:</strong> <a class="document-link" href="{% url 'download_resume' application.id %}">Download</a></p>
+    <p><strong>Resume:</strong> 
+        {% if application.resume %}
+            <a class="document-link" href="{% url 'download_resume' application.id %}">Download</a>
+        {% else %}
+            Not provided
+        {% endif %}
+    </p>
     <p><strong>Profile Photo:</strong></p>
-    <img src="{{ application.profile_photo.url }}" alt="Profile Photo" class="profile-photo">
+    {% if application.profile_photo %}
+        <img src="{{ application.profile_photo.url }}" alt="Profile Photo" class="profile-photo">
+    {% else %}
+        <p>Not provided</p>
+    {% endif %}
     <p><strong>PAN Number:</strong> {{ application.pan_number }}</p>
     <p><strong>PAN Card:</strong> 
         {% if application.pan_card_image %}<a class="document-link" href="{{ application.pan_card_image.url }}">View</a>{% endif %}

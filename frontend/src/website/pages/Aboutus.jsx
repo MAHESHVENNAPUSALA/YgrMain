@@ -1,43 +1,41 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useInView, useSpring, useTransform } from 'framer-motion';
+import { motion, useInView, useSpring, useTransform, useMotionValue, animate } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './Aboutus.css';
 
 // Count-up animated number component for stats
 const AnimatedNumber = ({ value, suffix }) => {
-  const [count, setCount] = useState(0);
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-10%' });
+  const isInView = useInView(ref, { once: true });
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    if (!isInView) return;
-    let start = 0;
-    const end = value;
-    const duration = 2000;
-    const stepTime = Math.abs(Math.floor(duration / end));
+    // Sync the rounded value to React state to render
+    return rounded.onChange((latest) => {
+      setDisplayValue(latest);
+    });
+  }, [rounded]);
 
-    const timer = setInterval(() => {
-      start += 1;
-      setCount(start);
-      if (start >= end) {
-        clearInterval(timer);
-      }
-    }, Math.max(stepTime, 16));
-
-    return () => clearInterval(timer);
-  }, [isInView, value]);
+  useEffect(() => {
+    if (isInView) {
+      const end = parseInt(value, 10) || 0;
+      animate(count, end, { duration: 2 });
+    }
+  }, [isInView, value, count]);
 
   return (
     <span ref={ref} className="stat-number">
-      {count}{suffix}
+      {displayValue}{suffix}
     </span>
   );
 };
 
 const ABOUT_STATS = [
-  { value: 250, suffix: '+', label: 'Projects Delivered' },
+  { value: 145, suffix: '+', label: 'Projects Delivered' },
   { value: 99, suffix: '%', label: 'Client Satisfaction' },
-  { value: 8, suffix: '+', label: 'Years of Excellence' },
+  { value: 5, suffix: '+', label: 'Years of Experience' },
   { value: 24, suffix: '×7', label: 'Technical Support' }
 ];
 
@@ -154,35 +152,11 @@ const COMPANY_JOURNEY_MILESTONES = [
 
 const TEAM_MEMBERS = [
   {
-    name: 'Vikram Reddy',
-    role: 'Senior Cloud & DevOps Architect',
-    specs: 'AWS • Kubernetes • Terraform',
+    name: 'Suneetha Reddy',
+    role: 'Digital Marketing & General Manager',
+    specs: 'Digital Marketing • Management',
     avatarBg: '#2D4A6D',
-    initials: 'VR',
-    linkedin: 'https://linkedin.com'
-  },
-  {
-    name: 'Ananya Sharma',
-    role: 'Lead AI & Software Engineer',
-    specs: 'Python • PyTorch • React',
-    avatarBg: '#5E9133',
-    initials: 'AS',
-    linkedin: 'https://linkedin.com'
-  },
-  {
-    name: 'Karthik Verma',
-    role: 'Enterprise Solutions Architect',
-    specs: 'Microservices • Java • Node.js',
-    avatarBg: '#D36B1C',
-    initials: 'KV',
-    linkedin: 'https://linkedin.com'
-  },
-  {
-    name: 'Priya Sundaram',
-    role: 'Head of Product & UX Design',
-    specs: 'Design Systems • UI/UX • Agile',
-    avatarBg: '#0F172A',
-    initials: 'PS',
+    initials: 'SR',
     linkedin: 'https://linkedin.com'
   }
 ];
@@ -404,9 +378,17 @@ const Aboutus = () => {
                 <span className="ygr-green-highlight">Building Long-Term Digital Partnerships.</span>
               </motion.h1>
 
-              <motion.p className="about-hero-description" variants={fadeUpVariant}>
-                YGR Gobal IT Services is a technology-driven software engineering company delivering enterprise applications, cloud-native solutions, AI-powered innovation, and digital transformation services for businesses worldwide. We combine engineering excellence, modern technologies, and customer-first thinking to create secure, scalable, and future-ready digital products.
-              </motion.p>
+              <motion.div className="about-hero-description" variants={fadeUpVariant} style={{ fontSize: '1.05rem', lineHeight: '1.65' }}>
+                <p style={{ marginBottom: '16px' }}>
+                  <strong>YGR Gobal IT Services Pvt. Ltd., is a leading Best IT company in Hyderabad</strong> providing software development, web development, mobile app development, cloud solutions, DevOps services, AWS solutions, corporate training, internships, and professional IT courses. We offer industry-focused training in <strong>Java Full Stack, Python Full Stack, MERN Stack, MEAN Stack, Data Science, Software Testing, UI/UX Design, Artificial Intelligence, and Machine Learning.</strong>
+                </p>
+                <p style={{ marginBottom: '16px' }}>
+                  YGR Gobal IT Services Pvt. Ltd. – Empowering Your Growth Through Technology. The name YGR stands for Your Growth Resource, reflecting our commitment to helping businesses and professionals achieve success through innovative technology solutions. We specialize in software development, AI automation, cloud services, digital transformation, and IT consulting.
+                </p>
+                <p>
+                  With a strong focus on quality, innovation, and customer satisfaction, we deliver reliable and scalable solutions that drive business growth. Whether you are a business seeking technology expertise or a student looking to build a successful IT career, YGR Gobal IT Services Pvt. Ltd. is your trusted technology and training partner.
+                </p>
+              </motion.div>
 
               <motion.div className="about-hero-buttons" variants={fadeUpVariant}>
                 <a href="#our-story" className="btn-about-primary">
@@ -894,7 +876,7 @@ const Aboutus = () => {
             <div className="featured-leader-body">
               <div className="leader-avatar-wrapper">
                 <div className="leader-avatar-graphic">
-                  <span>MV</span>
+                  <span>RY</span>
                 </div>
                 <div className="avatar-live-badge">
                   <span className="live-dot"></span> Executive

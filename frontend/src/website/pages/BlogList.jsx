@@ -115,7 +115,7 @@ const BlogList = () => {
               Digital <span className="highlight-green">Innovation Hub</span>
             </h1>
             <p className="blog-hero-subtitle">
-              Explore deep technical whitepapers, architectural blueprints, and industry insights written by YGR Global enterprise architects and software leaders.
+              Explore deep technical whitepapers, architectural blueprints, and industry insights written by YGR Gobal enterprise architects and software leaders.
             </p>
           </motion.div>
 

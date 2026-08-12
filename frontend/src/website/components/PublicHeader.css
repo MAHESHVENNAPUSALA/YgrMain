@@ -163,8 +163,9 @@
 /* Brand Logo (Enlarged 15-20%) */
 .brand-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 2px;
   text-decoration: none;
   color: #0F172A;
   transition: transform 0.2s ease;
@@ -175,16 +176,10 @@
 }
 
 .logo-img-wrapper {
-  width: 50px;
-  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFFFFF;
-  border-radius: 14px;
-  padding: 5px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-  border: 1px solid #E2E8F0;
+  height: 38px;
 }
 
 .logo-img-wrapper img {
@@ -196,22 +191,23 @@
 .brand-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 
 .brand-name {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 800;
-  font-size: 1.15rem;
-  letter-spacing: -0.02em;
+  font-size: 0.8rem;
+  letter-spacing: -0.01em;
   color: #2D4A6D;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .brand-tag {
-  font-size: 0.68rem;
+  font-size: 0.5rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   color: #5E9133;
   text-transform: uppercase;
   margin-top: 1px;
@@ -521,36 +517,38 @@
 
 .mobile-brand-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
 }
 
 .mobile-brand-logo {
   max-width: 140px;
-  max-height: 44px;
+  max-height: 38px;
   object-fit: contain;
 }
 
 .mobile-brand-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .mobile-brand-title {
   font-family: var(--font-poppins), sans-serif;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #0F2747;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .mobile-brand-subtitle {
-  font-size: 0.70rem;
+  font-size: 0.55rem;
   font-weight: 700;
   color: #5B9A33;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 /* Navigation List */

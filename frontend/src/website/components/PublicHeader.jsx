@@ -18,15 +18,7 @@ const NAV_LINKS = [
   { label: 'Careers', to: '/careers' },
   { label: 'Blog', to: '/blog' },
   { label: 'Contact', to: '/contact' },
-  {
-    label: 'Demo',
-    to: '#',
-    children: [
-      { label: 'Customer Care Vizag', href: 'http://demo.ygrgobalitservices.com/', desc: 'CRM & Support Platform' },
-      { label: 'Trip Management', href: 'http://trip.ygrgobalitservices.com/', desc: 'Logistics & Fleet Portal' },
-      { label: 'CodeLabs Vizag', href: 'http://uiux.ygrgobalitservices.com/', desc: 'UI/UX Design Studio' },
-    ]
-  },
+
 ];
 
 const PublicHeader = () => {
@@ -161,13 +153,13 @@ const PublicHeader = () => {
           <Link to="/" className="brand-logo" aria-label="YGR Gobal IT Services Home">
             <div className="logo-img-wrapper">
               <img
-                src="/images/logo1.jpeg"
+                src="/logo.png"
                 alt="YGR Gobal IT Services"
                 onError={(e) => { e.target.src = '/images/logo.png'; }}
               />
             </div>
             <div className="brand-text">
-              <span className="brand-name">YGR Gobal</span>
+              <span className="brand-name">GOBAL</span>
               <span className="brand-tag">IT SERVICES</span>
             </div>
           </Link>
@@ -316,13 +308,13 @@ const PublicHeader = () => {
               <div className="mobile-drawer-header">
                 <div className="mobile-brand-box">
                   <img
-                    src="/images/logo1.jpeg"
+                    src="/logo.png"
                     alt="YGR Gobal IT Services"
                     className="mobile-brand-logo"
                     onError={(e) => { e.target.src = '/images/logo.png'; }}
                   />
                   <div className="mobile-brand-text">
-                    <span className="mobile-brand-title">YGR GOBAL</span>
+                    <span className="mobile-brand-title">GOBAL</span>
                     <span className="mobile-brand-subtitle">IT SERVICES</span>
                   </div>
                 </div>

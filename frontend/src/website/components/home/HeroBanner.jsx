@@ -5,8 +5,8 @@ import './HeroBanner.css';
 
 const TRUST_BADGES = [
   { value: '99.8%', label: 'Client Satisfaction', icon: 'fa-award' },
-  { value: '8+ Yrs', label: 'Tech Excellence', icon: 'fa-shield-halved' },
-  { value: '250+', label: 'Global Deployments', icon: 'fa-rocket' },
+  { value: '5+ Yrs', label: 'Tech Excellence', icon: 'fa-shield-halved' },
+  { value: '145+', label: 'Global Deployments', icon: 'fa-rocket' },
 ];
 
 const SERVICE_PILLS = [

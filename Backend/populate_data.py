@@ -273,15 +273,17 @@ def populate():
         p, created = Project.objects.get_or_create(
             project_id=pid,
             defaults={
+                'project_code': pid,
                 'name': name,
                 'description': desc,
                 'startdate': start,
                 'deadline': dead,
                 'assigned_manager': primary_mgr,
-                'assigned_team': random.choice(teams_created),
                 'status': status_val
             }
         )
+        if created:
+            p.assigned_teams.add(random.choice(teams_created))
         projects_created.append(p)
 
     # Tasks allocation
@@ -306,7 +308,8 @@ def populate():
                 }
             )
             if created:
-                t.members.set(emp_users[idx % len(emp_users): (idx % len(emp_users)) + 2])
+                t.assigned_to = emp_users[idx % len(emp_users)]
+                t.save()
 
     print("Projects, teams, and tasks loaded.")
 

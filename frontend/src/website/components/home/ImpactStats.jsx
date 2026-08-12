@@ -12,7 +12,7 @@ const TESTIMONIALS_DATA = {
       company: 'FinTech Dynamics',
       country: 'USA',
       rating: 5,
-      quote: 'YGR Global delivered our core cloud payment engine 3 weeks ahead of schedule. Their zero-trust security architecture gave us complete peace of mind.',
+      quote: 'YGR Gobal delivered our core cloud payment engine 3 weeks ahead of schedule. Their zero-trust security architecture gave us complete peace of mind.',
       projectType: 'FinTech Architecture • AWS & Spring Boot'
     },
     {
@@ -62,7 +62,7 @@ const TESTIMONIALS_DATA = {
 
 const BOTTOM_TRUST_METRICS = [
   { label: '★ ★ ★ ★ ★ Overall Rating', icon: 'fa-star' },
-  { label: '250+ Successful Projects', icon: 'fa-check-double' },
+  { label: '145+ Successful Projects', icon: 'fa-check-double' },
   { label: '99% Client Satisfaction', icon: 'fa-heart' },
   { label: 'Long-Term Partnerships', icon: 'fa-handshake' }
 ];
@@ -119,7 +119,7 @@ const ImpactStats = () => {
           </h2>
 
           <p className="testimonials-description">
-            Our greatest achievement is the long-term trust we&apos;ve built with our clients. Here&apos;s what they say about partnering with YGR Global IT Services.
+            Our greatest achievement is the long-term trust we&apos;ve built with our clients. Here&apos;s what they say about partnering with YGR Gobal IT Services.
           </p>
         </motion.div>
 

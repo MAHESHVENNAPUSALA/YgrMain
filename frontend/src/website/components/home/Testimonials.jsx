@@ -61,13 +61,6 @@ const INDUSTRIES_DATA = [
     accentColor: '#5E9133'
   },
   {
-    id: 'hospitality',
-    name: 'Hospitality',
-    desc: 'Booking engines, guest experience management, and hotel operations software.',
-    icon: 'fa-hotel',
-    accentColor: '#D36B1C'
-  },
-  {
     id: 'media',
     name: 'Media & Entertainment',
     desc: 'Digital content streaming, digital asset management, and media workflows.',

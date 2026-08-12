@@ -75,7 +75,7 @@ const Contact = () => {
         });
         
         // Optionally launch WhatsApp connection
-        const waMsg = `Hello YGR Global! I submitted a project inquiry.\n\nName: ${formData.name}\nEmail: ${formData.email}\nService: ${formData.service}\nMessage: ${formData.message}`;
+        const waMsg = `Hello YGR Gobal! I submitted a project inquiry.\n\nName: ${formData.name}\nEmail: ${formData.email}\nService: ${formData.service}\nMessage: ${formData.message}`;
         window.open(`https://wa.me/917794053340?text=${encodeURIComponent(waMsg)}`, '_blank');
 
         setFormData({
@@ -100,7 +100,7 @@ const Contact = () => {
   };
 
   const handleScheduleMeeting = () => {
-    const meetingText = `Hello YGR Global IT Services! I would like to schedule a consultation meeting regarding our software project.`;
+    const meetingText = `Hello YGR Gobal IT Services! I would like to schedule a consultation meeting regarding our software project.`;
     window.open(`https://wa.me/917794053340?text=${encodeURIComponent(meetingText)}`, '_blank');
   };
 
@@ -188,7 +188,7 @@ const Contact = () => {
               {/* TRUST CARDS */}
               <div className="trust-cards-grid">
                 <div className="trust-card-box">
-                  <div className="trust-card-val">250+</div>
+                  <div className="trust-card-val">145+</div>
                   <div className="trust-card-lbl">Projects Delivered</div>
                 </div>
 
@@ -203,7 +203,7 @@ const Contact = () => {
                 </div>
 
                 <div className="trust-card-box">
-                  <div className="trust-card-val">8+</div>
+                  <div className="trust-card-val">5+</div>
                   <div className="trust-card-lbl">Years Experience</div>
                 </div>
               </div>
@@ -325,10 +325,10 @@ const Contact = () => {
                         onChange={handleChange}
                       >
                         <option value="">Select Estimated Budget</option>
-                        <option value="Under $10,000">Under $10,000</option>
-                        <option value="$10,000 - $25,000">$10,000 - $25,000</option>
-                        <option value="$25,000 - $50,000">$25,000 - $50,000</option>
-                        <option value="$50,000+">$50,000+</option>
+                        <option value="Under ₹10,000">Under ₹10,000</option>
+                        <option value="₹10,000 - ₹25,000">₹10,000 - ₹25,000</option>
+                        <option value="₹25,000 - ₹50,000">₹25,000 - ₹50,000</option>
+                        <option value="₹50,000+">₹50,000+</option>
                       </select>
                     </div>
 
@@ -376,7 +376,7 @@ const Contact = () => {
                           required
                         />
                         <label className="form-check-label form-check-label-custom" htmlFor="agreePrivacy">
-                          I agree to the privacy policy and consent to YGR Global processing my enquiry details.
+                          I agree to the privacy policy and consent to YGR Gobal processing my enquiry details.
                         </label>
                       </div>
                     </div>
@@ -432,7 +432,7 @@ const Contact = () => {
               height="450"
               allowFullScreen
               loading="lazy"
-              title="YGR Global Location Map"
+              title="YGR Gobal Location Map"
             ></iframe>
           </div>
         </div>

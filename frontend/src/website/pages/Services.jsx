@@ -217,7 +217,7 @@ const DEV_PROCESS_STEPS = [
 
 // ── SERVICES FAQS ──
 const SERVICES_FAQS = [
-  { q: 'What IT services does YGR Global specialize in?', a: 'YGR Global IT Services specializes in Enterprise Software Development, Cloud & DevOps, Mobile App Development (iOS & Android), AI & Automation, UI/UX Design, Software Testing, Digital Marketing, and Corporate IT Training.' },
+  { q: 'What IT services does YGR Gobal specialize in?', a: 'YGR Gobal IT Services specializes in Enterprise Software Development, Cloud & DevOps, Mobile App Development (iOS & Android), AI & Automation, UI/UX Design, Software Testing, Digital Marketing, and Corporate IT Training.' },
   { q: 'How do you handle project timeline and pricing estimates?', a: 'We offer flexible engagement models: Fixed-Price Dedicated Contracts for defined scope, and Time & Material / Staff Augmentation for agile scaling. Detailed milestone timelines are provided during initial scoping.' },
   { q: 'Can YGR migrate our existing legacy software to cloud platforms?', a: 'Yes! Our cloud engineering team specializes in seamless migration of legacy architectures to cloud-native AWS or Azure infrastructure with zero downtime and microservices refactoring.' },
   { q: 'Do you provide post-launch maintenance and technical support?', a: 'SLA-backed 24/7 maintenance contracts, continuous performance monitoring, security patches, server backups, and feature upgrades are provided for all clients.' },
@@ -382,7 +382,7 @@ const Services = () => {
 
                 <div className="solution-card">
                   <div className="card-box-title text-success">
-                    <i className="fas fa-check-circle"></i> YGR Global Solution
+                    <i className="fas fa-check-circle"></i> YGR Gobal Solution
                   </div>
                   <ul className="card-box-list">
                     {(activeService.solution || [

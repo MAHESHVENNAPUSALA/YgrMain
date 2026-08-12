@@ -27,7 +27,7 @@ const AdminHeader = ({ setMobileOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const currentInfo = pageTitles[location.pathname] || { title: 'Website Admin CMS', subtitle: 'YGR Global IT Services' };
+  const currentInfo = pageTitles[location.pathname] || { title: 'Website Admin CMS', subtitle: 'YGR Gobal IT Services' };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();

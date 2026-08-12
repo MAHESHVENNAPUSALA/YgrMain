@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useInView, useSpring, useTransform } from 'framer-motion';
+import { motion, useInView, useSpring, useTransform, useMotionValue, animate } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import './CompanyIntro.css';
 
@@ -15,9 +15,9 @@ const TRUST_POINTS = [
 ];
 
 const TRUST_METRICS = [
-  { value: 250, suffix: '+', label: 'Projects Delivered' },
+  { value: 145, suffix: '+', label: 'Projects Delivered' },
   { value: 99, suffix: '%', label: 'Client Satisfaction' },
-  { value: 8, suffix: '+', label: 'Years Excellence' },
+  { value: 5, suffix: '+', label: 'Years of Experience' },
   { value: 24, suffix: '×7', label: 'Technical Support' },
   { value: 100, suffix: '%', label: 'Transparent Process' }
 ];
@@ -31,31 +31,29 @@ const FLOATING_TRUST_BADGES = [
 
 // Count-up animated number component
 const AnimatedNumber = ({ value, suffix }) => {
-  const [count, setCount] = useState(0);
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-10%' });
+  const isInView = useInView(ref, { once: true });
+  const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    if (!isInView) return;
-    let start = 0;
-    const end = value;
-    const duration = 2000;
-    const stepTime = Math.abs(Math.floor(duration / end));
+    // Sync the rounded value to React state to render
+    return rounded.onChange((latest) => {
+      setDisplayValue(latest);
+    });
+  }, [rounded]);
 
-    const timer = setInterval(() => {
-      start += 1;
-      setCount(start);
-      if (start >= end) {
-        clearInterval(timer);
-      }
-    }, Math.max(stepTime, 16));
-
-    return () => clearInterval(timer);
-  }, [isInView, value]);
+  useEffect(() => {
+    if (isInView) {
+      const end = parseInt(value, 10) || 0;
+      animate(count, end, { duration: 2 });
+    }
+  }, [isInView, value, count]);
 
   return (
     <span ref={ref} className="metric-num">
-      {count}{suffix}
+      {displayValue}{suffix}
     </span>
   );
 };
@@ -289,7 +287,7 @@ const CompanyIntro = () => {
             {/* Description Paragraphs */}
             <motion.div className="why-description-block" variants={fadeUpVariant}>
               <p>
-                At YGR Global IT Services, we believe technology should create measurable business value.
+                At YGR Gobal IT Services, we believe technology should create measurable business value.
               </p>
               <p>
                 We focus on quality engineering, transparent collaboration, secure development practices, and long-term partnerships to help organizations innovate with confidence.

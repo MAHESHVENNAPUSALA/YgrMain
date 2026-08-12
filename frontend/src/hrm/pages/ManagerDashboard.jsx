@@ -16,6 +16,7 @@ const ManagerDashboard = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [editingTeam, setEditingTeam] = useState(null);
+  const [editSelectedMembers, setEditSelectedMembers] = useState([]);
 
   useEffect(() => {
     const fetchManagerData = async () => {
@@ -569,7 +570,10 @@ const ManagerDashboard = () => {
                           )}
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button onClick={() => setEditingTeam(team)} style={{ padding: '6px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                          <button onClick={() => {
+                            setEditingTeam(team);
+                            setEditSelectedMembers(team.members || []);
+                          }} style={{ padding: '6px 12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>
                             <i className="fa-solid fa-pen-to-square"></i> Edit
                           </button>
                           <button onClick={async () => {
@@ -617,6 +621,7 @@ const ManagerDashboard = () => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const payload = Object.fromEntries(formData);
+                payload.members = editSelectedMembers;
                 try {
                   await api.put(`/api/teams/${editingTeam.id}/`, payload);
                   alert('Team updated successfully!');
@@ -642,6 +647,45 @@ const ManagerDashboard = () => {
                       <option key={lead.id} value={lead.id}>{lead.name} ({lead.email})</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-group" style={{ marginBottom: '16px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#475569', marginBottom: '6px', display: 'block' }}>Select Employees (Members)</label>
+                  <div style={{
+                    maxHeight: '180px',
+                    overflowY: 'auto',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    backgroundColor: '#f8fafc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    {filteredDevs.filter(dev => !dev.is_assigned || editSelectedMembers.includes(dev.id)).length > 0 ? (
+                      filteredDevs.filter(dev => !dev.is_assigned || editSelectedMembers.includes(dev.id)).map(dev => {
+                        const isChecked = editSelectedMembers.includes(dev.id);
+                        return (
+                          <label key={dev.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#334155', margin: 0 }}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setEditSelectedMembers([...editSelectedMembers, dev.id]);
+                                } else {
+                                  setEditSelectedMembers(editSelectedMembers.filter(id => id !== dev.id));
+                                }
+                              }}
+                              style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#3b82f6' }}
+                            />
+                            <span>{dev.name} ({dev.email})</span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No employees available.</div>
+                    )}
+                  </div>
                 </div>
                 <button type="submit" className="m-add-btn m-add-btn-green" style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem' }}>
                   Save Changes

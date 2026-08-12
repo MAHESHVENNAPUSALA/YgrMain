@@ -1,1 +1,0 @@
-var e=e=>{if(!e)return`N/A`;try{let t=new Date(e);return isNaN(t.getTime())?e:t.toLocaleDateString(`en-US`,{year:`numeric`,month:`short`,day:`numeric`})}catch{return e}},t=e=>!e||typeof e!=`string`||e.trim()===``?null:e.startsWith(`http://`)||e.startsWith(`https://`)||e.startsWith(`data:`)||e.startsWith(`/`)?e:`/${e}`;export{t as n,e as t};

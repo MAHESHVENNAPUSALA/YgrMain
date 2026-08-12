@@ -193,9 +193,9 @@ const TeamList = () => {
                 </span>
               </a>
 
-              <Link to="/careers" className="btn-team-secondary">
+              <a href="#executive-board" className="btn-team-secondary" onClick={() => setActiveTeam('team')}>
                 <span>Join Our Team</span>
-              </Link>
+              </a>
             </div>
           </motion.div>
 
@@ -247,7 +247,7 @@ const TeamList = () => {
                     <div className="slide-image-card">
                       <img
                         src={item.image || '/images/placeholder.jpg'}
-                        alt={item.title || 'YGR Global Team'}
+                        alt={item.title || 'YGR Gobal Team'}
                         loading="eager"
                       />
                       <div className="slide-glass-overlay">

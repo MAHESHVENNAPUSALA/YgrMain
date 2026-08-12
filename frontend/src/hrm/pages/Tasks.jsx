@@ -551,13 +551,31 @@ const Tasks = () => {
                       {allUsers.filter((u) => {
                         if (role === 'HR') return u.role === 'Manager';
                         if (role === 'Manager') return u.role === 'TeamLead';
-                        if (role === 'TeamLead') return u.role === 'Employee';
+                        if (role === 'TeamLead') {
+                          if (u.role !== 'Employee') return false;
+                          if (selectedProject) {
+                            const p = projects.find(proj => String(proj.id) === String(selectedProject));
+                            if (p && p.assigned_team_member_ids && p.assigned_team_member_ids.length > 0) {
+                              return p.assigned_team_member_ids.includes(u.id);
+                            }
+                          }
+                          return true;
+                        }
                         return true;
                       }).length > 0 ? (
                         allUsers.filter((u) => {
                           if (role === 'HR') return u.role === 'Manager';
                           if (role === 'Manager') return u.role === 'TeamLead';
-                          if (role === 'TeamLead') return u.role === 'Employee';
+                          if (role === 'TeamLead') {
+                            if (u.role !== 'Employee') return false;
+                            if (selectedProject) {
+                              const p = projects.find(proj => String(proj.id) === String(selectedProject));
+                              if (p && p.assigned_team_member_ids && p.assigned_team_member_ids.length > 0) {
+                                return p.assigned_team_member_ids.includes(u.id);
+                              }
+                            }
+                            return true;
+                          }
                           return true;
                         }).map((u) => {
                           const isChecked = assignedMembers.includes(u.id) || assignedMembers.includes(String(u.id));

@@ -46,7 +46,7 @@ const CmsDashboard = () => {
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div>
             <span className="badge bg-success text-white rounded-pill px-3 py-1 fw-bold mb-2">WEBSITE CMS ADMINISTRATION</span>
-            <h2 className="fw-bold mb-1">YGR Global Website Content Management</h2>
+            <h2 className="fw-bold mb-1">YGR Gobal Website Content Management</h2>
             <p className="text-muted-light mb-0" style={{ color: '#94A3B8' }}>
               Manage website content, portfolio case studies, technology blogs, services, career openings, internship portals, and client enquiries.
             </p>

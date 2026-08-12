@@ -250,7 +250,7 @@ const FALLBACK_INTERNSHIPS = [
 
 const FAQ_ITEMS = [
   {
-    q: 'What is the interview process like at YGR Global IT Services?',
+    q: 'What is the interview process like at YGR Gobal IT Services?',
     a: 'Our interview process typically consists of 3 stages: an initial recruiter screening call, a technical evaluation (coding/architecture session), and a final HR discussion covering role alignment and compensation.'
   },
   {
@@ -277,7 +277,7 @@ const FALLBACK_TESTIMONIALS = [
     name: 'Anil Kumar',
     role: 'Senior Java Developer',
     experience: '3+ Years at YGR',
-    review: 'Working at YGR Global IT Services has allowed me to design enterprise microservices at scale. The engineering leadership is deeply supportive of learning new technologies.',
+    review: 'Working at YGR Gobal IT Services has allowed me to design enterprise microservices at scale. The engineering leadership is deeply supportive of learning new technologies.',
     photo: '/media/team/anil.kumar.jpg.jpeg'
   },
   {
@@ -454,7 +454,7 @@ const Careers = () => {
               {/* Floating Stat Badges Row */}
               <div className="n-hero-stats-row">
                 <div className="stat-card">
-                  <span className="stat-num">250+</span>
+                  <span className="stat-num">145+</span>
                   <span className="stat-lbl">Projects Delivered</span>
                 </div>
                 <div className="stat-card">
@@ -462,7 +462,7 @@ const Careers = () => {
                   <span className="stat-lbl">Client Retention</span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-num">8+ Yrs</span>
+                  <span className="stat-num">5+ Yrs</span>
                   <span className="stat-lbl">Industry Excellence</span>
                 </div>
                 <div className="stat-card">
@@ -601,7 +601,7 @@ const Careers = () => {
               <span className="pill-text">COMPANY CULTURE</span>
             </div>
             <h2 className="n-section-title">
-              Life at <span className="n-highlight-green">YGR Global IT Services</span>
+              Life at <span className="n-highlight-green">YGR Gobal IT Services</span>
             </h2>
             <p className="n-section-desc">
               A glimpse into our collaborative team events, engineering workshops, hackathons, and celebrations.
@@ -639,7 +639,7 @@ const Careers = () => {
               Current Open <span className="n-highlight-green">Positions</span>
             </h2>
             <p className="n-section-desc">
-              Explore active job openings and find your next milestone at YGR Global IT Services.
+              Explore active job openings and find your next milestone at YGR Gobal IT Services.
             </p>
           </div>
 
@@ -871,7 +871,7 @@ const Careers = () => {
               Hear From <span className="n-highlight-green">Our Engineers</span>
             </h2>
             <p className="n-section-desc">
-              Real stories from team members building their careers at YGR Global IT Services.
+              Real stories from team members building their careers at YGR Gobal IT Services.
             </p>
           </div>
 

@@ -221,6 +221,12 @@ class Project(models.Model):
             last_proj = Project.objects.order_by('-id').first()
             num = last_proj.id + 1000 if last_proj else 1000
             self.project_code = f"PRJ-{num + 1}"
+            
+            # Ensure uniqueness
+            while Project.objects.filter(project_code=self.project_code).exists():
+                num += 1
+                self.project_code = f"PRJ-{num + 1}"
+                
             if not self.project_id:
                 self.project_id = self.project_code
         elif not self.project_id:
@@ -563,6 +569,12 @@ class Team(models.Model):
             last_team = Team.objects.order_by('-id').first()
             num = last_team.id + 1000 if last_team else 1000
             self.team_code = f"TEAM-{num + 1}"
+            
+            # Ensure uniqueness
+            while Team.objects.filter(team_code=self.team_code).exists():
+                num += 1
+                self.team_code = f"TEAM-{num + 1}"
+                
         super().save(*args, **kwargs)
 
     def __str__(self):

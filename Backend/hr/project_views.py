@@ -53,11 +53,11 @@ class ProjectAPIView(APIView):
         if role in ['HR', 'MD']:
             projects = Project.objects.all()
         elif role == 'Manager':
-            projects = Project.objects.filter(assigned_manager=user)
+            projects = Project.objects.filter(Q(assigned_manager=user) | Q(tasks__assigned_to=user))
         elif role == 'TeamLead':
-            projects = Project.objects.filter(Q(assigned_teams__lead=user))
+            projects = Project.objects.filter(Q(assigned_teams__lead=user) | Q(tasks__assigned_to=user))
         elif role == 'Employee':
-            projects = Project.objects.filter(Q(assigned_teams__members=user))
+            projects = Project.objects.filter(Q(assigned_teams__members=user) | Q(tasks__assigned_to=user))
         else:
             projects = Project.objects.none()
 
@@ -123,33 +123,44 @@ class ProjectAPIView(APIView):
         if not name:
             return Response({"detail": "Project name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Sanitize inputs that could be 'null' strings from frontend
+        if str(startdate).lower() in ['null', 'undefined', '']:
+            startdate = None
+        if str(deadline).lower() in ['null', 'undefined', '']:
+            deadline = None
+        if str(estimated_budget).lower() in ['null', 'undefined', '']:
+            estimated_budget = None
+
         # Resolve manager if provided
         assigned_manager = None
-        if assigned_manager_id:
+        if assigned_manager_id and str(assigned_manager_id).lower() not in ['null', 'undefined', '']:
             try:
                 assigned_manager = User.objects.get(id=assigned_manager_id, role='Manager')
-            except User.DoesNotExist:
+            except (User.DoesNotExist, ValueError):
                 return Response({"detail": "Selected Project Manager is invalid or not in Manager role."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Handle Logo Upload
         project_logo = request.FILES.get('project_logo')
 
-        project = Project.objects.create(
-            name=name,
-            description=description,
-            client_name=client_name,
-            client_contact=client_contact,
-            project_category=project_category,
-            priority=priority,
-            startdate=startdate or None,
-            deadline=deadline or None,
-            estimated_budget=estimated_budget or None,
-            technology_stack=technology_stack,
-            project_color=project_color,
-            assigned_manager=assigned_manager,
-            created_by=user,
-            project_logo=project_logo
-        )
+        try:
+            project = Project.objects.create(
+                name=name,
+                description=description,
+                client_name=client_name,
+                client_contact=client_contact,
+                project_category=project_category,
+                priority=priority,
+                startdate=startdate or None,
+                deadline=deadline or None,
+                estimated_budget=estimated_budget or None,
+                technology_stack=technology_stack,
+                project_color=project_color,
+                assigned_manager=assigned_manager,
+                created_by=user,
+                project_logo=project_logo
+            )
+        except Exception as e:
+            return Response({"detail": f"Database validation error: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
         log_project_action(project, "Project Created", user, f"Project '{name}' was initialized.")
 
@@ -223,9 +234,12 @@ class ProjectDetailAPIView(APIView):
                 if name:
                     project.name = name
                 if estimated_budget is not None:
-                    project.estimated_budget = estimated_budget or None
+                    if str(estimated_budget).lower() in ['null', 'undefined', '']:
+                        project.estimated_budget = None
+                    else:
+                        project.estimated_budget = estimated_budget
                 if assigned_manager_id is not None:
-                    if assigned_manager_id == "" or assigned_manager_id == "null" or assigned_manager_id is None:
+                    if str(assigned_manager_id).lower() in ['', 'null', 'undefined']:
                         if project.assigned_manager:
                             log_project_action(project, "Manager Removed", user, f"Manager {project.assigned_manager.username} was unassigned.")
                             notify_user(project.assigned_manager, "Manager Unassigned", f"You have been unassigned from project '{project.name}'.")
@@ -240,16 +254,22 @@ class ProjectDetailAPIView(APIView):
                                 notify_user(new_manager, "Manager Assigned", f"You have been assigned as Manager for project '{project.name}'.")
                                 if old_mgr:
                                     notify_user(old_mgr, "Manager Unassigned", f"You have been unassigned from project '{project.name}'.")
-                        except User.DoesNotExist:
+                        except (User.DoesNotExist, ValueError):
                             return Response({"detail": "Invalid manager selection."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Common fields both PM and HR/MD can modify
             if description is not None:
                 project.description = description
             if startdate is not None:
-                project.startdate = startdate or None
+                if str(startdate).lower() in ['null', 'undefined', '']:
+                    project.startdate = None
+                else:
+                    project.startdate = startdate
             if deadline is not None:
-                project.deadline = deadline or None
+                if str(deadline).lower() in ['null', 'undefined', '']:
+                    project.deadline = None
+                else:
+                    project.deadline = deadline
             if client_name is not None:
                 project.client_name = client_name
             if client_contact is not None:
@@ -290,7 +310,11 @@ class ProjectDetailAPIView(APIView):
             if request.FILES.get('project_logo'):
                 project.project_logo = request.FILES['project_logo']
 
-            project.save()
+            try:
+                project.save()
+            except Exception as e:
+                return Response({"detail": f"Database validation error: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+                
             log_project_action(project, "Project Updated", user, "Project details updated.")
             serializer = ProjectSerializer(project, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -461,6 +485,7 @@ class TeamDetailAPIView(APIView):
         description = request.data.get('description')
         max_size = request.data.get('max_size')
         is_active = request.data.get('is_active')
+        members_ids = request.data.getlist('members') if hasattr(request.data, 'getlist') else request.data.get('members', None)
 
         if name:
             team.name = name
@@ -497,6 +522,39 @@ class TeamDetailAPIView(APIView):
                     return Response({"detail": "Invalid Team Lead selection."}, status=status.HTTP_400_BAD_REQUEST)
 
         team.save()
+
+        # Update members if provided
+        if members_ids is not None:
+            if isinstance(members_ids, str):
+                members_ids = [members_ids]
+            
+            # Find old members
+            old_members = list(team.members.all())
+            
+            new_emps = []
+            for m_id in members_ids:
+                try:
+                    emp = User.objects.get(id=int(m_id), role='Employee')
+                    new_emps.append(emp)
+                except (User.DoesNotExist, ValueError):
+                    pass
+            
+            # Limit check
+            new_emps = new_emps[:team.max_size]
+            team.members.set(new_emps)
+            
+            # Clear team_name for removed members
+            for old_emp in old_members:
+                if old_emp not in new_emps:
+                    if old_emp.team_name == team.name:
+                        old_emp.team_name = ""
+                        old_emp.save()
+            
+            # Set team_name for new members
+            for new_emp in new_emps:
+                new_emp.team_name = team.name
+                new_emp.save()
+
         if project:
             log_project_action(project, "Team Updated", user, f"Team '{team.name}' was updated.")
         serializer = TeamSerializer(team)
@@ -700,11 +758,11 @@ class ProjectDashboardAPIView(APIView):
         if role in ['HR', 'MD']:
             projects = Project.objects.filter(is_archived=False)
         elif role == 'Manager':
-            projects = Project.objects.filter(assigned_manager=user, is_archived=False)
+            projects = Project.objects.filter(Q(assigned_manager=user) | Q(tasks__assigned_to=user), is_archived=False)
         elif role == 'TeamLead':
-            projects = Project.objects.filter(Q(assigned_teams__lead=user), is_archived=False)
+            projects = Project.objects.filter(Q(assigned_teams__lead=user) | Q(tasks__assigned_to=user), is_archived=False)
         elif role == 'Employee':
-            projects = Project.objects.filter(Q(assigned_teams__members=user), is_archived=False)
+            projects = Project.objects.filter(Q(assigned_teams__members=user) | Q(tasks__assigned_to=user), is_archived=False)
         else:
             projects = Project.objects.none()
 

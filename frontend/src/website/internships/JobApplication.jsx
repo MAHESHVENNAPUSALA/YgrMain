@@ -5,7 +5,7 @@ import './job-application-premium.css';
 
 const FAQ_ITEMS = [
   {
-    q: 'What is the standard hiring process at YGR Global IT Services?',
+    q: 'What is the standard hiring process at YGR Gobal IT Services?',
     a: 'Our hiring process typically involves 3 stages: Resume Screening & Initial HR Call, Technical Interview (Coding / System Design), and Final Culture & Leadership Discussion.'
   },
   {
@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
     a: 'Our talent acquisition team reviews applications within 24–48 business hours. Shortlisted candidates are contacted via email or phone for interview scheduling.'
   },
   {
-    q: 'Does YGR Global offer remote or hybrid work options?',
+    q: 'Does YGR Gobal offer remote or hybrid work options?',
     a: 'Yes, we support flexible work modes depending on the role, project requirements, and client specifications, including Work From Home, Hybrid, and On-site opportunities.'
   },
   {
@@ -791,7 +791,7 @@ const OriginalExampagesJobApplication = () => {
         <div className="job-app-container-1320 max-w-900" style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div className="text-center mb-4">
             <h2 className="fw-bold fs-3 color-slate-900">Frequently Asked Questions</h2>
-            <p className="text-muted small">Everything you need to know about applying and working with YGR Global IT Services.</p>
+            <p className="text-muted small">Everything you need to know about applying and working with YGR Gobal IT Services.</p>
           </div>
 
           <div className="faq-accordion-wrapper">

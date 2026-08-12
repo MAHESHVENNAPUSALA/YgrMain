@@ -82,14 +82,16 @@ class TeamMemberAdmin(admin.ModelAdmin):
 
 
 from django.contrib import admin
-from .models import User,Question,UserAnswer,Score, ExamSession,Internships
+from .models import User,Question,UserAnswer,Score, ExamSession,Internships,LastMonthEvent,Testimonial
 
 # Register your models here.
 # admin.site.register(User)
 
 
 admin.site.register(UserAnswer)
+admin.site.register(LastMonthEvent)
 admin.site.register(Score)
+admin.site.register(Testimonial)
 
 
 @admin.register(Question)

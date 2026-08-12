@@ -231,7 +231,7 @@ const PublicNavbar = () => {
         {/* Logo */}
         <div className="pub-logo">
           <a href="/" onClick={e => { e.preventDefault(); go('/'); }}>
-            <img src="/static/images/logo1.jpeg" alt="YGR Global IT Services" onError={e => { e.target.style.display='none'; }} />
+            <img src="/static/images/logo1.jpeg" alt="YGR Gobal IT Services" onError={e => { e.target.style.display='none'; }} />
           </a>
         </div>
 

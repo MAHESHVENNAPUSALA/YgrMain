@@ -200,9 +200,15 @@ const ServicesSection = () => {
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="expertise-eyebrow">
-            <span className="eyebrow-dot"></span>
-            <span className="eyebrow-title">OUR EXPERTISE</span>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div className="expertise-eyebrow" style={{ margin: 0 }}>
+              <span className="eyebrow-dot"></span>
+              <span className="eyebrow-title">OUR EXPERTISE</span>
+            </div>
+            <div className="expertise-eyebrow" style={{ margin: 0 }}>
+              <span className="eyebrow-dot" style={{ background: '#10B981', boxShadow: '0 0 6px rgba(16, 185, 129, 0.8)' }}></span>
+              <span className="eyebrow-title">END TO END TECHNOLOGY</span>
+            </div>
           </div>
 
           <h2 className="expertise-heading">

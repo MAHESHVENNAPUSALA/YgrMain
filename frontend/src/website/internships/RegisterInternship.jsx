@@ -10,7 +10,7 @@ const INTERNSHIP_FAQS = [
   },
   {
     q: 'Will I receive an industry-recognized certificate?',
-    a: 'Yes! Upon successful completion of all assigned tasks and project deliverables, you will receive an official Internship Completion Certificate & Performance Recommendation Letter from YGR Global IT Services Pvt. Ltd.'
+    a: 'Yes! Upon successful completion of all assigned tasks and project deliverables, you will receive an official Internship Completion Certificate & Performance Recommendation Letter from YGR Gobal IT Services Pvt. Ltd.'
   },
   {
     q: 'Is there a stipend provided during the internship?',
@@ -22,7 +22,7 @@ const INTERNSHIP_FAQS = [
   },
   {
     q: 'Is placement assistance available after the internship?',
-    a: 'Yes, top-performing candidates are offered direct job placement opportunities at YGR Global or referred to our network of 50+ hiring partner companies.'
+    a: 'Yes, top-performing candidates are offered direct job placement opportunities at YGR Gobal or referred to our network of 50+ hiring partner companies.'
   }
 ];
 
@@ -55,7 +55,7 @@ const WHY_JOIN_ITEMS = [
   {
     icon: 'fas fa-briefcase',
     title: 'Placement Assistance',
-    desc: 'Direct hiring opportunities at YGR Global IT Services and partner tech enterprises.'
+    desc: 'Direct hiring opportunities at YGR Gobal IT Services and partner tech enterprises.'
   }
 ];
 

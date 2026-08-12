@@ -29,7 +29,7 @@ const FALLBACK_PROJECTS = [
     status: 'Completed',
     duration: '6 Months',
     clientName: 'GlobalCare Inc',
-    testimonial: 'YGR Global delivered our HIPAA-compliant portal ahead of schedule. Outstanding engineering execution and zero security vulnerabilities!',
+    testimonial: 'YGR Gobal delivered our HIPAA-compliant portal ahead of schedule. Outstanding engineering execution and zero security vulnerabilities!',
     projectUrl: 'https://demo.ygrgobalitservices.com/',
     caseStudyUrl: '/contact',
     featured: true
@@ -58,7 +58,7 @@ const FALLBACK_PROJECTS = [
     status: 'Completed',
     duration: '8 Months',
     clientName: 'Apex Logistics Ltd',
-    testimonial: 'The real-time fleet engine developed by YGR Global has saved our operations team over $120k annually in fuel costs.',
+    testimonial: 'The real-time fleet engine developed by YGR Gobal has saved our operations team over $120k annually in fuel costs.',
     projectUrl: 'https://trip.ygrgobalitservices.com/',
     caseStudyUrl: '/contact',
     featured: true
@@ -87,7 +87,7 @@ const FALLBACK_PROJECTS = [
     status: 'Completed',
     duration: '1 Year',
     clientName: 'Vanguard Capital',
-    testimonial: 'YGR Global’s AI dashboard transformed our compliance audits from days to milliseconds.',
+    testimonial: 'YGR Gobal’s AI dashboard transformed our compliance audits from days to milliseconds.',
     projectUrl: 'https://demo.ygrgobalitservices.com/',
     caseStudyUrl: '/contact',
     featured: true
@@ -173,7 +173,7 @@ const FALLBACK_PROJECTS = [
     status: 'Completed',
     duration: '3 Months',
     clientName: 'SecureBank Corp',
-    testimonial: 'YGR Global identified critical edge-case vulnerabilities that saved our launch.',
+    testimonial: 'YGR Gobal identified critical edge-case vulnerabilities that saved our launch.',
     projectUrl: 'https://demo.ygrgobalitservices.com/',
     caseStudyUrl: '/contact',
     featured: false
@@ -281,7 +281,7 @@ const Portfolio = () => {
 
           {/* Statistics Bar */}
           <div className="portfolio-stats-row">
-            <div className="portfolio-stat-item"><i className="fas fa-check-circle"></i> 250+ Projects Delivered</div>
+            <div className="portfolio-stat-item"><i className="fas fa-check-circle"></i> 145+ Projects Delivered</div>
             <div className="portfolio-stat-item"><i className="fas fa-users"></i> 120+ Global Clients</div>
             <div className="portfolio-stat-item"><i className="fas fa-shield-alt"></i> 99.9% System Uptime</div>
             <div className="portfolio-stat-item"><i className="fas fa-globe"></i> 15+ Countries</div>
@@ -485,7 +485,7 @@ const Portfolio = () => {
             <h2 className="fw-bold fs-2 text-white mb-2">Have a Similar Project?</h2>
             <h3 className="fw-bold fs-3 text-success mb-3">Let's Build It Together.</h3>
             <p className="mb-4 mx-auto" style={{ color: '#94A3B8', maxWidth: '600px' }}>
-              Partner with YGR Global IT Services to build scalable software, cloud platforms, or AI applications.
+              Partner with YGR Gobal IT Services to build scalable software, cloud platforms, or AI applications.
             </p>
             <div className="d-flex flex-wrap justify-content-center gap-3">
               <Link to="/contact" className="btn-view-case" style={{ width: 'auto', padding: '14px 32px', fontSize: '0.95rem' }}>

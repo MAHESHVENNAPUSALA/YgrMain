@@ -3,7 +3,7 @@ import { useToast } from '../../shared/context/ToastContext';
 
 const FALLBACK_CAROUSELS = [
   { id: 1, title: 'Engineering Digital Products & Business Transformation', desc: 'Enterprise software, AI solutions, cloud platforms & mobile apps.', image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&q=80', status: 'Active' },
-  { id: 2, title: 'Build Your Career With YGR Global IT Services', desc: 'Join our team of elite engineers working on Fortune 500 tech.', image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80', status: 'Active' }
+  { id: 2, title: 'Build Your Career With YGR Gobal IT Services', desc: 'Join our team of elite engineers working on Fortune 500 tech.', image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&q=80', status: 'Active' }
 ];
 
 const CarouselDashboard = () => {

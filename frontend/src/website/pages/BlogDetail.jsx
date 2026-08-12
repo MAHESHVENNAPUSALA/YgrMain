@@ -298,7 +298,7 @@ const BlogDetail = () => {
                   </div>
                 </div>
                 <p className="text-secondary small mb-0">
-                  {blog.author?.bio || 'Leading technology innovations, distributed microservices, and enterprise AI blueprints at YGR Global.'}
+                  {blog.author?.bio || 'Leading technology innovations, distributed microservices, and enterprise AI blueprints at YGR Gobal.'}
                 </p>
               </div>
 

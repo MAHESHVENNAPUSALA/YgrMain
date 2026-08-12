@@ -10,11 +10,11 @@ const SettingsAdminPage = () => {
   const { addToast } = useToast();
 
   const [formData, setFormData] = useState({
-    company_name: 'YGR Global IT Services',
+    company_name: 'YGR Gobal IT Services',
     email: 'contact@ygrservices.com',
     phone: '+1 (800) 123-4567',
     address: 'Tech Park, Suite 400, Innovation Way',
-    copyright: '© 2026 YGR Global IT Services. All Rights Reserved.',
+    copyright: '© 2026 YGR Gobal IT Services. All Rights Reserved.',
     google_analytics_id: 'G-XXXXXXXXXX',
     google_maps_url: '',
     facebook: 'https://facebook.com',

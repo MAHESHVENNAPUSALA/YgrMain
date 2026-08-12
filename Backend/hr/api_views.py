@@ -421,7 +421,7 @@ class EmployeeDashboardAPIView(APIView):
             "team_lead": team_lead_data,
             "team_members": team_members_data,
             "tasks": tasks_serializer.data,
-            "active_tasks_count": tasks.filter(status="Pending").count(),
+            "active_tasks_count": tasks.filter(status__in=["Pending", "In Progress"]).count(),
             "latest_payslip": payslip_data,
             "recent_messages": recent_messages_data,
             "notifications": notifications_data,
@@ -604,12 +604,17 @@ class TLDashboardAPIView(APIView):
         member_status_list = []
         team_activities = []
         
-        if teams.exists():
-            members = User.objects.filter(teams__in=teams).distinct()
-            members_count = members.count()
-            
-            projects = Project.objects.filter(assigned_teams__in=teams).distinct()
-            projects_count = projects.count()
+        # Get team members
+        members = User.objects.filter(teams__in=teams).distinct()
+        members_count = members.count()
+        
+        # Get projects assigned to teams OR projects where the Team Lead has tasks
+        projects = Project.objects.filter(
+            Q(assigned_teams__in=teams) | Q(tasks__assigned_to=user)
+        ).distinct()
+        projects_count = projects.count()
+        
+        if True:
             
             for p in projects:
                 total_t = Task.objects.filter(project=p).count()
@@ -1166,10 +1171,8 @@ class AttendanceAPIView(APIView):
             
             # Fetch users based on role scope
             if role == 'TeamLead':
-                users = User.objects.filter(
-                    Q(reporting_manager=user) |
-                    Q(teams__lead=user)
-                ).distinct()
+                team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+                users = User.objects.filter(id__in=team_member_ids).distinct()
             elif role == 'Manager':
                 managed_teams = Team.objects.filter(projects__assigned_manager=user)
                 users = User.objects.filter(
@@ -1237,10 +1240,8 @@ class DailyRegistryAPIView(APIView):
             selected_date = str(date.today())
         
         if role == 'TeamLead':
-            users = User.objects.filter(
-                Q(reporting_manager=user) |
-                Q(teams__lead=user)
-            ).distinct()
+            team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+            users = User.objects.filter(id__in=team_member_ids).distinct()
         elif role == 'Manager':
             managed_teams = Team.objects.filter(projects__assigned_manager=user)
             users = User.objects.filter(
@@ -1418,10 +1419,8 @@ class MonthlySummaryAPIView(APIView):
             month = today.month
 
         if role == 'TeamLead':
-            users = User.objects.filter(
-                Q(reporting_manager=user) |
-                Q(teams__lead=user)
-            ).distinct()
+            team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+            users = User.objects.filter(id__in=team_member_ids).distinct()
         elif role == 'Manager':
             managed_teams = Team.objects.filter(projects__assigned_manager=user)
             users = User.objects.filter(
@@ -1897,7 +1896,8 @@ class LeaveAPIView(APIView):
             else:
                 leaves = Leave.objects.filter(current_approver_role=role)
             if role == 'TeamLead':
-                leaves = leaves.filter(Q(user__reporting_manager=user) | Q(user__teams__lead=user)).distinct()
+                team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+                leaves = leaves.filter(user__id__in=team_member_ids).distinct()
             elif role == 'Manager':
                 managed_teams = Team.objects.filter(projects__assigned_manager=user)
                 leaves = leaves.filter(
@@ -1914,7 +1914,8 @@ class LeaveAPIView(APIView):
             leaves = Leave.objects.filter(approval_steps__approver=user, approval_steps__decision='Approved').distinct()
         elif scope == 'team-all':
             if role == 'TeamLead':
-                leaves = Leave.objects.filter(Q(user__reporting_manager=user) | Q(user__teams__lead=user)).distinct()
+                team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+                leaves = Leave.objects.filter(user__id__in=team_member_ids).distinct()
             elif role == 'Manager':
                 managed_teams = Team.objects.filter(projects__assigned_manager=user)
                 leaves = Leave.objects.filter(
@@ -1940,7 +1941,8 @@ class LeaveAPIView(APIView):
             pending_count = leaves.count()
         else:
             if role == 'TeamLead':
-                pending_count = Leave.objects.filter(current_approver_role=role).filter(Q(user__reporting_manager=user) | Q(user__teams__lead=user)).distinct().count()
+                team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+                pending_count = Leave.objects.filter(current_approver_role=role, user__id__in=team_member_ids).distinct().count()
             elif role == 'Manager':
                 managed_teams = Team.objects.filter(projects__assigned_manager=user)
                 pending_count = Leave.objects.filter(current_approver_role=role).filter(
@@ -2445,10 +2447,14 @@ class TaskAPIView(APIView):
         elif role == 'TeamLead':
             tasks = Task.objects.filter(
                 Q(project__assigned_teams__lead=user) |
-                Q(assigned_to__teams__lead=user)
+                Q(assigned_to__teams__lead=user) |
+                Q(assigned_to=user)
             ).distinct()
         elif role == 'Manager':
-            tasks = Task.objects.filter(project__assigned_manager=user)
+            tasks = Task.objects.filter(
+                Q(project__assigned_manager=user) |
+                Q(assigned_to=user)
+            ).distinct()
         elif role in ['HR', 'MD']:
             tasks = Task.objects.all()
         else:
@@ -2490,8 +2496,8 @@ class TaskAPIView(APIView):
         
         # Verify permissions per role
         if user.role == 'TeamLead':
-            if not project.assigned_teams.filter(lead=user).exists():
-                return Response({"detail": "You do not lead a team on this project."}, status=status.HTTP_403_FORBIDDEN)
+            if not project.assigned_teams.filter(lead=user).exists() and not project.tasks.filter(assigned_to=user).exists():
+                return Response({"detail": "You do not lead a team on this project and have no tasks assigned to you."}, status=status.HTTP_403_FORBIDDEN)
         elif user.role == 'Manager':
             if project.assigned_manager != user:
                 return Response({"detail": "You are not the manager of this project."}, status=status.HTTP_403_FORBIDDEN)
@@ -2770,9 +2776,8 @@ class DailyReportAPIView(APIView):
         if role == 'Employee':
             reports = DailyReport.objects.filter(user=user)
         elif role == 'TeamLead':
-            members = User.objects.filter(
-                Q(reporting_manager=user) | Q(teams__lead=user)
-            ).distinct()
+            team_member_ids = Team.objects.filter(lead=user).values_list('members__id', flat=True).distinct()
+            members = User.objects.filter(id__in=team_member_ids).distinct()
             reports = DailyReport.objects.filter(Q(user=user) | Q(user__in=members))
         elif role == 'Manager':
             projects = Project.objects.filter(assigned_manager=user)
@@ -4103,6 +4108,12 @@ class AllUsersAPIView(APIView):
             if request.user.role not in ['HR', 'MD', 'Manager', 'TeamLead']:
                 return Response({"detail": "Access Denied: Unauthorized to view user directory."}, status=status.HTTP_403_FORBIDDEN)
             users = User.objects.all().order_by('emp_id')
+            
+            if request.user.role == 'TeamLead':
+                from .models import Team
+                member_ids = Team.objects.filter(lead=request.user, is_active=True).values_list('members__id', flat=True).distinct()
+                users = users.filter(id__in=member_ids)
+                
             serializer = UserSerializer(users, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
