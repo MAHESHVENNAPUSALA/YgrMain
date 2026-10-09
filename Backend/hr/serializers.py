@@ -281,6 +281,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     project = ProjectSerializer(read_only=True)
     members = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -291,6 +292,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'start_date',
             'end_date',
             'status',
+            'priority',
+            'notes',
+            'file',
+            'file_url',
             'project',
             'members',
         ]
@@ -303,6 +308,17 @@ class TaskSerializer(serializers.ModelSerializer):
                 "role": obj.assigned_to.role
             }]
         return []
+
+    def get_file_url(self, obj):
+        if not (obj.file and obj.file.name):
+            return None
+        request = self.context.get('request')
+        try:
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        except Exception:
+            return None
 
 class PayslipSerializer(serializers.ModelSerializer):
     net_salary = serializers.ReadOnlyField()
@@ -539,9 +555,62 @@ class CallSessionSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = Client
         fields = '__all__'
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        client = super().create(validated_data)
+        
+        if password:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            username = client.email if client.email else f"client_{client.id}"
+            if User.objects.filter(username=username).exists():
+                username = f"client_{client.id}_{username}"
+            
+            user = User.objects.create_user(
+                username=username,
+                email=client.email,
+                password=password,
+                first_name=client.contact_person or client.name,
+                role='Client'
+            )
+            client.user = user
+            client.save()
+            
+        return client
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        client = super().update(instance, validated_data)
+
+        if password:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            if client.user:
+                client.user.set_password(password)
+                client.user.save()
+            else:
+                username = client.email if client.email else f"client_{client.id}"
+                if User.objects.filter(username=username).exists():
+                    username = f"client_{client.id}_{username}"
+                
+                user = User.objects.create_user(
+                    username=username,
+                    email=client.email,
+                    password=password,
+                    first_name=client.contact_person or client.name,
+                    role='Client'
+                )
+                client.user = user
+                client.save()
+                
+        return client
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -595,13 +664,21 @@ class ExamSessionSerializer(serializers.ModelSerializer):
 
 
 class ResultSerializer(serializers.ModelSerializer):
-    exam_language = serializers.ReadOnlyField(source='exam.language')
-    exam_user_name = serializers.ReadOnlyField(source='exam.user.username')
+    exam_language = serializers.SerializerMethodField()
+    exam_user_name = serializers.SerializerMethodField()
     score = serializers.ReadOnlyField(source='score_percentage')
 
     class Meta:
         model = Result
         fields = '__all__'
+
+    def get_exam_language(self, obj):
+        return obj.exam.language if obj.exam else ''
+
+    def get_exam_user_name(self, obj):
+        if obj.exam and obj.exam.user:
+            return obj.exam.user.username or obj.exam.user.email
+        return 'Unknown Candidate'
 
 
 

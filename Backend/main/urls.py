@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path, include
 from django.contrib.auth.views import LogoutView
 from django.contrib.sitemaps.views import sitemap   # ✅ CORRECT IMPORT
 from . import views
@@ -52,20 +52,48 @@ urlpatterns = [
 
 
 
-    # ================= HOME =================
+    # ================= PUBLIC WEBSITE (REACT SPA) =================
     path("", views.home, name="home"),
-    path("demo/", views.demo, name="demo"),
-    path("header/", views.header, name="header"),
-    path("footer/", views.footer, name="footer"),
-    path("services/", views.services, name="services"),
+    path("about", views.aboutus, name="about_clean"),
+    path("about/", views.aboutus, name="about"),
+    path("aboutus", views.aboutus, name="aboutus_clean"),
     path("aboutus/", views.aboutus, name="aboutus"),
+    path("services", views.services, name="services_clean"),
+    path("services/", views.services, name="services"),
+    path("portfolio", views.home, name="portfolio_clean"),
+    path("portfolio/", views.home, name="portfolio"),
+    path("careers", views.careers, name="careers_clean"),
     path("careers/", views.careers, name="careers"),
+    path("contact", views.contact, name="contact_clean"),
     path("contact/", views.contact, name="contact"),
+    path("blog", views.blog_list, name="blog_clean"),
+    path("blog/", views.blog_list, name="blog_list"),
+    path("blogs", views.blog_list, name="blogs_clean"),
+    path("blogs/", views.blog_list, name="blogs_list"),
+    path("blog/<str:slug>", views.blog_detail, name="blog_detail_slug_clean"),
+    path("blog/<str:slug>/", views.blog_detail, name="blog_detail_slug"),
+    path("team", views.team_list, name="team_clean"),
+    path("team/", views.team_list, name="team_list"),
+    path("global-internships", views.home, name="global_internships_clean"),
+    path("global-internships/", views.home, name="global_internships"),
+    path("internships/<str:slug>", views.home, name="internship_detail_clean"),
+    path("internships/<str:slug>/", views.home, name="internship_detail"),
+    path("register-internship", views.home, name="register_internship_clean"),
+    path("register-internship/", views.home, name="register_internship"),
+    path("client-registration", views.home, name="client_registration_clean"),
+    path("client-registration/", views.home, name="client_registration"),
+    path("candidate-exam", views.home, name="candidate_exam_clean"),
+    path("candidate-exam/", views.home, name="candidate_exam"),
+    path("vacancies", views.home, name="vacancies_clean"),
+    path("vacancies/", views.home, name="vacancies"),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
 
     # ================= STATIC PAGES =================
+    path("terms", views.terms, name="terms_clean"),
     path("terms/", views.terms, name="terms"),
+    path("privacy", views.privacy, name="privacy_clean"),
     path("privacy/", views.privacy, name="privacy"),
+    path("cookies", views.cookies, name="cookies_clean"),
     path("cookies/", views.cookies, name="cookies"),
     path("help/", views.help, name="help"),
     path("faqs/", views.faqs, name="faqs"),
@@ -88,16 +116,14 @@ urlpatterns = [
     path("projects/<int:id>/delete/", views.project_delete, name="project_delete"),
 
 
-    # ================= BLOG =================
-    path("blogs/", views.blog_list, name="blog_list"),
+    # ================= BLOG ADMIN =================
     path("dashboard/blogs/", views.admin_blog_list, name="admin_blog_list"),
     path("dashboard/blogs/add/", views.add_blog, name="add_blog"),
     path("dashboard/blogs/edit/<int:blog_id>/", views.edit_blog, name="edit_blog"),
     path("dashboard/blogs/delete/<int:blog_id>/", views.delete_blog, name="delete_blog"),
 
 
-    # ================= TEAM =================
-    path("team/", views.team_list, name="team_list"),
+    # ================= TEAM ADMIN =================
     path("dashboard/team/", views.team_dashboard, name="team_dashboard"),
     path("dashboard/team/add/", views.team_create, name="team_create"),
     path("dashboard/team/edit/<int:id>/", views.team_edit, name="team_edit"),
@@ -117,7 +143,7 @@ urlpatterns = [
 
 
     # ================= USER AUTH =================
-    path("login/", views.login_view, name="login"),
+    path("intern-login/", views.login_view, name="login"),
     path("logout/", LogoutView.as_view(next_page="careers"), name="logout"),
     path("dashboard/", views.user_dashboard, name="dashboard"),
 
@@ -155,10 +181,11 @@ urlpatterns = [
 
 
     # ================= INTERNSHIPS ================= 
-    path("internships/", views.internships_view, name="internships"),
-    path("internships_list/", views.internships_list, name="internships_list"),
+    path("internships/", views.home, name="internships"),
+    path("internships_list/", views.home, name="internships_list"),
     path("profile/", views.profile, name="profile"),
     path("edit_profile/<int:id>/", views.edit_profile, name="edit_profile"),
+    path("api/register/<int:course_id>/", views.register_view, name="api_register"),
     path("register/<int:course_id>/", views.register_view, name="register"),
     path('create-payment/', views.create_payment, name='create_payment'),
     path('payment_success/<int:reg_id>/', views.payment_success, name='payment_success'),
@@ -184,11 +211,13 @@ urlpatterns = [
     path("internship-dashboard/", views.internship_dashboard, name="internship_dashboard"),
     path("internship-edit/<int:id>/", views.internship_edit, name="internship_edit"),
     path("internship-delete/<int:id>/", views.internship_delete, name="internship_delete"),
-path("profile/download_certificate/<int:user_id>/", views.download_certificate, name="download_certificate"),
+    path("profile/download_certificate/<int:user_id>/", views.download_certificate, name="download_certificate"),
 
     # user admin dashboard
 
     path("internship_users_dashboard/", views.internship_users_dashboard, name="internship_users_dashboard"),
+    path("internship-registration-profile/<int:id>/", views.internship_registration_profile, name="internship_registration_profile"),
+    path("delete-internship-registration/<int:id>/", views.delete_internship_registration, name="delete_internship_registration"),
     path("user-profile/<int:id>/", views.user_profile, name="user_profile"),
     path("delete-user/<int:id>/", views.delete_user, name="delete_user"),
 
@@ -212,10 +241,40 @@ path("profile/download_certificate/<int:user_id>/", views.download_certificate, 
     path("dashboard/job_applications/", views.job_applications_dashboard, name="job_applications_dashboard"),
     path("dashboard/job_application/<int:id>/", views.view_job_application, name="view_job_application"),
     path("dashboard/job_application/<int:id>/download_resume/", views.download_resume, name="download_resume"),
-    path('applications/delete/<int:id>/', 
-     views.delete_job_application, 
-     name='delete_job_application'),
-    path('blog/<int:id>/', views.blog_detail, name='blog_detail'),
+    path('applications/delete/<int:id>/', views.delete_job_application,name='delete_job_application'),
+    path('blog/<int:id>/', views.home, name='blog_detail_id'),
     path('client_form/', views.client_form, name='client_form'),
-     path('clients/', views.client_list, name='client_list'),
+    path('clients/', views.client_list, name='client_list'),
+
+    # Catch-all fallback for React Single Page Application (SPA) routing on live server
+    re_path(r'^(?:(?!api/|media/|static/|admin/|admin$|dashboard/|dashboard$).)*$', views.home, name='spa_fallback'),
+    path('api/exam/login/', views.api_exam_login, name='api_exam_login'),
+    path('api/exam/profile/', views.api_exam_profile, name='api_exam_profile'),
+    path('api/exam/dashboard/', views.api_exam_profile, name='api_exam_dashboard'),
+    path('api/exam/start/', views.api_exam_start, name='api_exam_start'),
+    path('api/exam/submit/', views.api_exam_submit, name='api_exam_submit'),
+    path('api/hr/internship-applicants/', views.api_hr_internship_applicants, name='api_hr_internship_applicants'),
+    path('api/hr/internship-applicants/<int:pk>/', views.api_hr_internship_applicant_detail, name='api_hr_internship_applicant_detail'),
 ]
+
+from rest_framework.routers import DefaultRouter
+from .internship_portal_views import (
+    PublicInternshipRegistrationViewSet,
+    AdminInternshipRegistrationViewSet,
+    InternshipInterviewViewSet,
+    InternshipOfferViewSet,
+    InternshipExamSessionViewSet
+)
+
+router = DefaultRouter()
+router.register(r'portal/internships/register', PublicInternshipRegistrationViewSet, basename='portal_internships_register')
+router.register(r'portal/admin/internships/candidates', AdminInternshipRegistrationViewSet, basename='portal_admin_internships')
+router.register(r'portal/admin/internships/interviews', InternshipInterviewViewSet, basename='portal_admin_interviews')
+router.register(r'portal/admin/internships/offers', InternshipOfferViewSet, basename='portal_admin_offers')
+router.register(r'portal/admin/internships/exams', InternshipExamSessionViewSet, basename='portal_admin_exams')
+
+urlpatterns += [
+    path('api/', include(router.urls)),
+]
+
+

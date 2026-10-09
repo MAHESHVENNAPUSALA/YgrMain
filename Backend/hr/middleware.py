@@ -33,12 +33,13 @@ class HRMSAccessControlMiddleware:
         public_url_names = {
             'viewlogins', 'hr_login', 'tl_login', 'employee_login', 
             'manager_login', 'login', 'exam_login', 'exam_register',
-            'react_app',  # React SPA catch-all (serves index.html for /login, /employee-dashboard, etc.)
+            'react_app', 'register', 'apply', 'job_application',
         }
         
         is_public = (
             url_name in public_url_names or 
             (view_name and view_name.startswith('admin:')) or 
+            path == '/admin' or
             path.startswith('/admin/') or
             path.startswith('/admin-') or
             path.startswith('/dashboard/') or

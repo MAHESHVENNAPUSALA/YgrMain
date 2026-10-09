@@ -6,6 +6,7 @@ import './website/premium-theme.css';
 import ProtectedRoute from './hrm/components/ProtectedRoute';
 import Layout from './hrm/components/Layout';
 import Loader from './components/common/Loader';
+import ScrollToTop from './components/common/ScrollToTop';
 import { renderWebsiteRoutes } from './routes/websiteRoutes';
 import { renderAdminCmsRoutes } from './routes/adminCmsRoutes';
 import { AdminAuthProvider } from './website/admin/hooks/useAdminAuth';
@@ -30,6 +31,9 @@ import Vacancies from './website/internships/Vacancies';
 import JobApplication from './website/internships/JobApplication';
 import JobApplicantLogin from './website/internships/JobApplicantLogin';
 import RegisterInternship from './website/internships/RegisterInternship';
+import CandidateDashboard from './website/internships/CandidateDashboard';
+import CandidateExam from './website/internships/CandidateExam';
+import CandidateLogin from './website/internships/CandidateLogin';
 
 // ── Website CMS Admin Pages (Lazy Loaded) ─────────────────────────
 const AdminLoginPage = lazy(() => import('./website/admin/pages/authentication/AdminLoginPage'));
@@ -42,6 +46,7 @@ const Employees = lazy(() => import('./hrm/pages/Employees'));
 const ManagerDashboard = lazy(() => import('./hrm/pages/ManagerDashboard'));
 const TLDashboard = lazy(() => import('./hrm/pages/TLDashboard'));
 const MDDashboard = lazy(() => import('./hrm/pages/MDDashboard'));
+const ClientDashboard = lazy(() => import('./hrm/pages/ClientDashboard'));
 const Profile = lazy(() => import('./hrm/pages/Profile'));
 const Attendance = lazy(() => import('./hrm/pages/Attendance'));
 const Payslips = lazy(() => import('./hrm/pages/Payslips'));
@@ -60,6 +65,7 @@ const ClientCreate = lazy(() => import('./hrm/pages/ClientCreate'));
 const ServiceCreate = lazy(() => import('./hrm/pages/ServiceCreate'));
 const InvoiceCreate = lazy(() => import('./hrm/pages/InvoiceCreate'));
 const SalaryStructures = lazy(() => import('./hrm/pages/SalaryStructures'));
+const HRInternshipCandidates = lazy(() => import('./hrm/pages/HRInternshipCandidates'));
 
 const AdminRedirect = () => {
   const backendHost =
@@ -80,7 +86,8 @@ const HomeRedirect = () => {
     TeamLead: ROUTES.HRMS_TL_DASHBOARD,
     Manager: ROUTES.HRMS_MANAGER_DASHBOARD,
     HR: ROUTES.HRMS_HR_DASHBOARD,
-    MD: ROUTES.HRMS_MD_DASHBOARD
+    MD: ROUTES.HRMS_MD_DASHBOARD,
+    Client: ROUTES.HRMS_CLIENT_DASHBOARD
   };
   return <Navigate to={roleRedirects[user.role] || ROUTES.HRMS_LOGIN} replace />;
 };
@@ -89,14 +96,18 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Suspense fallback={<Loader message="Loading portal dashboard..." />}>
           <Routes>
             {/* ── PUBLIC COMPANY WEBSITE ── */}
             {renderWebsiteRoutes()}
 
             {/* ── INTERNSHIP PORTAL ── */}
-            <Route element={<PublicLayout hideHeaderFooter={true} />}>
+            <Route element={<PublicLayout />}>
               <Route path={ROUTES.VACANCIES} element={<Vacancies />} />
+              <Route path="/internships/candidate-login" element={<CandidateLogin />} />
+              <Route path="/internships/candidate-dashboard/:registrationId" element={<CandidateDashboard />} />
+              <Route path="/internships/exam/:token" element={<CandidateExam />} />
               <Route path="/legacy/exampages/internship_list" element={<Navigate to={ROUTES.GLOBAL_INTERNSHIPS} replace />} />
               <Route path="/legacy/exampages/job_applicant_login" element={<JobApplicantLogin />} />
             </Route>
@@ -170,6 +181,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="client-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['Client']}>
+                    <ClientDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* HRMS Self-service & Management Pages */}
               <Route path="profile" element={<Profile />} />
@@ -239,6 +258,7 @@ function App() {
               <Route path="salary-structures" element={<SalaryStructures />} />
               <Route path="payslips-list" element={<Payslips />} />
               <Route path="questions" element={<Exams />} />
+              <Route path="hr/internship-candidates" element={<ProtectedRoute allowedRoles={['HR', 'Admin']}><HRInternshipCandidates /></ProtectedRoute>} />
             </Route>
 
             {/* Catch-all */}

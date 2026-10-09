@@ -30,7 +30,7 @@ const ClientForm = () => {
                 body: formData,
             });
             setStatus("Your details have been successfully submitted!");
-            e.target.reset();
+            e.target.reset(); 
         } catch (error) {
             console.error("Error submitting form", error);
         }

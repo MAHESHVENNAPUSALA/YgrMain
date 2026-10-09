@@ -46,27 +46,31 @@ const BlogList = () => {
     fetchData();
   }, []);
 
-  // Filtered blogs logic for Live Search & Category Pills
+  // Filtered blogs logic for Live Search & Category Pills (Sorted by Highest Views First)
   const filteredBlogs = useMemo(() => {
-    return blogs.filter((blog) => {
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        (blog.category && blog.category.toLowerCase() === selectedCategory.toLowerCase());
+    return blogs
+      .filter((blog) => {
+        const matchesCategory =
+          selectedCategory === 'All' ||
+          (blog.category && blog.category.toLowerCase() === selectedCategory.toLowerCase());
 
-      const query = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !query ||
-        blog.title.toLowerCase().includes(query) ||
-        (blog.short_description && blog.short_description.toLowerCase().includes(query)) ||
-        (blog.tags && blog.tags.some((t) => t.toLowerCase().includes(query)));
+        const query = searchQuery.toLowerCase().trim();
+        const matchesSearch =
+          !query ||
+          blog.title.toLowerCase().includes(query) ||
+          (blog.short_description && blog.short_description.toLowerCase().includes(query)) ||
+          (blog.tags && blog.tags.some((t) => t.toLowerCase().includes(query)));
 
-      return matchesCategory && matchesSearch;
-    });
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
   }, [blogs, selectedCategory, searchQuery]);
 
-  // Featured blog (first featured blog or first item in list)
+  // Featured blog (explicitly featured or highest viewed post)
   const featuredBlog = useMemo(() => {
-    return blogs.find((b) => b.is_featured) || blogs[0] || null;
+    if (!blogs || blogs.length === 0) return null;
+    const sortedByViews = [...blogs].sort((a, b) => (b.views_count || 0) - (a.views_count || 0));
+    return sortedByViews.find((b) => b.is_featured) || sortedByViews[0] || null;
   }, [blogs]);
 
   // Handle Newsletter Submission
@@ -210,13 +214,22 @@ const BlogList = () => {
 
                     <div className="d-flex align-items-center justify-content-between pt-3 border-top">
                       <div className="d-flex align-items-center gap-2">
-                        <div className="author-initials">
-                          {featuredBlog.author?.name ? featuredBlog.author.name.charAt(0) : 'Y'}
-                        </div>
+                        {featuredBlog.author?.avatar ? (
+                          <img src={featuredBlog.author.avatar} alt={featuredBlog.author.name} className="author-avatar-sm" style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563EB' }} />
+                        ) : (
+                          <div className="author-badge-ring" style={{ width: '36px', height: '36px' }}>
+                            <span className="author-ygr-mark">YGR</span>
+                          </div>
+                        )}
                         <div>
-                          <div className="fw-bold text-dark small">{featuredBlog.author?.name || 'YGR Architect'}</div>
-                          <div className="text-muted extra-small" style={{ fontSize: '0.78rem' }}>
-                            {featuredBlog.created_at}
+                          <div className="fw-bold text-dark small d-flex align-items-center gap-1">
+                            {featuredBlog.author?.name || 'YGR Tech Team'}
+                            <i className="fas fa-check-circle text-primary" style={{ fontSize: '0.82rem' }} title="Verified Engineering Author"></i>
+                          </div>
+                          <div className="text-muted extra-small d-flex align-items-center gap-2" style={{ fontSize: '0.78rem' }}>
+                            <span>{featuredBlog.created_at}</span>
+                            <span>•</span>
+                            <span className="text-primary fw-semibold"><i className="far fa-eye me-1"></i>{featuredBlog.views_count || 0} views</span>
                           </div>
                         </div>
                       </div>
@@ -284,10 +297,23 @@ const BlogList = () => {
                         </div>
 
                         <div className="card-body-custom">
-                          <div className="card-meta-line">
-                            <span className="author-initials">{blog.author?.name ? blog.author.name.charAt(0) : 'Y'}</span>
-                            <span className="fw-semibold text-dark">{blog.author?.name || 'YGR Tech Team'}</span>
-                            <span className="ms-auto text-muted">{blog.created_at}</span>
+                          <div className="card-meta-line" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {blog.author?.avatar ? (
+                              <img src={blog.author.avatar} alt={blog.author.name} className="author-avatar-sm" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #2563EB', flexShrink: 0 }} />
+                            ) : (
+                              <div className="author-badge-ring">
+                                <span className="author-ygr-mark">YGR</span>
+                              </div>
+                            )}
+                            <div className="d-flex align-items-center gap-1">
+                              <span className="fw-semibold text-dark" style={{ fontSize: '0.82rem' }}>{blog.author?.name || 'YGR Tech Team'}</span>
+                              <i className="fas fa-check-circle text-primary" style={{ fontSize: '0.75rem' }} title="Verified Engineering Author"></i>
+                            </div>
+                            <div className="ms-auto d-flex align-items-center gap-2 text-muted" style={{ fontSize: '0.78rem' }}>
+                              <span className="text-primary fw-bold"><i className="far fa-eye me-1"></i>{blog.views_count || 0}</span>
+                              <span>•</span>
+                              <span>{blog.created_at}</span>
+                            </div>
                           </div>
 
                           <h4 className="blog-card-title">{blog.title}</h4>

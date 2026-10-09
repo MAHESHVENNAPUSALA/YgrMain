@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import './HeroBanner.css';
 
 const TRUST_BADGES = [
-  { value: '99.8%', label: 'Client Satisfaction', icon: 'fa-award' },
-  { value: '5+ Yrs', label: 'Tech Excellence', icon: 'fa-shield-halved' },
-  { value: '145+', label: 'Global Deployments', icon: 'fa-rocket' },
+  { value: '99%', label: 'Client Satisfaction', icon: 'fa-award' },
+  { value: '6+ Yrs', label: 'Tech Excellence', icon: 'fa-shield-halved' },
+  { value: '149+', label: 'Global Deployments', icon: 'fa-rocket' },
 ];
 
 const SERVICE_PILLS = [
@@ -99,7 +99,7 @@ const HeroBanner = () => {
             transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="hero-description"
           >
-            We engineer high-performance web applications, cloud infrastructure, and AI-driven enterprise software that accelerate global growth for forward-thinking organizations.
+            YGR Gobal IT Services is recognized as the <strong>best IT services company in Hyderabad</strong>, and the <strong>best partner to make web applications and mobile applications</strong>. We engineer high-performance cloud infrastructure and AI-driven enterprise software that accelerate global growth.
           </motion.p>
 
           {/* CTA Buttons (56px height, 20px gap, rounded-full) */}

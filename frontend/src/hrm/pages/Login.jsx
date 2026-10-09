@@ -23,6 +23,7 @@ const Login = () => {
         Manager: '/manager-dashboard',
         HR: '/hr-dashboard',
         MD: '/md-dashboard',
+        Client: '/client-dashboard',
       };
       navigate(roleRedirects[user.role] || '/employee-dashboard', { replace: true });
     }

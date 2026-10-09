@@ -1,97 +1,45 @@
 {% extends "admin_base.html" %}
-
-{% block title %}{% if edit_mode %}Edit{% else %}Add{% endif %} Job Vacancy{% endblock %}
-{% block header_title %}{% if edit_mode %}Edit{% else %}Add{% endif %} Job Vacancy{% endblock %}
+{% block title %}{% if edit_mode %}Edit Vacancy{% else %}Add Vacancy{% endif %}{% endblock %}
 
 {% block content %}
+<div style="background: white; padding: 25px; border-radius: 10px; max-width: 700px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <h2 style="color: #092a49; margin-bottom: 20px;">{% if edit_mode %}Edit Vacancy{% else %}Add Job Vacancy{% endif %}</h2>
 
-<style>
-/* ===== FORM CONTAINER ===== */
-.form-container {
-    max-width: 600px;
-    margin: 50px auto;
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 25px 45px rgba(0,0,0,0.08);
-}
-
-/* Heading */
-.form-container h2 {
-    text-align: center;
-    color: #2563eb;
-    margin-bottom: 25px;
-}
-
-/* Inputs */
-.form-container input,
-.form-container textarea {
-    width: 100%;
-    padding: 12px 14px;
-    margin: 10px 0;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    font-size: 14px;
-    transition: 0.2s ease;
-}
-
-.form-container input:focus,
-.form-container textarea:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
-}
-
-/* Textarea */
-.form-container textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-/* Button */
-.form-container button {
-    width: 100%;
-    background: #2563eb;
-    color: #fff;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: 0.2s ease;
-}
-
-.form-container button:hover {
-    background: #1d4ed8;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-    .form-container {
-        margin: 30px 15px;
-        padding: 20px;
-    }
-}
-</style>
-
-<div class="form-container">
     <form method="POST">
         {% csrf_token %}
-
-        <h2>{% if edit_mode %}Edit{% else %}Add{% endif %} Job</h2>
-
-        <input name="title" value="{{ job.title|default:'' }}" placeholder="Job Title" required>
-        <input name="location" value="{{ job.location|default:'' }}" placeholder="Location" required>
-        <input name="role" value="{{ job.role|default:'' }}" placeholder="Role (Full Time / Internship)" required>
-        <input name="package" value="{{ job.package|default:'' }}" placeholder="Package (₹3-6 LPA)" required>
-        <input name="vacancies" value="{{ job.vacancies|default:'' }}" placeholder="vacancies 0 - 10" required>
-        <textarea name="description" placeholder="Job Description">{{ job.description|default:'' }}</textarea>
-        <textarea name="requirements" placeholder="Requirements">{{ job.requirements|default:'' }}</textarea>
-
-        <button type="submit">{% if edit_mode %}Update Job{% else %}Post Job{% endif %}</button>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Job Title *</label>
+            <input type="text" name="title" value="{{ job.title|default:'' }}" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Role *</label>
+            <input type="text" name="role" value="{{ job.role|default:'' }}" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Location *</label>
+            <input type="text" name="location" value="{{ job.location|default:'' }}" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Salary Package *</label>
+            <input type="text" name="package" value="{{ job.package|default:'' }}" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Number of Openings</label>
+            <input type="text" name="vacancies" value="{{ job.vacancies|default:'1' }}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Job Description</label>
+            <textarea name="description" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">{{ job.description|default:'' }}</textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Requirements</label>
+            <textarea name="requirements" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">{{ job.requirements|default:'' }}</textarea>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label><input type="checkbox" name="is_active" {% if job.is_active or not edit_mode %}checked{% endif %} /> Active</label>
+        </div>
+        <button type="submit" style="background: #092a49; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Save Vacancy</button>
+        <a href="{% url 'admin_vacancies' %}" style="margin-left: 10px; color: #555; text-decoration: none;">Cancel</a>
     </form>
 </div>
-
 {% endblock %}

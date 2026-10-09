@@ -62,8 +62,10 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && user.role !== 'Client') {
       fetchAttendanceStatus();
+    } else {
+      setLoadingAttendance(false);
     }
   }, [user]);
 
@@ -299,6 +301,7 @@ const Sidebar = () => {
       case 'HR': return '/hr-dashboard';
       case 'Manager': return '/manager-dashboard';
       case 'TeamLead': return '/tl-dashboard';
+      case 'Client': return '/client-dashboard';
       default: return '/employee-dashboard';
     }
   };
@@ -628,6 +631,7 @@ const Sidebar = () => {
       </NavLink>
 
       {/* Check In / Out Footer block inside sidebar */}
+      {user.role !== 'Client' && (
       <div className="sidebar-footer">
         {loadingAttendance ? (
           <div style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '12px' }}>
@@ -651,6 +655,7 @@ const Sidebar = () => {
           </button>
         )}
       </div>
+      )}
 
       {/* Attendance Camera & Location Modal */}
       {showModal && (

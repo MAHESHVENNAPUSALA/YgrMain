@@ -29,6 +29,10 @@ const OriginalExampagesJobApplication = () => {
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [panCardImage, setPanCardImage] = useState(null);
+  const [aadhaarFront, setAadhaarFront] = useState(null);
+  const [aadhaarBack, setAadhaarBack] = useState(null);
   const [formErrors, setFormErrors] = useState({});
   const [globalError, setGlobalError] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
@@ -37,27 +41,43 @@ const OriginalExampagesJobApplication = () => {
   const initialFormState = {
     first_name: '',
     last_name: '',
+    dob: '',
+    gender: 'Not Specified',
     email: '',
     phone: '',
     whatsapp: '',
     current_address: '',
+    permanent_address: '',
     highest_qualification: 'Graduate',
     college_university: '',
     passout_year: new Date().getFullYear().toString(),
+    ssc_marks: '',
+    inter_diploma_marks: '',
+    higher_education_marks: '',
+    backlogs: '0',
     candidate_type: 'Fresher',
     current_company: '',
+    current_designation: '',
     total_experience: '0',
     relevant_experience: '0',
     expected_salary: '',
     current_salary: '',
     notice_period: 'Immediate',
+    reason_for_job_change: '',
     preferred_location: 'Hyderabad',
+    employment_type: 'Full Time',
+    preferred_work_mode: 'Office',
     job_role: searchParams.get('role') || searchParams.get('title') || 'Software Engineer',
     department: searchParams.get('department') || 'Engineering',
     linkedin_url: '',
     portfolio_url: '',
     primary_skills: '',
+    secondary_skills: '',
     technical_skills: '',
+    certifications: '',
+    internship_details: '',
+    pan_number: '',
+    aadhaar_number: '',
     why_join: '',
     declaration: false
   };
@@ -88,25 +108,38 @@ const OriginalExampagesJobApplication = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, fileType = 'resume') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 10 * 1024 * 1024) {
-        setFormErrors((prev) => ({ ...prev, resume: 'File size exceeds maximum 10MB limit.' }));
+        setFormErrors((prev) => ({ ...prev, [fileType]: 'File size exceeds maximum 10MB limit.' }));
         return;
       }
-      setSelectedFile(file);
-      setFormErrors((prev) => ({ ...prev, resume: '' }));
+      if (fileType === 'resume') setSelectedFile(file);
+      else if (fileType === 'profile_photo') setProfilePhoto(file);
+      else if (fileType === 'pan_card_image') setPanCardImage(file);
+      else if (fileType === 'aadhaar_front_image') setAadhaarFront(file);
+      else if (fileType === 'aadhaar_back_image') setAadhaarBack(file);
+
+      setFormErrors((prev) => ({ ...prev, [fileType]: '' }));
     }
   };
 
-  const removeFile = () => {
-    setSelectedFile(null);
+  const removeFile = (fileType = 'resume') => {
+    if (fileType === 'resume') setSelectedFile(null);
+    else if (fileType === 'profile_photo') setProfilePhoto(null);
+    else if (fileType === 'pan_card_image') setPanCardImage(null);
+    else if (fileType === 'aadhaar_front_image') setAadhaarFront(null);
+    else if (fileType === 'aadhaar_back_image') setAadhaarBack(null);
   };
 
   const handleReset = () => {
     setFormData(initialFormState);
     setSelectedFile(null);
+    setProfilePhoto(null);
+    setPanCardImage(null);
+    setAadhaarFront(null);
+    setAadhaarBack(null);
     setFormErrors({});
     setGlobalError('');
   };
@@ -162,9 +195,11 @@ const OriginalExampagesJobApplication = () => {
       bodyFormData.append(key, formData[key]);
     });
 
-    if (selectedFile) {
-      bodyFormData.append('resume', selectedFile);
-    }
+    if (selectedFile) bodyFormData.append('resume', selectedFile);
+    if (profilePhoto) bodyFormData.append('profile_photo', profilePhoto);
+    if (panCardImage) bodyFormData.append('pan_card_image', panCardImage);
+    if (aadhaarFront) bodyFormData.append('aadhaar_front_image', aadhaarFront);
+    if (aadhaarBack) bodyFormData.append('aadhaar_back_image', aadhaarBack);
 
     const csrfToken = getCookie('csrftoken');
 
@@ -365,6 +400,33 @@ const OriginalExampagesJobApplication = () => {
                         {formErrors.last_name && <div className="field-error-hint">{formErrors.last_name}</div>}
                       </div>
 
+                      {/* DOB & Gender */}
+                      <div className="col-md-6">
+                        <label className="job-field-label">Date of Birth</label>
+                        <input
+                          type="date"
+                          className="job-field-control"
+                          name="dob"
+                          value={formData.dob}
+                          onChange={handleChange}
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="job-field-label">Gender</label>
+                        <select
+                          className="job-field-select"
+                          name="gender"
+                          value={formData.gender}
+                          onChange={handleChange}
+                        >
+                          <option value="Not Specified">Not Specified</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
                       {/* Email & Phone */}
                       <div className="col-md-6">
                         <label className="job-field-label">Email Address *</label>
@@ -422,6 +484,18 @@ const OriginalExampagesJobApplication = () => {
                         {formErrors.current_address && <div className="field-error-hint">{formErrors.current_address}</div>}
                       </div>
 
+                      <div className="col-md-12">
+                        <label className="job-field-label">Permanent Address</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="permanent_address"
+                          value={formData.permanent_address}
+                          onChange={handleChange}
+                          placeholder="Full permanent address"
+                        />
+                      </div>
+
                       {/* Highest Qualification & College */}
                       <div className="col-md-6">
                         <label className="job-field-label">Highest Qualification *</label>
@@ -467,6 +541,55 @@ const OriginalExampagesJobApplication = () => {
                         />
                       </div>
 
+                      {/* Academic Marks */}
+                      <div className="col-md-3">
+                        <label className="job-field-label">10th Marks / CGPA</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="ssc_marks"
+                          value={formData.ssc_marks}
+                          onChange={handleChange}
+                          placeholder="e.g. 85% or 9.2"
+                        />
+                      </div>
+                      
+                      <div className="col-md-3">
+                        <label className="job-field-label">12th / Diploma Marks</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="inter_diploma_marks"
+                          value={formData.inter_diploma_marks}
+                          onChange={handleChange}
+                          placeholder="e.g. 80% or 8.5"
+                        />
+                      </div>
+
+                      <div className="col-md-3">
+                        <label className="job-field-label">Graduation Marks</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="higher_education_marks"
+                          value={formData.higher_education_marks}
+                          onChange={handleChange}
+                          placeholder="e.g. 75% or 8.0"
+                        />
+                      </div>
+
+                      <div className="col-md-3">
+                        <label className="job-field-label">Active Backlogs</label>
+                        <input
+                          type="number"
+                          className="job-field-control"
+                          name="backlogs"
+                          value={formData.backlogs}
+                          onChange={handleChange}
+                          min="0"
+                        />
+                      </div>
+
                       <div className="col-md-6">
                         <label className="job-field-label">Experience Type *</label>
                         <select
@@ -483,7 +606,7 @@ const OriginalExampagesJobApplication = () => {
                       {/* Current Company & Total Exp */}
                       {formData.candidate_type === 'Experienced' && (
                         <>
-                          <div className="col-md-6">
+                          <div className="col-md-4">
                             <label className="job-field-label">Current Company</label>
                             <input
                               type="text"
@@ -494,8 +617,20 @@ const OriginalExampagesJobApplication = () => {
                               placeholder="Current Employer Name"
                             />
                           </div>
+                          
+                          <div className="col-md-4">
+                            <label className="job-field-label">Current Designation</label>
+                            <input
+                              type="text"
+                              className="job-field-control"
+                              name="current_designation"
+                              value={formData.current_designation}
+                              onChange={handleChange}
+                              placeholder="e.g. Software Engineer"
+                            />
+                          </div>
 
-                          <div className="col-md-6">
+                          <div className="col-md-4">
                             <label className="job-field-label">Total Experience (Years)</label>
                             <input
                               type="number"
@@ -504,6 +639,30 @@ const OriginalExampagesJobApplication = () => {
                               name="total_experience"
                               value={formData.total_experience}
                               onChange={handleChange}
+                            />
+                          </div>
+                          
+                          <div className="col-md-4">
+                            <label className="job-field-label">Relevant Experience (Years)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              className="job-field-control"
+                              name="relevant_experience"
+                              value={formData.relevant_experience}
+                              onChange={handleChange}
+                            />
+                          </div>
+                          
+                          <div className="col-md-8">
+                            <label className="job-field-label">Reason for Job Change</label>
+                            <input
+                              type="text"
+                              className="job-field-control"
+                              name="reason_for_job_change"
+                              value={formData.reason_for_job_change}
+                              onChange={handleChange}
+                              placeholder="Why are you looking for a change?"
                             />
                           </div>
                         </>
@@ -566,6 +725,35 @@ const OriginalExampagesJobApplication = () => {
                         </select>
                       </div>
 
+                      <div className="col-md-3">
+                        <label className="job-field-label">Employment Type</label>
+                        <select
+                          className="job-field-select"
+                          name="employment_type"
+                          value={formData.employment_type}
+                          onChange={handleChange}
+                        >
+                          <option value="Full Time">Full Time</option>
+                          <option value="Part Time">Part Time</option>
+                          <option value="Contract">Contract</option>
+                          <option value="Internship">Internship</option>
+                        </select>
+                      </div>
+                      
+                      <div className="col-md-3">
+                        <label className="job-field-label">Work Mode</label>
+                        <select
+                          className="job-field-select"
+                          name="preferred_work_mode"
+                          value={formData.preferred_work_mode}
+                          onChange={handleChange}
+                        >
+                          <option value="Office">Office</option>
+                          <option value="Hybrid">Hybrid</option>
+                          <option value="Remote">Remote</option>
+                        </select>
+                      </div>
+
                       <div className="col-md-6">
                         <label className="job-field-label">Job Applying For *</label>
                         <input
@@ -607,6 +795,42 @@ const OriginalExampagesJobApplication = () => {
                         {formErrors.primary_skills && <div className="field-error-hint">{formErrors.primary_skills}</div>}
                       </div>
 
+                      <div className="col-md-6">
+                        <label className="job-field-label">Secondary Skills</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="secondary_skills"
+                          value={formData.secondary_skills}
+                          onChange={handleChange}
+                          placeholder="e.g. HTML, CSS, Git"
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="job-field-label">Certifications</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="certifications"
+                          value={formData.certifications}
+                          onChange={handleChange}
+                          placeholder="e.g. AWS Certified Developer"
+                        />
+                      </div>
+                      
+                      <div className="col-md-6">
+                        <label className="job-field-label">Internship Details</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="internship_details"
+                          value={formData.internship_details}
+                          onChange={handleChange}
+                          placeholder="List any relevant internships"
+                        />
+                      </div>
+
                       {/* LinkedIn & Portfolio */}
                       <div className="col-md-6">
                         <label className="job-field-label">LinkedIn URL</label>
@@ -632,6 +856,72 @@ const OriginalExampagesJobApplication = () => {
                         />
                       </div>
 
+                      {/* Document Details */}
+                      <div className="col-md-6">
+                        <label className="job-field-label">PAN Number</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="pan_number"
+                          value={formData.pan_number}
+                          onChange={handleChange}
+                          placeholder="ABCDE1234F"
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="job-field-label">Aadhaar Number</label>
+                        <input
+                          type="text"
+                          className="job-field-control"
+                          name="aadhaar_number"
+                          value={formData.aadhaar_number}
+                          onChange={handleChange}
+                          placeholder="1234 5678 9012"
+                        />
+                      </div>
+
+                      {/* FILE UPLOADS SECTION */}
+                      <div className="col-md-6 mt-3">
+                        <label className="job-field-label">Profile Photo</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*"
+                          onChange={(e) => handleFileChange(e, 'profile_photo')}
+                        />
+                      </div>
+                      
+                      <div className="col-md-6 mt-3">
+                        <label className="job-field-label">PAN Card Image</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange(e, 'pan_card_image')}
+                        />
+                      </div>
+
+                      <div className="col-md-6 mt-3">
+                        <label className="job-field-label">Aadhaar Front Image</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange(e, 'aadhaar_front_image')}
+                        />
+                      </div>
+                      
+                      <div className="col-md-6 mt-3">
+                        <label className="job-field-label">Aadhaar Back Image</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          accept="image/*,.pdf"
+                          onChange={(e) => handleFileChange(e, 'aadhaar_back_image')}
+                        />
+                      </div>
+
                       {/* RESUME UPLOAD SECTION (Height 140px) */}
                       <div className="col-12 mt-3">
                         <label className="job-field-label">Resume Upload (PDF, DOC, DOCX up to 10MB) *</label>
@@ -639,7 +929,7 @@ const OriginalExampagesJobApplication = () => {
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx"
-                            onChange={handleFileChange}
+                            onChange={(e) => handleFileChange(e, 'resume')}
                             required={!selectedFile}
                           />
                           <i className="fas fa-cloud-upload-alt dropzone-icon"></i>

@@ -166,7 +166,7 @@ a :hover{
         <p>We are not responsible for the privacy practices of external websites linked from our platform.</p>
 
         <h2>7. Your Rights & Choices</h2>
-        <p>You can access, update, delete your data, and unsubscribe from emails. Contact: <a href="mailto:hr@rrgobalitservices.com">hr@rrgobalitservices.com</a></p>
+        <p>You can access, update, delete your data, and unsubscribe from emails. Contact: <a href="mailto:hr@ygrgobalitservices.com">hr@ygrgobalitservices.com</a></p>
 
         <h2>8. Changes to this Privacy Policy</h2>
         <p>We may update this policy and post changes here with an updated "Effective Date".</p>

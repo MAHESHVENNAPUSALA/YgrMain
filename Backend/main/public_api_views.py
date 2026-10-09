@@ -307,6 +307,9 @@ def public_internships(request):
             'duration': i.duration,
             'description': i.description,
             'syllabus': i.syllabus,
+            'skills': i.skills,
+            'certificate': i.certificate,
+            'stipend': i.stipend,
             'image': request.build_absolute_uri(i.image.url) if i.image else ''
         })
     return JsonResponse(data, safe=False)

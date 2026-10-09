@@ -19,6 +19,7 @@ export const ROUTES = {
   INTERNSHIP_DETAIL: '/internships/:slug',
   VACANCIES: '/vacancies',
   REGISTER_INTERNSHIP: '/register-internship',
+  CANDIDATE_EXAM: '/candidate-exam',
 
   // ── WEBSITE CMS ADMIN (CMS Management) ────────────────────────────
   ADMIN_CMS_DASHBOARD: '/admin/website/dashboard',
@@ -46,6 +47,7 @@ export const ROUTES = {
   HRMS_MANAGER_DASHBOARD: '/manager-dashboard',
   HRMS_TL_DASHBOARD: '/tl-dashboard',
   HRMS_MD_DASHBOARD: '/md-dashboard',
+  HRMS_CLIENT_DASHBOARD: '/client-dashboard',
   HRMS_REGISTER: '/register',
   HRMS_EMPLOYEES: '/employee-list',
   HRMS_HR_LIST: '/hr-list',

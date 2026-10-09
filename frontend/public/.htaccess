@@ -3,7 +3,7 @@
   PassengerEnabled off
   
   # Enable Passenger ONLY for Django backend routes
-  <If "%{REQUEST_URI} =~ m#^/(api|admin|media|static)#">
+  <If "%{REQUEST_URI} =~ m#^/(api|admin|media|static|dashboard|manager|teamlead|employee|hr|chat|intern-login|logout|exam|start_exam|save-answer|submit_exam|create-question|view-questions|registers|create-payment|payment-success|admin-payments|student-login|dashboards|admin-login|admin-logout|admin-base|internship-dashboard|internship_users_dashboard|apply|my-jobs|job-login|client_form|clients|projects|internship-edit|internship-delete|profile|edit_profile|delete-internship-registration|user-profile|delete-user|applications|getdata|register)#">
     PassengerEnabled on
   </If>
 </IfModule>
@@ -19,8 +19,8 @@
     AddType text/css .css
   </IfModule>
 
-  # 1. Disable rewriting for API, Admin, Media, and Django static files
-  RewriteCond %{REQUEST_URI} ^/(api|admin|media|static) [NC]
+  # 1. Disable rewriting for API, Admin, Media, and Django static files and all backend views
+  RewriteCond %{REQUEST_URI} ^/(api|admin|media|static|dashboard|manager|teamlead|employee|hr|chat|intern-login|logout|exam|start_exam|save-answer|submit_exam|create-question|view-questions|registers|create-payment|payment-success|admin-payments|student-login|dashboards|admin-login|admin-logout|admin-base|internship-dashboard|internship_users_dashboard|apply|my-jobs|job-login|client_form|clients|projects|internship-edit|internship-delete|profile|edit_profile|delete-internship-registration|user-profile|delete-user|applications|getdata|register) [NC]
   RewriteRule ^ - [L]
 
   # 2. Disable rewriting for existing physical files (e.g. /assets/main.js, /favicon.ico)

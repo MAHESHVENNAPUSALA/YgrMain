@@ -16,6 +16,9 @@ const EmployeeDashboard = () => {
   // Accordion active menu keys
   const [teamAccordionOpen, setTeamAccordionOpen] = useState(false);
   const [openMemberAccordion, setOpenMemberAccordion] = useState({});
+  const [taskDetailModal, setTaskDetailModal] = useState(null);
+  const [clientReview, setClientReview] = useState(null);
+  const [clientReviewLoading, setClientReviewLoading] = useState(false);
 
   // Fetch data safely
   useEffect(() => {
@@ -85,6 +88,28 @@ const EmployeeDashboard = () => {
       [memberId]: !prev[memberId],
     }));
   };
+
+  // Fetch client review whenever a task modal opens
+  useEffect(() => {
+    if (!taskDetailModal) {
+      setClientReview(null);
+      return;
+    }
+    let cancelled = false;
+    const fetchReview = async () => {
+      setClientReviewLoading(true);
+      try {
+        const res = await api.get(`/api/tasks/${taskDetailModal.id}/my-client-review/`);
+        if (!cancelled) setClientReview(res.data);
+      } catch {
+        if (!cancelled) setClientReview(null);
+      } finally {
+        if (!cancelled) setClientReviewLoading(false);
+      }
+    };
+    fetchReview();
+    return () => { cancelled = true; };
+  }, [taskDetailModal?.id]);
 
   const getInitials = (name) => {
     if (!name) return '??';
@@ -776,6 +801,9 @@ const EmployeeDashboard = () => {
             grid-template-columns: 1fr;
           }
         }
+        .task-row-hover:hover {
+          background-color: #f8fafc;
+        }
       `}</style>
 
       {/* SECTION 1: Welcome Banner */}
@@ -1157,7 +1185,7 @@ const EmployeeDashboard = () => {
               <tbody>
                 {dashboardData?.tasks && dashboardData.tasks.length > 0 ? (
                   dashboardData.tasks.slice(0, 4).map((task) => (
-                    <tr key={task.id}>
+                    <tr key={task.id} onClick={() => setTaskDetailModal(task)} style={{ cursor: 'pointer' }} className="task-row-hover">
                       <td style={{ fontWeight: '600' }}>{task.task_name}</td>
                       <td>{task.project?.project_name || 'General'}</td>
                       <td>{task.start_date}</td>
@@ -1305,6 +1333,112 @@ const EmployeeDashboard = () => {
         </div>
 
       </div>
+
+      {/* TASK DETAIL MODAL */}
+      {taskDetailModal && (
+        <div className="modal-overlay" onClick={() => setTaskDetailModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', background: '#ffffff', borderRadius: '16px', padding: '0', width: '90%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div className="modal-header" style={{ padding: '18px 24px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Task Overview</h3>
+              <button className="modal-close" onClick={() => setTaskDetailModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>×</button>
+            </div>
+            <div className="modal-body" style={{ textAlign: 'left', padding: '24px' }}>
+              <h4 style={{ fontSize: '1.25rem', color: '#0f172a', marginBottom: '10px' }}>{taskDetailModal.task_name}</h4>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <span className={`badge-capsule ${taskDetailModal.status === 'Completed' ? 'success' : taskDetailModal.status === 'Submitted' ? 'info' : 'warning'}`}>
+                  {taskDetailModal.status}
+                </span>
+                <span className="badge-capsule" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+                  📂 {taskDetailModal.project?.project_name || 'General'}
+                </span>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                <h5 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Description</h5>
+                <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {taskDetailModal.description || 'No description provided.'}
+                </p>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Start Date</span>
+                  <span style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 600 }}>{taskDetailModal.start_date || 'N/A'}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Deadline</span>
+                  <span style={{ fontSize: '0.95rem', color: '#ef4444', fontWeight: 600 }}>{taskDetailModal.end_date || 'N/A'}</span>
+                </div>
+                {taskDetailModal.file_url && (
+                  <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Submitted Document</span>
+                    <a
+                      href={taskDetailModal.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#3b82f6', padding: '8px 14px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #bfdbfe', textDecoration: 'none' }}
+                    >
+                      📄 View / Download Document
+                    </a>
+                  </div>
+                )}
+
+                {/* Client Review Section */}
+                {clientReviewLoading ? (
+                  <div style={{ gridColumn: 'span 2', padding: '10px 0', color: '#94a3b8', fontSize: '0.85rem' }}>Loading client review...</div>
+                ) : clientReview && clientReview.status ? (
+                  <div style={{ gridColumn: 'span 2', marginTop: '8px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '10px' }}>Client Review</span>
+                    <div style={{
+                      padding: '14px 16px', borderRadius: '10px', border: '2px solid',
+                      background: clientReview.status === 'Approved' ? '#f0fdf4' : '#fff7ed',
+                      borderColor: clientReview.status === 'Approved' ? '#86efac' : '#fed7aa',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '1.5rem' }}>{clientReview.status === 'Approved' ? '✅' : '🔄'}</span>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '1rem', color: clientReview.status === 'Approved' ? '#166534' : '#92400e' }}>
+                            {clientReview.status === 'Approved' ? 'Client Approved!' : 'Client Sent Back for Revision'}
+                          </div>
+                          {clientReview.reviewed_at && (
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Reviewed: {new Date(clientReview.reviewed_at).toLocaleString()}</div>
+                          )}
+                        </div>
+                      </div>
+                      {clientReview.feedback && (
+                        <div style={{ background: '#fff', borderRadius: '7px', padding: '10px 12px', fontSize: '0.88rem', color: '#475569', border: '1px solid #e2e8f0', marginBottom: '8px' }}>
+                          <strong>Feedback: </strong>{clientReview.feedback}
+                        </div>
+                      )}
+                      {clientReview.client_document_url && (
+                        <a
+                          href={clientReview.client_document_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#dbeafe', color: '#1e40af', padding: '6px 12px', borderRadius: '7px', fontSize: '0.82rem', fontWeight: 700, border: '1px solid #93c5fd', textDecoration: 'none' }}
+                        >
+                          📎 Download Client's Document
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                <Link 
+                  to="/tasks"
+                  className="btn" 
+                  style={{ textDecoration: 'none', margin: 0, padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  Manage Task in Tasks Board
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

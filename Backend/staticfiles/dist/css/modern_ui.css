@@ -396,3 +396,5 @@ p {
     color: #092a49;
     transform: rotate(90deg);
 }
+/* Override broken legacy reveal animations */
+.reveal, .reveal-left, .reveal-right { opacity: 1 !important; transform: none !important; transition: none !important; }

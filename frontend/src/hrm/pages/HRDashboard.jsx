@@ -18,6 +18,23 @@ const HRDashboard = () => {
   // Leaves action state
   const [pendingLeaves, setPendingLeaves] = useState([]);
 
+  // Document verification states
+  const [openedDocs, setOpenedDocs] = useState([]);
+  const [verifiedDocs, setVerifiedDocs] = useState([]);
+
+  const handleViewDoc = (docId, url) => {
+    window.open(url, '_blank');
+    if (!openedDocs.includes(docId)) {
+      setOpenedDocs(prev => [...prev, docId]);
+    }
+  };
+
+  const handleVerifyDoc = (docId) => {
+    if (!verifiedDocs.includes(docId)) {
+      setVerifiedDocs(prev => [...prev, docId]);
+    }
+  };
+
   useEffect(() => {
     const fetchHRStats = async () => {
       try {
@@ -611,9 +628,30 @@ const HRDashboard = () => {
                     <span className="hr-list-sub">Pending verification for {doc.name}</span>
                   </div>
                   {doc.document_url ? (
-                    <a href={doc.document_url} target="_blank" rel="noreferrer" className="btn-action-pill approve" style={{ textDecoration: 'none', textAlign: 'center' }}>View & Verify</a>
+                    verifiedDocs.includes(doc.id || idx) ? (
+                      <span className="btn-action-pill" style={{ background: '#d1fae5', color: '#065f46', cursor: 'default', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-check-circle"></i> Verification Completed
+                      </span>
+                    ) : openedDocs.includes(doc.id || idx) ? (
+                      <button className="btn-action-pill approve" onClick={() => handleVerifyDoc(doc.id || idx)}>
+                        Verify
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn-action-pill approve" 
+                        onClick={() => handleViewDoc(doc.id || idx, doc.document_url)}
+                      >
+                        View & Verify
+                      </button>
+                    )
                   ) : (
-                    <button className="btn-action-pill approve" onClick={() => alert('Document verified.')}>Verify</button>
+                    verifiedDocs.includes(doc.id || idx) ? (
+                      <span className="btn-action-pill" style={{ background: '#d1fae5', color: '#065f46', cursor: 'default', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <i className="fa-solid fa-check-circle"></i> Verification Completed
+                      </span>
+                    ) : (
+                      <button className="btn-action-pill approve" onClick={() => handleVerifyDoc(doc.id || idx)}>Verify</button>
+                    )
                   )}
                 </div>
               ))
@@ -706,6 +744,10 @@ const HRDashboard = () => {
             <button className="hr-shortcut-btn" onClick={() => navigate('/employees')}>
               <i className="fa-solid fa-file-shield" style={{ color: '#64748b' }}></i>
               <span>Documents</span>
+            </button>
+            <button className="hr-shortcut-btn" onClick={() => navigate('/hr/internship-candidates')}>
+              <i className="fa-solid fa-user-graduate" style={{ color: '#4f46e5' }}></i>
+              <span>Internship Candidates</span>
             </button>
             <button className="hr-shortcut-btn" onClick={() => navigate('/employees')}>
               <i className="fa-solid fa-chart-bar" style={{ color: '#6366f1' }}></i>

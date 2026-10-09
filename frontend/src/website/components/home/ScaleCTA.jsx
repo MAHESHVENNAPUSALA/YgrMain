@@ -82,8 +82,8 @@ const ScaleCTA = () => {
           </div>
 
           <h2 className="process-heading">
-            A Proven Process <br />
-            For Building Digital Excellence
+            How We Bring Ideas To Life <br />
+            Our 6-Step Delivery Process
           </h2>
 
           <p className="process-description">

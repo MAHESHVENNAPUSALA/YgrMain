@@ -14,6 +14,7 @@ const navItems = [
   { label: 'Clients', icon: '🏢', path: '/admin/website/clients' },
   { label: 'Careers', icon: '💼', path: '/admin/website/careers' },
   { label: 'Internships', icon: '🎓', path: '/admin/website/internships' },
+  { label: 'Exam Applicants', icon: '?', path: '/admin/website/internship-applicants' },
   { label: 'Contact Enquiries', icon: '📬', path: '/admin/website/contact-enquiries' },
   { label: 'SEO Settings', icon: '🔍', path: '/admin/website/seo' },
   { label: 'Website Settings', icon: '⚙️', path: '/admin/website/settings' },
@@ -95,3 +96,4 @@ const AdminSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) =>
 };
 
 export default AdminSidebar;
+

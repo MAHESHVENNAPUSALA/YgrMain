@@ -188,7 +188,7 @@ const Contact = () => {
               {/* TRUST CARDS */}
               <div className="trust-cards-grid">
                 <div className="trust-card-box">
-                  <div className="trust-card-val">145+</div>
+                  <div className="trust-card-val">149+</div>
                   <div className="trust-card-lbl">Projects Delivered</div>
                 </div>
 
@@ -203,7 +203,7 @@ const Contact = () => {
                 </div>
 
                 <div className="trust-card-box">
-                  <div className="trust-card-val">5+</div>
+                  <div className="trust-card-val">6+</div>
                   <div className="trust-card-lbl">Years Experience</div>
                 </div>
               </div>
@@ -309,6 +309,7 @@ const Contact = () => {
                               <option value="Mobile App Development (iOS & Android)">Mobile App Development (iOS & Android)</option>
                               <option value="Enterprise Cloud Systems & Migration">Enterprise Cloud Systems & Migration</option>
                               <option value="AI Engineering & LLM Automation">AI Engineering & LLM Automation</option>
+                              <option value="Global Internships & Technical Training">Global Internships & Technical Training</option>
                             </>
                           )}
                         </select>

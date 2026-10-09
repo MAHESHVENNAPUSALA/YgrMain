@@ -62,7 +62,7 @@ const TESTIMONIALS_DATA = {
 
 const BOTTOM_TRUST_METRICS = [
   { label: '★ ★ ★ ★ ★ Overall Rating', icon: 'fa-star' },
-  { label: '145+ Successful Projects', icon: 'fa-check-double' },
+  { label: '149+ Successful Projects', icon: 'fa-check-double' },
   { label: '99% Client Satisfaction', icon: 'fa-heart' },
   { label: 'Long-Term Partnerships', icon: 'fa-handshake' }
 ];

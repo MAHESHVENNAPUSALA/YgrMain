@@ -9,7 +9,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import UserSerializer, AttendanceSerializer, TaskSerializer, PayslipSerializer, AttendanceCorrectionSerializer, LeaveSerializer, HolidaySerializer, SalaryStructureSerializer, ProjectSerializer, DailyReportSerializer, HRSettingsSerializer, ChatMessageSerializer, ChatRoomSerializer, GroupMessageSerializer, CallSessionSerializer, ClientSerializer, ServiceSerializer, InvoiceItemSerializer, InvoiceSerializer, QuestionSerializer, ExamuserSerializer, ExamSessionSerializer, ResultSerializer, TeamSerializer, ProjectDocumentSerializer, ProjectCommentSerializer, ProjectAuditLogSerializer, NotificationSerializer, ProjectDetailSerializer
-from .models import Attendance, Team, Task, Payslip, DailyReport, Holiday, Project, Leave, AttendanceCorrection, SalaryStructure, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, UserAnswer, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, TaskReview
+from .models import Attendance, Team, Task, Payslip, DailyReport, Holiday, Project, Leave, AttendanceCorrection, SalaryStructure, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, UserAnswer, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, TaskReview, ClientTaskReview
 
 User = get_user_model()
 
@@ -496,7 +496,7 @@ class HRDashboardAPIView(APIView):
         pending_offers = User.objects.filter(status='Fresher').count()
 
         # Document Verification
-        pending_docs_users = User.objects.exclude(document='').exclude(document__isnull=True).order_by('-id')[:5]
+        pending_docs_users = User.objects.exclude(document='').exclude(document__isnull=True).filter(is_document_verified=False).order_by('-id')[:5]
         pending_docs_data = []
         for u in pending_docs_users:
             pending_docs_data.append({
@@ -633,7 +633,7 @@ class TLDashboardAPIView(APIView):
             # Upcoming tasks
             upcoming_tasks = Task.objects.filter(
                 assigned_to__in=members,
-                status__in=['Pending', 'Submitted']
+                status__in=['Pending', 'In Progress', 'Submitted']
             ).select_related("project").order_by("end_date")[:5]
             
             for t in upcoming_tasks:
@@ -659,7 +659,7 @@ class TLDashboardAPIView(APIView):
                 att_status = att.status if att else "Absent"
                 working_hours = str(att.total_hours) if att and att.total_hours else "—"
                 
-                curr_task = Task.objects.filter(assigned_to=m, status__in=["Pending", "Submitted"]).order_by("end_date").first()
+                curr_task = Task.objects.filter(assigned_to=m, status__in=["Pending", "In Progress", "Submitted"]).order_by("end_date").first()
                 task_name = curr_task.task_name if curr_task else "No Active Task"
                 task_status = curr_task.status if curr_task else "—"
                 
@@ -2990,6 +2990,13 @@ class ChatRoomAPIView(APIView):
         
         if not name:
             return Response({"detail": "Room name is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        existing_room = ChatRoom.objects.filter(name=name, room_type=room_type, users=request.user).first()
+        if existing_room:
+            if user_ids:
+                existing_room.users.add(*User.objects.filter(id__in=user_ids))
+            serializer = ChatRoomSerializer(existing_room)
+            return Response(serializer.data, status=status.HTTP_200_OK)
             
         room = ChatRoom.objects.create(
             name=name,
@@ -3430,6 +3437,172 @@ class ExamAPIView(APIView):
         
         return Response({
             "detail": "Exam submitted successfully.",
+            "correct_answers": correct_count,
+            "total_questions": total_questions,
+            "score": score_percent
+        }, status=status.HTTP_201_CREATED)
+
+
+class CandidateExamLoginAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if not email or not password:
+            return Response({"detail": "Email and Access Passcode are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        candidate = Examuser.objects.filter(email__iexact=email).first()
+        if not candidate or (candidate.password and candidate.password.strip() != password):
+            return Response({"detail": "Invalid candidate email or access passcode."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Check if candidate has already completed an exam
+        last_exam = ExamSession.objects.filter(user=candidate, is_completed=True).order_by('-id').first()
+        if last_exam:
+            result = Result.objects.filter(exam=last_exam).first()
+            score = result.score_percentage if result else 0
+            return Response({
+                "id": candidate.id,
+                "username": candidate.username,
+                "email": candidate.email,
+                "role": candidate.role,
+                "completed": True,
+                "score": score,
+                "detail": "Exam already completed for this candidate account."
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "id": candidate.id,
+            "username": candidate.username,
+            "email": candidate.email,
+            "role": candidate.role,
+            "completed": False
+        }, status=status.HTTP_200_OK)
+
+
+class CandidateExamQuestionsAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if not email or not password:
+            return Response({"detail": "Email and Access Passcode are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        candidate = Examuser.objects.filter(email__iexact=email).first()
+        if not candidate or (candidate.password and candidate.password.strip() != password):
+            return Response({"detail": "Invalid candidate email or access passcode."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        questions = Question.objects.filter(language__iexact=candidate.role)
+        if questions.count() == 0:
+            questions = Question.objects.filter(language__icontains=candidate.role.split('_')[0])
+        if questions.count() == 0:
+            questions = Question.objects.all()
+
+        questions_list = list(questions)
+        if len(questions_list) == 0:
+            return Response({"detail": "No questions configured in database for this subject."}, status=status.HTTP_400_BAD_REQUEST)
+
+        import random
+        seed = f"{candidate.id}_{candidate.email.lower()}"
+        rnd = random.Random(seed)
+        limit = min(30, len(questions_list))
+        selected_questions = rnd.sample(questions_list, limit)
+
+        data = [{
+            "id": q.id,
+            "question_text": q.question_text,
+            "option_a": q.option_a,
+            "option_b": q.option_b,
+            "option_c": q.option_c,
+            "option_d": q.option_d
+        } for q in selected_questions]
+
+        return Response({
+            "candidate_name": candidate.username,
+            "language": candidate.role,
+            "total_questions": len(data),
+            "questions": data
+        }, status=status.HTTP_200_OK)
+
+
+class CandidateExamSubmitAPIView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+        answers = request.data.get('answers', {})
+
+        if not email or not password:
+            return Response({"detail": "Email and Access Passcode are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        candidate = Examuser.objects.filter(email__iexact=email).first()
+        if not candidate or (candidate.password and candidate.password.strip() != password):
+            return Response({"detail": "Invalid candidate email or access passcode."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if ExamSession.objects.filter(user=candidate, is_completed=True).exists():
+            last_exam = ExamSession.objects.filter(user=candidate, is_completed=True).order_by('-id').first()
+            result = Result.objects.filter(exam=last_exam).first()
+            return Response({
+                "detail": "Exam already completed.",
+                "score": result.score_percentage if result else 0
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        questions = Question.objects.filter(language__iexact=candidate.role)
+        if questions.count() == 0:
+            questions = Question.objects.filter(language__icontains=candidate.role.split('_')[0])
+        if questions.count() == 0:
+            questions = Question.objects.all()
+        if questions.count() < 1:
+            return Response({"detail": "No questions configured for this language."}, status=status.HTTP_400_BAD_REQUEST)
+
+        exam = ExamSession.objects.create(
+            user=candidate,
+            language=candidate.role,
+            is_completed=True
+        )
+
+        import random
+        questions_list = list(questions)
+        seed = f"{candidate.id}_{candidate.email.lower()}"
+        rnd = random.Random(seed)
+        limit = min(30, len(questions_list))
+        assigned_questions = rnd.sample(questions_list, limit)
+
+        correct_count = 0
+        total_questions = len(assigned_questions)
+
+        for q in assigned_questions:
+            selected = answers.get(str(q.id))
+            if selected:
+                is_correct = (selected == q.correct_option)
+                if is_correct:
+                    correct_count += 1
+                UserAnswer.objects.create(
+                    exam=exam,
+                    question=q,
+                    selected_option=selected,
+                    is_correct=is_correct
+                )
+
+        score_percent = (correct_count / total_questions) * 100 if total_questions > 0 else 0
+
+        result = Result.objects.create(
+            exam=exam,
+            total_questions=total_questions,
+            correct_answers=correct_count,
+            score_percentage=score_percent
+        )
+
+        return Response({
+            "detail": "Exam submitted successfully.",
+            "candidate_name": candidate.username,
             "correct_answers": correct_count,
             "total_questions": total_questions,
             "score": score_percent
@@ -4050,7 +4223,11 @@ class AllChatRoomsAPIView(APIView):
         from .models import ChatRoom, GroupMessage
         from django.utils.timezone import localtime
 
-        channels = ChatRoom.objects.filter(room_type='channel')
+        if request.user.role == 'Client':
+            channels = ChatRoom.objects.none()
+        else:
+            channels = ChatRoom.objects.filter(room_type='channel')
+
         teams = ChatRoom.objects.filter(room_type='team', users=request.user)
 
         # Parse last_read_ids param: "roomId:msgId,roomId:msgId"
@@ -4104,12 +4281,12 @@ class AllUsersAPIView(APIView):
         base_url = request.build_absolute_uri('/').rstrip('/')
 
         scope = request.query_params.get('scope', '')
-        if scope == 'directory':
-            if request.user.role not in ['HR', 'MD', 'Manager', 'TeamLead']:
+        if scope in ['directory', 'all']:
+            if request.user.role not in ['HR', 'MD', 'Manager', 'TeamLead', 'Employee']:
                 return Response({"detail": "Access Denied: Unauthorized to view user directory."}, status=status.HTTP_403_FORBIDDEN)
-            users = User.objects.all().order_by('emp_id')
+            users = User.objects.filter(is_active=True).order_by('emp_id')
             
-            if request.user.role == 'TeamLead':
+            if request.user.role == 'TeamLead' and scope != 'all':
                 from .models import Team
                 member_ids = Team.objects.filter(lead=request.user, is_active=True).values_list('members__id', flat=True).distinct()
                 users = users.filter(id__in=member_ids)
@@ -4118,6 +4295,23 @@ class AllUsersAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         users_qs = User.objects.filter(is_active=True).exclude(id=request.user.id).order_by('first_name', 'username')
+
+        if request.user.role == 'Client':
+            from .models import Project
+            try:
+                client_record = request.user.client_profile
+                projects = Project.objects.filter(client=client_record)
+                allowed_user_ids = set()
+                for project in projects:
+                    if project.assigned_manager:
+                        allowed_user_ids.add(project.assigned_manager.id)
+                    for team in project.assigned_teams.all():
+                        if team.lead:
+                            allowed_user_ids.add(team.lead.id)
+                        allowed_user_ids.update(team.members.values_list('id', flat=True))
+                users_qs = users_qs.filter(id__in=allowed_user_ids)
+            except Exception:
+                users_qs = users_qs.none()
 
         if scope == 'team':
             if request.user.role == 'TeamLead':
@@ -4318,3 +4512,293 @@ class ExamUserAPIView(APIView):
 
 
 
+
+class ClientDashboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role != 'Client':
+            return Response({'detail': 'Access Denied: Not a Client.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            client_record = user.client_profile
+        except Exception:
+            return Response({'detail': 'Client profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        projects_qs = Project.objects.filter(client=client_record)
+        projects_data = []
+        
+        for project in projects_qs:
+            total_tasks = project.tasks.count()
+            completed_tasks = project.tasks.filter(status='Completed').count()
+            progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+            
+            teams = []
+            for team in project.assigned_teams.all():
+                team_data = {
+                    'name': team.name,
+                    'lead': team.lead.get_full_name() or team.lead.username if team.lead else None,
+                    'lead_id': team.lead.id if team.lead else None,
+                    'members': [{'id': m.id, 'name': m.get_full_name() or m.username} for m in team.members.all()]
+                }
+                teams.append(team_data)
+
+            # Build per-employee work breakdown for this project
+            employee_ids_with_tasks = (
+                project.tasks.filter(assigned_to__isnull=False)
+                .values_list('assigned_to', flat=True)
+                .distinct()
+            )
+            
+            employee_work = []
+            for emp_id in employee_ids_with_tasks:
+                try:
+                    emp = User.objects.get(id=emp_id)
+                except User.DoesNotExist:
+                    continue
+                
+                emp_tasks = project.tasks.filter(assigned_to=emp)
+                total_emp = emp_tasks.count()
+                completed_emp = emp_tasks.filter(status='Completed').count()
+                in_progress_emp = emp_tasks.filter(status='In Progress').count()
+                submitted_emp = emp_tasks.filter(status='Submitted').count()
+                pending_emp = emp_tasks.filter(status='Pending').count()
+                completion_pct = round(completed_emp / total_emp * 100) if total_emp > 0 else 0
+
+                # Per-task detail for client review panel
+                task_list = []
+                for t in emp_tasks.order_by('-end_date'):
+                    file_url = None
+                    if t.file and t.file.name:
+                        try:
+                            file_url = request.build_absolute_uri(t.file.url)
+                        except Exception:
+                            pass
+
+                    client_review_data = {'status': None, 'feedback': None, 'client_document_url': None}
+                    try:
+                        cr = t.client_review
+                        cr_doc_url = None
+                        if cr.client_document and cr.client_document.name:
+                            try:
+                                cr_doc_url = request.build_absolute_uri(cr.client_document.url)
+                            except Exception:
+                                pass
+                        client_review_data = {
+                            'status': cr.status,
+                            'feedback': cr.feedback,
+                            'client_document_url': cr_doc_url,
+                            'reviewed_at': str(cr.reviewed_at) if cr.reviewed_at else None,
+                        }
+                    except ClientTaskReview.DoesNotExist:
+                        pass
+
+                    task_list.append({
+                        'id': t.id,
+                        'task_name': t.task_name,
+                        'status': t.status,
+                        'priority': t.priority,
+                        'start_date': str(t.start_date) if t.start_date else None,
+                        'end_date': str(t.end_date) if t.end_date else None,
+                        'file_url': file_url,
+                        'client_review': client_review_data,
+                    })
+                
+                employee_work.append({
+                    'id': emp.id,
+                    'name': emp.get_full_name() or emp.username,
+                    'role': emp.role,
+                    'emp_id': emp.emp_id or '',
+                    'total_tasks': total_emp,
+                    'completed': completed_emp,
+                    'in_progress': in_progress_emp,
+                    'submitted': submitted_emp,
+                    'pending': pending_emp,
+                    'completion_pct': completion_pct,
+                    'tasks': task_list,
+                })
+                
+            projects_data.append({
+                'id': project.id,
+                'project_code': project.project_code,
+                'name': project.name,
+                'status': project.status,
+                'progress': round(progress),
+                'total_tasks': total_tasks,
+                'completed_tasks': completed_tasks,
+                'pending_tasks': total_tasks - completed_tasks,
+                'manager': project.assigned_manager.get_full_name() or project.assigned_manager.username if project.assigned_manager else None,
+                'manager_id': project.assigned_manager.id if project.assigned_manager else None,
+                'teams': teams,
+                'startdate': str(project.startdate) if project.startdate else None,
+                'deadline': str(project.deadline) if project.deadline else None,
+                'employee_work': employee_work,
+            })
+            
+        return Response({
+            'client': {
+                'name': client_record.name,
+                'business_name': client_record.business_name,
+            },
+            'projects': projects_data
+        }, status=status.HTTP_200_OK)
+
+
+class VerifyUserDocumentAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access denied. Only HR and MD can verify documents."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            target_user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        target_user.is_document_verified = True
+        target_user.save(update_fields=['is_document_verified'])
+
+        return Response({
+            "detail": f"Document for {target_user.get_full_name() or target_user.username} verified successfully.",
+            "user_id": target_user.id,
+            "is_document_verified": True
+        }, status=status.HTTP_200_OK)
+
+
+class ClientTaskReviewAPIView(APIView):
+    """
+    GET  /api/tasks/<pk>/client-review/  — fetch existing review
+    POST /api/tasks/<pk>/client-review/  — client submits / updates review
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _get_task_for_client(self, request, pk):
+        """Return task only if the requesting user is the Client linked to the task's project."""
+        task = get_object_or_404(Task, pk=pk)
+        if request.user.role != 'Client':
+            return None, Response({'detail': 'Only clients can review tasks.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            client_record = request.user.client_profile
+        except Exception:
+            return None, Response({'detail': 'Client profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if task.project.client_id != client_record.id:
+            return None, Response({'detail': 'This task does not belong to your project.'}, status=status.HTTP_403_FORBIDDEN)
+        return task, None
+
+    def get(self, request, pk):
+        task, err = self._get_task_for_client(request, pk)
+        if err:
+            return err
+        try:
+            review = task.client_review
+            doc_url = None
+            if review.client_document and review.client_document.name:
+                try:
+                    doc_url = request.build_absolute_uri(review.client_document.url)
+                except Exception:
+                    pass
+            return Response({
+                'id': review.id,
+                'status': review.status,
+                'feedback': review.feedback,
+                'client_document_url': doc_url,
+                'reviewed_at': review.reviewed_at,
+            })
+        except ClientTaskReview.DoesNotExist:
+            return Response({'status': None, 'feedback': None, 'client_document_url': None})
+
+    def post(self, request, pk):
+        task, err = self._get_task_for_client(request, pk)
+        if err:
+            return err
+
+        # Task must have an employee-submitted file before client reviews
+        if not (task.file and task.file.name):
+            return Response({'detail': 'Employee has not submitted a document yet.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        review_status = request.data.get('status', 'Pending')
+        feedback      = request.data.get('feedback', '')
+        client_doc    = request.FILES.get('client_document')
+
+        if review_status not in ['Approved', 'Needs Revision']:
+            return Response({'detail': 'status must be Approved or Needs Revision.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        review, created = ClientTaskReview.objects.get_or_create(
+            task=task,
+            defaults={'reviewed_by': request.user}
+        )
+        review.reviewed_by = request.user
+        review.status      = review_status
+        review.feedback    = feedback
+        if client_doc:
+            review.client_document = client_doc
+        review.save()
+
+        # If Needs Revision — send task back to Pending and notify employee
+        if review_status == 'Needs Revision':
+            task.status = 'Pending'
+            task.file   = None          # clear old submission so employee re-submits
+            task.save(update_fields=['status', 'file'])
+            # Create notification for employee
+            if task.assigned_to:
+                Notification.objects.create(
+                    user=task.assigned_to,
+                    message=f"Client returned task '{task.task_name}' for revision. Feedback: {feedback or 'No feedback provided.'}",
+                    notification_type='task',
+                )
+        elif review_status == 'Approved':
+            task.status = 'Completed'
+            task.save(update_fields=['status'])
+            if task.assigned_to:
+                Notification.objects.create(
+                    user=task.assigned_to,
+                    message=f"Client approved your task '{task.task_name}'! Great work.",
+                    notification_type='task',
+                )
+
+        doc_url = None
+        if review.client_document and review.client_document.name:
+            try:
+                doc_url = request.build_absolute_uri(review.client_document.url)
+            except Exception:
+                pass
+
+        return Response({
+            'id': review.id,
+            'status': review.status,
+            'feedback': review.feedback,
+            'client_document_url': doc_url,
+            'reviewed_at': review.reviewed_at,
+            'task_status': task.status,
+        }, status=status.HTTP_200_OK)
+
+
+class EmployeeClientReviewAPIView(APIView):
+    """
+    GET /api/tasks/<pk>/my-client-review/
+    Employee fetches the client review for their own task.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        task = get_object_or_404(Task, pk=pk)
+        if task.assigned_to != request.user:
+            return Response({'detail': 'This is not your task.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            review = task.client_review
+            doc_url = None
+            if review.client_document and review.client_document.name:
+                try:
+                    doc_url = request.build_absolute_uri(review.client_document.url)
+                except Exception:
+                    pass
+            return Response({
+                'status': review.status,
+                'feedback': review.feedback,
+                'client_document_url': doc_url,
+                'reviewed_at': str(review.reviewed_at),
+            })
+        except ClientTaskReview.DoesNotExist:
+            return Response({'status': None, 'feedback': None, 'client_document_url': None})

@@ -248,6 +248,19 @@ const FALLBACK_INTERNSHIPS = [
   }
 ];
 
+const CORPORATE_HIRING_PARTNERS = [
+  { name: 'TCS', logo: '/images/companies/tcs.svg' },
+  { name: 'Infosys', logo: '/images/companies/infosys.svg' },
+  { name: 'Wipro', logo: '/images/companies/wipro.svg' },
+  { name: 'Accenture', logo: '/images/companies/accenture.svg' },
+  { name: 'Cognizant', logo: '/images/companies/cognizant.svg' },
+  { name: 'Amazon', logo: '/images/companies/amazon.svg' },
+  { name: 'HCLTech', logo: '/images/companies/hcl.svg' },
+  { name: 'Tech Mahindra', logo: '/images/companies/tech-mahindra.svg' },
+  { name: 'Capgemini', logo: '/images/companies/capgemini.svg' },
+  { name: 'Deloitte', logo: '/images/companies/deloitte.svg' }
+];
+
 const FAQ_ITEMS = [
   {
     q: 'What is the interview process like at YGR Gobal IT Services?',
@@ -441,12 +454,17 @@ const Careers = () => {
               </p>
 
               <div className="n-hero-cta-group">
-                <a href="#open-positions" className="n-btn-primary">
-                  <span>Explore Open Positions</span>
-                  <i className="fas fa-arrow-right"></i>
+                <a href="#internships" className="n-btn-primary">
+                  <span>Explore Internships</span>
+                  <i className="fas fa-arrow-down"></i>
                 </a>
 
-                <Link to="/team" className="n-btn-secondary">
+                <a href="#open-positions" className="n-btn-primary">
+                  <span>Explore Open Positions</span>
+                  <i className="fas fa-arrow-down"></i>
+                </a>
+
+                <Link to="/team" className="n-btn-primary">
                   <span>Meet Our Team</span>
                 </Link>
               </div>
@@ -454,7 +472,7 @@ const Careers = () => {
               {/* Floating Stat Badges Row */}
               <div className="n-hero-stats-row">
                 <div className="stat-card">
-                  <span className="stat-num">145+</span>
+                  <span className="stat-num">149+</span>
                   <span className="stat-lbl">Projects Delivered</span>
                 </div>
                 <div className="stat-card">
@@ -462,7 +480,7 @@ const Careers = () => {
                   <span className="stat-lbl">Client Retention</span>
                 </div>
                 <div className="stat-card">
-                  <span className="stat-num">5+ Yrs</span>
+                  <span className="stat-num">6+ Yrs</span>
                   <span className="stat-lbl">Industry Excellence</span>
                 </div>
                 <div className="stat-card">
@@ -560,6 +578,143 @@ const Careers = () => {
         </div>
       </section>
 
+      {/* ── SECTION 9: DYNAMIC INTERNSHIP PROGRAM ── */}
+      <section className="n-internship-section" id="internships">
+        <div className="n-section-container">
+          <div className="n-section-header">
+            <div className="n-careers-pill-eyebrow">
+              <span className="pill-pulse-dot"></span>
+              <span className="pill-text">EARLY CAREER PIPELINE</span>
+            </div>
+            <h2 className="n-section-title">
+              Global Internship <span className="n-highlight-green">& Freshers Program</span>
+            </h2>
+            <p className="n-section-desc">
+              Kickstart your tech career with real-world industry projects, senior mentorship, and full-time hiring pathways.
+            </p>
+          </div>
+
+          <div className="n-internships-grid">
+            {internshipsList.map((prog, idx) => {
+              const itemSlug = prog.slug || prog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+              const formId = prog.applicationFormId || prog.id;
+              const applyUrl = `/register-internship?course_id=${formId}&title=${encodeURIComponent(prog.title)}`;
+
+              return (
+                <div key={prog.id || idx} className="n-intern-card">
+                  <div className="intern-card-icon">
+                    <i className="fas fa-graduation-cap"></i>
+                  </div>
+                  <h3 className="intern-title">{prog.title}</h3>
+                  <div className="intern-meta-badges">
+                    <span className="badge-item"><i className="fas fa-clock"></i> {prog.duration || '6 Months'}</span>
+                    <span className="badge-item"><i className="fas fa-certificate"></i> {prog.certificate || 'Industry Certified'}</span>
+                    <span className="badge-item"><i className="fas fa-wallet"></i> {prog.stipend || 'Stipend Included'}</span>
+                  </div>
+                  <p className="intern-skills"><strong>Skills:</strong> {prog.skills || 'Modern Tech Stack'}</p>
+
+                  <div className="intern-btn-group" style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
+                    <Link to={`/internships/${itemSlug}`} className="btn-intern-details" style={{ flex: 1, height: '42px', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#2D4A6D', fontWeight: 700, borderRadius: '999px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.84rem' }}>
+                      Explore Program
+                    </Link>
+                    <a href={applyUrl} className="btn-intern-apply" style={{ flex: 1.2, height: '42px', background: '#5E9133', color: '#FFFFFF', fontWeight: 700, borderRadius: '999px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none', fontSize: '0.84rem' }}>
+                      Apply Now <i className="fas fa-arrow-right"></i>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION: STUDENT PLACEMENTS & HIRING PARTNERS ── */}
+      <section className="n-student-placements-section">
+        <div className="n-section-container">
+          <div className="n-section-header">
+            <div className="n-careers-pill-eyebrow">
+              <span className="pill-pulse-dot"></span>
+              <span className="pill-text">STUDENT PLACEMENT TRACK RECORD</span>
+            </div>
+            <h2 className="n-section-title">
+              We Place Our Students In <span className="n-highlight-green">Top IT Companies</span>
+            </h2>
+            <p className="n-section-desc">
+              Our industry-oriented internship programs have successfully placed over 1,255+ students and freshers into leading MNCs, tech startups, and global software enterprises.
+            </p>
+          </div>
+
+          {/* Impact Placement Stats */}
+          <div className="n-placement-stats-grid">
+            <div className="placement-stat-box">
+              <div className="stat-icon-wrap"><i className="fas fa-user-graduate"></i></div>
+              <div className="stat-big-num">499+</div>
+              <div className="stat-num-label">Students Placed in IT Companies</div>
+            </div>
+            <div className="placement-stat-box">
+              <div className="stat-icon-wrap"><i className="fas fa-building font-green"></i></div>
+              <div className="stat-big-num">159+</div>
+              <div className="stat-num-label">Corporate Hiring Partners</div>
+            </div>
+            <div className="placement-stat-box">
+              <div className="stat-icon-wrap"><i className="fas fa-chart-line font-blue"></i></div>
+              <div className="stat-big-num">95%</div>
+              <div className="stat-num-label">Placement Success Rate</div>
+            </div>
+            <div className="placement-stat-box">
+              <div className="stat-icon-wrap"><i className="fas fa-award font-orange"></i></div>
+              <div className="stat-big-num">₹4.5 - ₹12 LPA</div>
+              <div className="stat-num-label">Average Salary Package</div>
+            </div>
+          </div>
+
+          {/* Hiring Partner Company Logos / Infinite Single Line Marquee */}
+          <div className="hiring-partners-block">
+            <h4 className="partners-title">Top Corporate Companies Hiring YGR Trained Interns & Graduates</h4>
+            <div className="partners-marquee-wrapper">
+              <div className="partners-marquee-group">
+                {CORPORATE_HIRING_PARTNERS.map((partner, pIdx) => (
+                  <div key={`m1-${pIdx}`} className="partner-logo-card" title={partner.name}>
+                    <img
+                      src={partner.logo}
+                      alt={`${partner.name} logo`}
+                      className="partner-logo-img"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline-block';
+                      }}
+                    />
+                    <span className="partner-fallback-name" style={{ display: 'none' }}>
+                      {partner.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="partners-marquee-group" aria-hidden="true">
+                {CORPORATE_HIRING_PARTNERS.map((partner, pIdx) => (
+                  <div key={`m2-${pIdx}`} className="partner-logo-card" title={partner.name}>
+                    <img
+                      src={partner.logo}
+                      alt={`${partner.name} logo`}
+                      className="partner-logo-img"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline-block';
+                      }}
+                    />
+                    <span className="partner-fallback-name" style={{ display: 'none' }}>
+                      {partner.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      </section>
+
       {/* ── SECTION 3: EMPLOYEE BENEFITS ── */}
       <section className="n-benefits-section">
         <div className="n-section-container">
@@ -592,40 +747,6 @@ const Careers = () => {
         </div>
       </section>
 
-      {/* ── SECTION 4: LIFE AT YGR (DYNAMIC GALLERY CAROUSEL) ── */}
-      <section className="n-life-at-ygr-section">
-        <div className="n-section-container">
-          <div className="n-section-header">
-            <div className="n-careers-pill-eyebrow">
-              <span className="pill-pulse-dot"></span>
-              <span className="pill-text">COMPANY CULTURE</span>
-            </div>
-            <h2 className="n-section-title">
-              Life at <span className="n-highlight-green">YGR Gobal IT Services</span>
-            </h2>
-            <p className="n-section-desc">
-              A glimpse into our collaborative team events, engineering workshops, hackathons, and celebrations.
-            </p>
-          </div>
-
-          <div className="n-gallery-grid">
-            {galleryImages.map((gItem, idx) => (
-              <div
-                key={gItem.id || idx}
-                className="n-gallery-card"
-                onClick={() => setLightboxImg(gItem.image || gItem.src)}
-              >
-                <img src={gItem.image || gItem.src} alt={gItem.title || 'Life at YGR'} />
-                <div className="gallery-overlay">
-                  <span className="gallery-tag">{gItem.tag || 'Culture'}</span>
-                  <h4 className="gallery-title">{gItem.title}</h4>
-                  <span className="gallery-zoom-icon"><i className="fas fa-expand"></i></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── SECTION 5: CURRENT OPEN POSITIONS (DYNAMIC FILTERS) ── */}
       <section className="n-open-positions-section" id="open-positions">
@@ -855,91 +976,6 @@ const Careers = () => {
                 <span className="tech-category">{tech.category}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 8: DYNAMIC EMPLOYEE TESTIMONIALS ── */}
-      <section className="n-testimonials-section">
-        <div className="n-section-container">
-          <div className="n-section-header">
-            <div className="n-careers-pill-eyebrow">
-              <span className="pill-pulse-dot"></span>
-              <span className="pill-text">EMPLOYEE STORIES</span>
-            </div>
-            <h2 className="n-section-title">
-              Hear From <span className="n-highlight-green">Our Engineers</span>
-            </h2>
-            <p className="n-section-desc">
-              Real stories from team members building their careers at YGR Gobal IT Services.
-            </p>
-          </div>
-
-          <div className="n-testimonials-grid">
-            {testimonials.map((item, idx) => (
-              <div key={item.id || idx} className="n-testimonial-card">
-                <i className="fas fa-quote-left quote-mark"></i>
-                <p className="review-text">"{item.review || item.content}"</p>
-                <div className="author-row">
-                  <img src={item.photo || item.image || '/images/placeholder.jpg'} alt={item.name} />
-                  <div className="author-meta">
-                    <h4 className="author-name">{item.name}</h4>
-                    <span className="author-role">{item.role || item.designation}</span>
-                    <span className="author-exp">{item.experience || 'Team Member'}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 9: DYNAMIC INTERNSHIP PROGRAM ── */}
-      <section className="n-internship-section">
-        <div className="n-section-container">
-          <div className="n-section-header">
-            <div className="n-careers-pill-eyebrow">
-              <span className="pill-pulse-dot"></span>
-              <span className="pill-text">EARLY CAREER PIPELINE</span>
-            </div>
-            <h2 className="n-section-title">
-              Global Internship <span className="n-highlight-green">& Freshers Program</span>
-            </h2>
-            <p className="n-section-desc">
-              Kickstart your tech career with real-world industry projects, senior mentorship, and full-time hiring pathways.
-            </p>
-          </div>
-
-          <div className="n-internships-grid">
-            {internshipsList.map((prog, idx) => {
-              const itemSlug = prog.slug || prog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              const formId = prog.applicationFormId || prog.id;
-              const applyUrl = `/register-internship?course_id=${formId}&title=${encodeURIComponent(prog.title)}`;
-
-              return (
-                <div key={prog.id || idx} className="n-intern-card">
-                  <div className="intern-card-icon">
-                    <i className="fas fa-graduation-cap"></i>
-                  </div>
-                  <h3 className="intern-title">{prog.title}</h3>
-                  <div className="intern-meta-badges">
-                    <span className="badge-item"><i className="fas fa-clock"></i> {prog.duration || '6 Months'}</span>
-                    <span className="badge-item"><i className="fas fa-certificate"></i> {prog.certificate || 'Industry Certified'}</span>
-                    <span className="badge-item"><i className="fas fa-wallet"></i> {prog.stipend || 'Stipend Included'}</span>
-                  </div>
-                  <p className="intern-skills"><strong>Skills:</strong> {prog.skills || 'Modern Tech Stack'}</p>
-
-                  <div className="intern-btn-group" style={{ display: 'flex', gap: '10px', marginTop: 'auto' }}>
-                    <Link to={`/internships/${itemSlug}`} className="btn-intern-details" style={{ flex: 1, height: '42px', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#2D4A6D', fontWeight: 700, borderRadius: '999px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', fontSize: '0.84rem' }}>
-                      Explore Program
-                    </Link>
-                    <a href={applyUrl} className="btn-intern-apply" style={{ flex: 1.2, height: '42px', background: '#5E9133', color: '#FFFFFF', fontWeight: 700, borderRadius: '999px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none', fontSize: '0.84rem' }}>
-                      Apply Now <i className="fas fa-arrow-right"></i>
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>

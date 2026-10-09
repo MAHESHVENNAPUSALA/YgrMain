@@ -120,72 +120,66 @@ def admin_logout(request):
 
 
 
-# ================= BASIC PAGES =================
+# ================= BASIC PAGES (REACT SPA) =================
 
-def home(request):
-    Carousel = AddCarouselImages.objects.all()
-    testimonials = Testimonial.objects.filter(is_active=True).order_by('-created_at')
-    return render(request, 'home.html', {
-        'carousel': Carousel,
-        'testimonials': testimonials
-    })
+def home(request, *args, **kwargs):
+    return render(request, 'index.html')
 
 
 def services(request):
-    service_type = request.GET.get('type')
-    return render(request, 'services.html', {'service_type': service_type})
+    return render(request, 'index.html')
 
 
 def demo(request):
-    return render(request, 'demo.html')
+    return render(request, 'index.html')
 
 
 def header(request):
-    return render(request, 'header.html')
+    return render(request, 'index.html')
 
 
 def footer(request):
-    return render(request, 'footer.html')
+    return render(request, 'index.html')
 
 
 def aboutus(request):
-    return render(request, 'aboutus.html')
+    return render(request, 'index.html')
 
 
 def contact(request):
-    return render(request, "contact.html")
+    return render(request, "index.html")
 
 
 def careers(request):
-    return render(request, 'careers.html')
+    return render(request, 'index.html')
 
 
 def terms(request):
-    return render(request, 'terms.html')
+    return render(request, 'index.html')
 
 
 def privacy(request):
-    return render(request, 'privacy.html')
+    return render(request, 'index.html')
 
 
 def cookies(request):
-    return render(request, 'cookies.html')
+    return render(request, 'index.html')
 
 
 def help(request):
-    return render(request, 'help.html')
+    return render(request, 'index.html')
 
 
 def faqs(request):
-    return render(request, 'faqs.html')
+    return render(request, 'index.html')
 
 
 def refund(request):
-    return render(request, 'refund.html')
+    return render(request, 'index.html')
 
 
 def shipping(request):
-    return render(request, 'shipping.html')
+    return render(request, 'index.html')
 
 
 # ================= CAROUSEL =================
@@ -257,8 +251,7 @@ def carousel_delete(request, id):
 # ================= BLOG =================
 
 def blog_list(request):
-    blogs = Blog.objects.all().order_by('-created_at')
-    return render(request, 'blog_list.html', {'blogs': blogs})
+    return render(request, 'index.html')
 
 
 @admin_required
@@ -320,9 +313,7 @@ def delete_blog(request, blog_id):
 # ================= TEAM =================
 
 def team_list(request):
-    team = TeamMember.objects.filter(is_active=True)
-    events = LastMonthEvent.objects.all()
-    return render(request, 'team_list.html', {'team': team, 'events': events})
+    return render(request, 'index.html')
 
 @admin_required
 def team_dashboard(request):
@@ -511,7 +502,8 @@ from django.db.models import Q
 from django.utils.crypto import get_random_string
 from django.conf import settings
 
-from .models import User, Score, Question, UserAnswer, Internships
+from hr.models import Score, Question, UserAnswer
+from .models import User, Internships
 
 
 User = get_user_model()
@@ -522,7 +514,7 @@ User = get_user_model()
 # ===========================
 
 @csrf_exempt
-def register_view(request, course_id):
+def legacy_user_register_view(request, course_id):
     course = get_object_or_404(Internships, id=course_id)
     errors = {}
 
@@ -565,7 +557,8 @@ def register_view(request, course_id):
 
         return JsonResponse({
             "status": "registered",
-            "course": course.title
+            "course": course.title,
+            "user_id": user.id
         })
 
     return render(request, "exampages/register.html", {"course": course, "errors": errors})
@@ -858,7 +851,8 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 
-from .models import Internships, User, Score
+from hr.models import Score
+from .models import Internships, User
 
 
 # =========================
@@ -866,30 +860,71 @@ from .models import Internships, User, Score
 # =========================
 @csrf_exempt
 def create_order(request):
-    user_id = request.session.get("pending_user_id")
-    if not user_id:
-        return JsonResponse({"error": "No pending user"}, status=400)
+    from .models import InternshipRegistration, Payment
 
-    user = User.objects.get(id=user_id)
+    reg_id = None
+    payment_type = "full"
+    try:
+        data = json.loads(request.body)
+        reg_id = data.get("reg_id") or data.get("user_id")
+        payment_type = data.get("payment_type", "full")
+    except:
+        pass
+        
+    if not reg_id:
+        reg_id = request.session.get("pending_reg_id")
+        
+    if not reg_id:
+        return JsonResponse({"error": "No pending registration"}, status=400)
+    try:
+        reg = InternshipRegistration.objects.get(id=reg_id)
+    except InternshipRegistration.DoesNotExist:
+        return JsonResponse({"error": "Registration record not found"}, status=400)
 
     client = razorpay.Client(
         auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
     )
 
-    amount = 29900  # ₹299 in paise
+    base_amount = 250  # ₹250
+    gst = round(base_amount * 0.18, 2)
+    total = base_amount + gst
 
-    order = client.order.create({
-        "amount": amount,
-        "currency": "INR",
-        "payment_capture": 1
-    })
+    emi_part = None
+    amount_to_pay = total
 
-    user.razorpay_order_id = order["id"]
-    user.save()
+    if payment_type == "emi":
+        emi1 = round(total * 0.4, 2)
+        amount_to_pay = emi1
+        emi_part = 1
+
+    try:
+        order = client.order.create({
+            "amount": int(amount_to_pay * 100),
+            "currency": "INR",
+            "payment_capture": 1
+        })
+    except Exception as e:
+        return JsonResponse({"error": f"Payment Gateway Error: {str(e)}"}, status=400)
+
+    reg.razorpay_order_id = order["id"]
+    reg.payment_type = payment_type
+    reg.emi_part = emi_part
+    reg.base_amount = base_amount
+    reg.gst_amount = gst
+    reg.total_amount = total
+    reg.save()
+    
+
+    Payment.objects.create(
+        registration=reg,
+        amount=amount_to_pay,
+        emi_part=emi_part,
+        razorpay_order_id=order["id"]
+    )
 
     return JsonResponse({
         "order_id": order["id"],
-        "amount": order["amount"],
+        "amount": int(amount_to_pay * 100),
         "key": settings.RAZORPAY_KEY_ID
     })
 
@@ -912,12 +947,24 @@ def verify_payment(request):
             "razorpay_signature": data["razorpay_signature"]
         })
 
-        user = User.objects.get(razorpay_order_id=data["razorpay_order_id"])
-        user.is_paid = True
-        user.save()
+        from .models import Payment, InternshipRegistration
 
-        if "pending_user_id" in request.session:
-            del request.session["pending_user_id"]
+        from .models import Payment, InternshipRegistration
+        try:
+            payment = Payment.objects.get(razorpay_order_id=data["razorpay_order_id"])
+            payment.razorpay_payment_id = data["razorpay_payment_id"]
+            payment.razorpay_signature = data["razorpay_signature"]
+            payment.is_paid = True
+            payment.save()
+
+            reg = payment.registration
+            reg.amount_paid += payment.amount
+            reg.save()
+        except Payment.DoesNotExist:
+            pass
+
+        if "pending_reg_id" in request.session:
+            del request.session["pending_reg_id"]
 
         return JsonResponse({"status": "success"})
 
@@ -929,7 +976,7 @@ def verify_payment(request):
 # PAYMENT SUCCESS PAGE
 # =========================
 class PaymentSuccessView(TemplateView):
-    template_name = "exampages/payment_success.html"
+    template_name = "index.html"
 
 
 # =========================
@@ -937,23 +984,27 @@ class PaymentSuccessView(TemplateView):
 # =========================
 @csrf_exempt
 def delete_pending_user(request):
-    user_id = request.session.get("pending_user_id")
+    try:
+        import json
+        data = json.loads(request.body)
+        reg_id = data.get("reg_id")
+    except Exception:
+        reg_id = request.session.get("pending_reg_id")
 
-    if user_id:
+    if reg_id:
         try:
-            user = User.objects.get(id=user_id, is_paid=False)
-
-            if user.photo:
-                user.photo.delete(save=False)
-            if user.resume:
-                user.resume.delete(save=False)
-
-            user.delete()
-        except User.DoesNotExist:
+            from .models import InternshipRegistration
+            reg = InternshipRegistration.objects.get(id=reg_id)
+            if not getattr(reg, "is_paid", False) and reg.amount_paid == 0:
+                if reg.photo:
+                    reg.photo.delete(save=False)
+                if reg.resume:
+                    reg.resume.delete(save=False)
+                reg.delete()
+            if "pending_reg_id" in request.session:
+                del request.session["pending_reg_id"]
+        except Exception:
             pass
-
-        if "pending_user_id" in request.session:
-            del request.session["pending_user_id"]
 
     return JsonResponse({"status": "deleted"})
 
@@ -962,12 +1013,13 @@ def delete_pending_user(request):
 # CHECK PAYMENT STATUS
 # =========================
 def payment_status(request):
-    user_id = request.session.get("pending_user_id")
-    if not user_id:
+    reg_id = request.session.get("pending_reg_id")
+    if not reg_id:
         return JsonResponse({"paid": False})
-
-    user = User.objects.get(id=user_id)
-    return JsonResponse({"paid": user.is_paid})
+    
+    from .models import InternshipRegistration
+    reg = InternshipRegistration.objects.get(id=reg_id)
+    return JsonResponse({"paid": (reg.amount_paid > 0)})
 
 
 # =========================
@@ -995,11 +1047,18 @@ def razorpay_webhook(request):
             payment = event["payload"]["payment"]["entity"]
             order_id = payment["order_id"]
 
-            user = User.objects.filter(razorpay_order_id=order_id).first()
+            from .models import InternshipRegistration, Payment
+            reg = InternshipRegistration.objects.filter(razorpay_order_id=order_id).first()
 
-            if user and not user.is_paid:
-                user.is_paid = True
-                user.save()
+            if reg and reg.amount_paid == 0:
+                # Note: We should ideally update amount_paid from the event amount. 
+                # Since we don't have is_paid directly on InternshipRegistration, we update amount_paid.
+                payment = Payment.objects.filter(razorpay_order_id=order_id).first()
+                if payment:
+                    reg.amount_paid += payment.amount
+                    reg.save()
+                    payment.is_paid = True
+                    payment.save()
 
         return JsonResponse({"status": "ok"})
 
@@ -1012,49 +1071,71 @@ def razorpay_webhook(request):
 # =========================
 @csrf_exempt
 def register_view(request, course_id):
-    course = get_object_or_404(Internships, id=course_id)
+    course = Internships.objects.filter(id=course_id).first()
+    course_title = course.title if (course and course.title) else (
+        request.POST.get('course_title') or request.POST.get('course') or "Software Engineering Internship"
+    )
     errors = {}
 
     if request.method == "POST":
-        username = request.POST.get('name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
+        try:
+            name = (request.POST.get('name') or '').strip()
+            email = (request.POST.get('email') or '').strip()
+            phone = (request.POST.get('phone') or '').strip()
 
-        if User.objects.filter(username=username).exists():
-            errors['name'] = "Username already taken"
+            if not name:
+                errors['name'] = "Full name is required."
+            if not email:
+                errors['email'] = "Email address is required."
+            if not phone:
+                errors['phone'] = "Phone number is required."
 
-        if User.objects.filter(email=email).exists():
-            errors['email'] = "Email already registered"
+            if errors:
+                return JsonResponse({"status": "error", "errors": errors}, status=400)
 
-        if User.objects.filter(phone=phone).exists():
-            errors['phone'] = "Phone number already registered"
+            city = request.POST.get('city', '')
+            state = request.POST.get('state', '')
+            fallback_address = f"{city}, {state}".strip(", ")
+            clg_address = request.POST.get('clg_address') or fallback_address
+            
+            from .models import InternshipRegistration
+            
+            reg = InternshipRegistration.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                wphone=request.POST.get('wphone', ''),
+                clg_name=request.POST.get('clg_name', ''),
+                address=clg_address,
+                roll_no=request.POST.get('roll_no', ''),
+                branch=request.POST.get('branch', ''),
+                photo=request.FILES.get('photo'),
+                resume=request.FILES.get('resume'),
+                course=course_title,
+                plan="Premium",
+                base_amount=0,
+                gst_amount=0,
+                total_amount=0,
+                payment_type="",
+                amount_paid=0,
+                razorpay_order_id=""
+            )
 
-        if errors:
-            return JsonResponse({"errors": errors}, status=400)
+            request.session["pending_reg_id"] = reg.id
 
-        password = get_random_string(10)
+            return JsonResponse({
+                "status": "registered",
+                "reg_id": reg.id,
+                "user_id": reg.id
+            })
 
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
-        user.phone = phone
-        user.wnumber = request.POST.get('wphone')
-        user.clg_name = request.POST.get('clg_name')
-        user.clg_address = request.POST.get('clg_address')
-        user.roll_no = request.POST.get('roll_no')
-        user.branch = request.POST.get('branch')
-        user.photo = request.FILES.get('photo')
-        user.resume = request.FILES.get('resume')
-        user.course = course
-        user.is_paid = False
-        user.save()
-
-        request.session["pending_user_id"] = user.id
-
-        return JsonResponse({"status": "registered"})
+    if request.headers.get('Accept', '').startswith('application/json') or request.headers.get('Content-Type', '').startswith('application/json'):
+        return JsonResponse({"course": course_title, "course_id": course_id})
 
     return render(request, "exampages/register.html", {"course": course, "errors": errors})
 
@@ -1281,17 +1362,8 @@ def testimonial_delete(request, pk):
 
 # ------------------ FRONTEND ------------------
 
-def home(request):
-    # Get active testimonials
-    testimonials = Testimonial.objects.filter(is_active=True).order_by("-created_at")
-
-    # Get all carousel images
-    carousel_images = AddCarouselImages.objects.all()
-
-    return render(request, "home.html", {
-        "testimonials": testimonials,
-        "carousel_images": carousel_images,
-    })
+def home(request, *args, **kwargs):
+    return render(request, "index.html")
 
 
 
@@ -1471,9 +1543,13 @@ def internship_delete(request, id):
 @admin_required
 def internship_users_dashboard(request):
     admin = get_admin_from_session(request)
-    # Only users registered for a course (internship)
-    users = User.objects.filter(course__isnull=False)
-    scores = Score.objects.select_related('user').all()
+    # Fetch internship registrations instead of Users
+    from .models import InternshipRegistration
+    users = InternshipRegistration.objects.all().order_by('-created_at')
+    
+    # We don't have scores linked to InternshipRegistration, but we'll pass an empty list for compatibility
+    scores = []
+    
     return render(request, 'exampages/internship_users_dashboard.html', {
         'users': users,
         'scores': scores,
@@ -1491,6 +1567,16 @@ def user_profile(request, id):
         'admin': admin
     })
 
+@admin_required
+def internship_registration_profile(request, id):
+    from .models import InternshipRegistration
+    admin = get_admin_from_session(request)
+    reg = get_object_or_404(InternshipRegistration, id=id)
+    return render(request, 'exampages/internship_registration_profile.html', {
+        'reg': reg,
+        'admin': admin
+    })
+
 
 @admin_required
 def delete_user(request, id):
@@ -1499,6 +1585,19 @@ def delete_user(request, id):
     if request.method == 'POST':
         user.delete()
     return redirect('user_admin_dashboard')
+
+@admin_required
+def delete_internship_registration(request, id):
+    from .models import InternshipRegistration
+    admin = get_admin_from_session(request)
+    reg = get_object_or_404(InternshipRegistration, id=id)
+    if request.method == 'POST':
+        if reg.photo:
+            reg.photo.delete(save=False)
+        if reg.resume:
+            reg.resume.delete(save=False)
+        reg.delete()
+    return redirect('internship_users_dashboard')
 
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse
@@ -1554,10 +1653,12 @@ def job_application(request, job_id=None):
                     email=email,
                     password=phone
                 )
-                user.phone = phone
-                user.first_name = first_name
-                user.last_name = last_name
-                user.save()
+            
+            # Update user info whether new or existing
+            user.phone = phone
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
 
             def get_notice_period(val):
                 if not val: return None
@@ -2134,9 +2235,8 @@ def student_dashboard(request):
 from django.shortcuts import render, get_object_or_404
 from .models import Blog
 
-def blog_detail(request, id):
-    blog = get_object_or_404(Blog, id=id)
-    return render(request, 'blog_detail.html', {'blog': blog})
+def blog_detail(request, id=None, slug=None):
+    return render(request, 'index.html')
     
     
     
@@ -2449,3 +2549,31 @@ def admin_api_authors(request):
 
     authors = BlogAuthor.objects.all().order_by('name')
     return JsonResponse([{'id': a.id, 'name': a.name, 'role': a.role, 'bio': a.bio} for a in authors], safe=False)
+
+# ===========================
+# API EXAM & HR ENDPOINTS (STUBS)
+# ===========================
+
+@csrf_exempt
+def api_exam_login(request):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)
+
+@csrf_exempt
+def api_exam_profile(request):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)
+
+@csrf_exempt
+def api_exam_start(request):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)
+
+@csrf_exempt
+def api_exam_submit(request):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)
+
+@csrf_exempt
+def api_hr_internship_applicants(request):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)
+
+@csrf_exempt
+def api_hr_internship_applicant_detail(request, pk):
+    return JsonResponse({'status': 'Not Implemented'}, status=501)

@@ -23,6 +23,7 @@ const TLDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [showDevsModal, setShowDevsModal] = useState(false);
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+  const [taskDetailModal, setTaskDetailModal] = useState(null);
 
   const fetchAllData = async () => {
     try {
@@ -341,6 +342,9 @@ const TLDashboard = () => {
           .grid-70-30, .grid-50-50 {
             grid-template-columns: 1fr;
           }
+        }
+        .task-row-hover:hover {
+          background-color: #f8fafc;
         }
 
         /* Cards & Panels */
@@ -1055,7 +1059,7 @@ const TLDashboard = () => {
                 <tbody>
                   {data?.upcoming_tasks && data.upcoming_tasks.length > 0 ? (
                     data.upcoming_tasks.slice(0, 4).map((t) => (
-                      <tr key={t.id}>
+                      <tr key={t.id} onClick={() => setTaskDetailModal(t)} style={{ cursor: 'pointer' }} className="task-row-hover">
                         <td style={{ fontWeight: 600 }}>{t.task_name}</td>
                         <td>{t.end_date}</td>
                         <td>
@@ -1448,6 +1452,71 @@ const TLDashboard = () => {
                   Create Team
                 </button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* TASK DETAIL MODAL */}
+      {taskDetailModal && (
+        <div className="modal-overlay" onClick={() => setTaskDetailModal(null)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', background: '#ffffff', borderRadius: '16px', padding: '0', width: '90%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div className="modal-header" style={{ padding: '18px 24px', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Task Overview</h3>
+              <button className="modal-close" onClick={() => setTaskDetailModal(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>×</button>
+            </div>
+            <div className="modal-body" style={{ textAlign: 'left', padding: '24px' }}>
+              <h4 style={{ fontSize: '1.25rem', color: '#0f172a', marginBottom: '10px' }}>{taskDetailModal.task_name}</h4>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <span className={`badge-capsule ${taskDetailModal.status === 'Completed' ? 'success' : taskDetailModal.status === 'Submitted' ? 'info' : 'warning'}`}>
+                  {taskDetailModal.status || 'Pending'}
+                </span>
+                <span className="badge-capsule" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+                  📂 {taskDetailModal.project?.project_name || 'General'}
+                </span>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                <h5 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Description</h5>
+                <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {taskDetailModal.description || 'No description provided.'}
+                </p>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Start Date</span>
+                  <span style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 600 }}>{taskDetailModal.start_date || 'N/A'}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Deadline</span>
+                  <span style={{ fontSize: '0.95rem', color: '#ef4444', fontWeight: 600 }}>{taskDetailModal.end_date || 'N/A'}</span>
+                </div>
+                {taskDetailModal.file_url && (
+                  <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Submitted Document</span>
+                    <a
+                      href={taskDetailModal.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#3b82f6', padding: '8px 14px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #bfdbfe', textDecoration: 'none' }}
+                    >
+                      📄 View / Download Document
+                    </a>
+                  </div>
+                )}
+              </div>
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button 
+                  className="btn" 
+                  style={{ margin: 0, padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/tasks');
+                  }}
+                >
+                  Manage Task in Tasks Board
+                </button>
+              </div>
             </div>
           </div>
         </div>

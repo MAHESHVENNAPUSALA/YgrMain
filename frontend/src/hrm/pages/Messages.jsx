@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../shared/context/AuthContext';
 import chatApi from '../../services/api/chat';
 import { useToast } from '../../shared/context/ToastContext';
@@ -88,6 +89,7 @@ function StatusDot({ status }) {
 const Messages = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
 
   // ── State ──
   const [allUsers, setAllUsers] = useState([]);
@@ -205,6 +207,18 @@ const Messages = () => {
       chatApi.updatePresence({ status: 'Offline' }).catch(() => {});
     };
   }, [loadSidebar]);
+
+  useEffect(() => {
+    if (location.state?.openChatId && location.state?.chatType && location.state?.chatName) {
+      setActiveChat({
+        type: location.state.chatType,
+        id: location.state.openChatId,
+        name: location.state.chatName
+      });
+      // Clear state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // ── Load messages for active chat ──
   const loadMessages = useCallback(async (reset = false) => {

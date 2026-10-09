@@ -47,6 +47,7 @@ class User(AbstractUser):
         ('Manager', 'Manager'),
         ('TeamLead', 'Team Lead'),
         ('Employee', 'Employee'),
+        ('Client', 'Client'),
     ]
     
     DEPARTMENT = [
@@ -90,6 +91,7 @@ class User(AbstractUser):
     department = models.CharField( max_length=100, choices=DEPARTMENT, default='python_dev' )
     team_name = models.CharField(max_length=100, null=True, blank=True)
     document = models.FileField(upload_to='employee_docs/', blank=True, null=True)
+    is_document_verified = models.BooleanField(default=False)
     designation = models.CharField(max_length=100, blank=True, null=True)
     aadhaar = models.CharField(max_length=12, blank=True, null=True)
     reporting_manager = models.ForeignKey(
@@ -100,7 +102,7 @@ class User(AbstractUser):
         related_name='subordinates'
     )
 
-    # Student / Intern fields from main app
+
     wnumber = models.CharField(blank=True, null=True, max_length=12)
     clg_name = models.CharField(max_length=50, blank=True)
     clg_address = models.CharField(max_length=100, blank=True)
@@ -109,7 +111,7 @@ class User(AbstractUser):
     photo = models.ImageField(upload_to='img/', blank=True, null=True)
     resume = models.FileField(upload_to='doc/', blank=True, null=True)
     exam_attempt = models.BooleanField(default=False)
-    exam_attpemt = models.BooleanField(default=False)  # spelling alias for main app compatibility
+    exam_attpemt = models.BooleanField(default=False)  
     is_paid = models.BooleanField(default=False)
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
     course = models.ForeignKey('Internships', on_delete=models.SET_NULL, null=True, blank=True)
@@ -117,7 +119,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if not self.emp_id:
-            # prefix based on assigned role
+    
             prefix = {
                 "MD": "YGRMD",
                 "HR": "YGRHR",
@@ -144,7 +146,7 @@ class Project(models.Model):
     startdate = models.DateField(null=True, blank=True)
     deadline = models.DateField(null=True, blank=True)
 
-    # Client information
+
     client_name = models.CharField(max_length=150, null=True, blank=True)
     client_contact = models.CharField(max_length=150, null=True, blank=True)
     client = models.ForeignKey(
@@ -171,7 +173,7 @@ class Project(models.Model):
     project_logo = models.ImageField(upload_to='project_logos/', null=True, blank=True)
     project_color = models.CharField(max_length=10, default='#3b82f6')
 
-    # HR → Manager
+
     assigned_manager = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -181,7 +183,7 @@ class Project(models.Model):
         limit_choices_to={"role": "Manager"}
     )
 
-    # Manager → Team
+    
     assigned_teams = models.ManyToManyField("Team", blank=True, related_name="projects")
 
     document = models.FileField(
@@ -399,7 +401,7 @@ class CompanyAnnouncement(models.Model):
 
     def __str__(self):
         return self.title
-
+                                                                                             
     
  
 
@@ -409,6 +411,7 @@ from django.utils import timezone
 
 
 class Client(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='client_profile')
     name = models.CharField(max_length=150)
     business_name = models.CharField(max_length=200, blank=True)
     gst_number = models.CharField(max_length=50, blank=True, null=True)
@@ -422,7 +425,7 @@ class Client(models.Model):
     website = models.CharField(max_length=200, blank=True, null=True)
     status = models.CharField(max_length=20, default='Active')
 
-    def __str__(self):
+    def __str__(self): 
         return self.name
 
 
@@ -740,6 +743,27 @@ class Task(models.Model):
 
     def __str__(self):
         return self.task_name
+
+
+class ClientTaskReview(models.Model):
+    """Client reviews an employee's submitted task document."""
+    REVIEW_STATUS_CHOICES = [
+        ('Pending',        'Pending Review'),
+        ('Approved',       'Approved'),
+        ('Needs Revision', 'Needs Revision'),
+    ]
+
+    task            = models.OneToOneField(Task, on_delete=models.CASCADE, related_name='client_review')
+    reviewed_by     = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='client_task_reviews')
+    status          = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default='Pending')
+    feedback        = models.TextField(blank=True, null=True)
+    client_document = models.FileField(upload_to='client_reviews/', blank=True, null=True)
+    reviewed_at     = models.DateTimeField(auto_now=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"ClientReview for '{self.task.task_name}' — {self.status}"
+
 
 class TaskExtension(models.Model):
     task = models.OneToOneField(Task, on_delete=models.CASCADE, related_name='extension')
@@ -1256,7 +1280,7 @@ class UserAnswer(models.Model):
     exam = models.ForeignKey(ExamSession, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
 
-    selected_option = models.CharField(max_length=1)  # A/B/C/D
+    selected_option = models.CharField(max_length=1) 
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
@@ -1783,7 +1807,7 @@ class AttendanceCorrection(models.Model):
         return f"Correction for {self.attendance.user.username} on {self.attendance.date} ({self.status})"
 
 
-# Recalculate signals
+# Recalculate signals 
 @receiver(post_save, sender=Attendance)
 def attendance_post_save(sender, instance, created, **kwargs):
     if getattr(instance, '_no_recalc', False):
@@ -1993,6 +2017,12 @@ class InternshipRegistration(models.Model):
     email = models.EmailField()
     course = models.CharField(max_length=100)
     address = models.TextField(null=True, blank=True)
+    clg_name = models.CharField(max_length=255, null=True, blank=True)
+    roll_no = models.CharField(max_length=50, null=True, blank=True)
+    branch = models.CharField(max_length=100, null=True, blank=True)
+    photo = models.ImageField(upload_to="internship_photos/", null=True, blank=True)
+    resume = models.FileField(upload_to="internship_resumes/", null=True, blank=True)
+    wphone = models.CharField(max_length=15, null=True, blank=True)
     plan = models.CharField(max_length=50)
     base_amount = models.FloatField()
     gst_amount = models.FloatField()

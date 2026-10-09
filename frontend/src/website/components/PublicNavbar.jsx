@@ -215,11 +215,12 @@ const PublicNavbar = () => {
             </div>
             <div className="col-md-4">
               <div className="tb-social" style={{ display: 'flex', justifyContent: 'flex-end', height: '45px' }}>
-                <a href="https://x.com/ygrgobalit2024" target="_blank" rel="noreferrer"><i className="fab fa-x-twitter"></i></a>
-                <a href="https://www.facebook.com/profile.php?id=61568888033386" target="_blank" rel="noreferrer"><i className="fab fa-facebook-f"></i></a>
-                <a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/" target="_blank" rel="noreferrer"><i className="fab fa-linkedin-in"></i></a>
-                <a href="https://www.instagram.com/ygrgobalitservices/" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
-                <a href="https://www.youtube.com/@rrtalktrends" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+                <a href="https://x.com/ygrgobalit2024" target="_blank" rel="noreferrer" title="Twitter / X"><i className="fab fa-x-twitter"></i></a>
+                <a href="https://www.facebook.com/profile.php?id=61568888033386" target="_blank" rel="noreferrer" title="Facebook"><i className="fab fa-facebook-f"></i></a>
+                <a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/" target="_blank" rel="noreferrer" title="LinkedIn"><i className="fab fa-linkedin-in"></i></a>
+                <a href="https://www.instagram.com/ygrgobalitservices/" target="_blank" rel="noreferrer" title="Instagram"><i className="fab fa-instagram"></i></a>
+                <a href="https://wa.me/917794053340" target="_blank" rel="noreferrer" title="WhatsApp"><i className="fab fa-whatsapp"></i></a>
+                <a href="https://www.youtube.com/@rrtalktrends" target="_blank" rel="noreferrer" title="YouTube"><i className="fab fa-youtube"></i></a>
               </div>
             </div>
           </div>

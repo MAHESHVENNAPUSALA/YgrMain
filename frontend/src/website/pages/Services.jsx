@@ -154,6 +154,25 @@ const DEFAULT_SERVICES = [
       { id: 602, title: 'Healthcare Penetration Audit', industry: 'Healthcare', tech: ['OWASP ZAP', 'Burp Suite'], image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&q=80' },
       { id: 603, title: 'High-Load E-Commerce Stress Test', industry: 'Retail', tech: ['JMeter', 'Python', 'AWS'], image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80' }
     ]
+  },
+  {
+    id: 7,
+    name: 'Digital Marketing & SEO',
+    slug: 'digital-marketing',
+    icon: 'fa-bullhorn',
+    shortDescription: 'Data-driven marketing, SEO optimization, and social media growth strategies.',
+    overview: 'We craft targeted digital marketing campaigns that drive brand visibility, generate high-quality leads, and maximize return on investment across all digital channels.',
+    challenges: ['Low organic search visibility', 'High customer acquisition costs', 'Poor social media engagement and brand awareness'],
+    solution: ['Comprehensive Technical & Content SEO', 'Data-Driven Paid Advertising (PPC) Campaigns', 'Strategic Social Media Management'],
+    benefits: ['Increase in Organic Traffic', 'Lower Cost Per Acquisition (CPA)', 'Enhanced Brand Authority'],
+    deliverables: ['SEO Audit & Strategy Report', 'Monthly Campaign Performance Dashboard', 'Content Marketing Plan'],
+    techStack: ['Google Analytics', 'SEMrush', 'Meta Ads', 'Google Ads', 'HubSpot'],
+    industries: ['E-Commerce', 'SaaS', 'Education', 'Real Estate'],
+    projects: [
+      { id: 701, title: 'E-Commerce Growth Campaign', industry: 'Retail', tech: ['Meta Ads', 'Google Analytics'], image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=600&q=80' },
+      { id: 702, title: 'B2B SaaS Lead Generation', industry: 'SaaS', tech: ['LinkedIn Ads', 'HubSpot'], image: 'https://images.unsplash.com/photo-1552581234-26160f608093?w=600&q=80' },
+      { id: 703, title: 'Local Real Estate SEO', industry: 'Real Estate', tech: ['SEMrush', 'Google Business'], image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80' }
+    ]
   }
 ];
 
@@ -248,6 +267,11 @@ const Services = () => {
   // Find currently active service object
   const activeService = servicesList.find((s) => s.slug === activeSlugParam) || servicesList[0];
 
+  // Scroll to top when active service changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeSlugParam]);
+
   return (
     <div className="corporate-services-page">
       {/* ── 1. COMPACT HERO SECTION ── */}
@@ -265,14 +289,24 @@ const Services = () => {
                 ENTERPRISE DIGITAL SOLUTIONS
               </div>
 
-              <h1 className="services-hero-title">
-                Engineering Digital Products & <br />
-                <span className="section-main-heading"><span className="text-green-highlight">Business Transformation</span></span>
-              </h1>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeService.slug}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <h1 className="services-hero-title">
+                    {activeService.name.split(' ').slice(0, Math.ceil(activeService.name.split(' ').length / 2)).join(' ')} <br />
+                    <span className="section-main-heading"><span className="text-green-highlight">{activeService.name.split(' ').slice(Math.ceil(activeService.name.split(' ').length / 2)).join(' ')}</span></span>
+                  </h1>
 
-              <p className="services-hero-desc">
-                YGR Gobal IT Services delivers enterprise software, AI solutions, cloud platforms, mobile applications, and digital transformation services that help organizations innovate and scale globally.
-              </p>
+                  <p className="services-hero-desc">
+                    As the <strong>leading Best IT company in Hyderabad</strong>, {activeService.overview.charAt(0).toLowerCase() + activeService.overview.slice(1)}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
 
               <div className="services-hero-btns">
                 <a href="#services-nav" className="btn-hero-primary">
@@ -286,24 +320,37 @@ const Services = () => {
 
             {/* Right Side Subtle Floating Enterprise Graphics */}
             <div className="services-hero-right">
-              <div className="hero-floating-box">
-                <div className="floating-pill-card">
-                  <div className="floating-pill-icon"><i className="fas fa-brain"></i></div>
-                  <div className="floating-pill-text">AI & Machine Learning Integration</div>
-                </div>
-                <div className="floating-pill-card">
-                  <div className="floating-pill-icon"><i className="fas fa-cloud"></i></div>
-                  <div className="floating-pill-text">Multi-Cloud AWS & Azure Mesh</div>
-                </div>
-                <div className="floating-pill-card">
-                  <div className="floating-pill-icon"><i className="fas fa-shield-halved"></i></div>
-                  <div className="floating-pill-text">Ironclad Cyber Security & Audits</div>
-                </div>
-                <div className="floating-pill-card">
-                  <div className="floating-pill-icon"><i className="fas fa-network-wired"></i></div>
-                  <div className="floating-pill-text">DevOps CI/CD Automation</div>
-                </div>
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeService.slug}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="hero-floating-box"
+                >
+                  {(activeService.deliverables?.length ? activeService.deliverables : activeService.techStack || []).slice(0, 4).map((text, idx) => {
+                    const t = text.toLowerCase();
+                    let icon = 'fa-bolt';
+                    if (t.includes('code') || t.includes('api')) icon = 'fa-code';
+                    else if (t.includes('cloud') || t.includes('aws')) icon = 'fa-cloud';
+                    else if (t.includes('security') || t.includes('audit') || t.includes('qa')) icon = 'fa-shield-halved';
+                    else if (t.includes('ai') || t.includes('ml')) icon = 'fa-brain';
+                    else if (t.includes('design') || t.includes('ui')) icon = 'fa-palette';
+                    else if (t.includes('app') || t.includes('mobile')) icon = 'fa-mobile-screen-button';
+                    else {
+                      const defaults = ['fa-bolt', 'fa-layer-group', 'fa-cube', 'fa-rocket'];
+                      icon = defaults[idx % defaults.length];
+                    }
+                    return (
+                      <div key={idx} className="floating-pill-card">
+                        <div className="floating-pill-icon"><i className={`fas ${icon}`}></i></div>
+                        <div className="floating-pill-text">{text}</div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
         </div>

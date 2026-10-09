@@ -281,7 +281,7 @@ const Portfolio = () => {
 
           {/* Statistics Bar */}
           <div className="portfolio-stats-row">
-            <div className="portfolio-stat-item"><i className="fas fa-check-circle"></i> 145+ Projects Delivered</div>
+            <div className="portfolio-stat-item"><i className="fas fa-check-circle"></i> 149+ Projects Delivered</div>
             <div className="portfolio-stat-item"><i className="fas fa-users"></i> 120+ Global Clients</div>
             <div className="portfolio-stat-item"><i className="fas fa-shield-alt"></i> 99.9% System Uptime</div>
             <div className="portfolio-stat-item"><i className="fas fa-globe"></i> 15+ Countries</div>

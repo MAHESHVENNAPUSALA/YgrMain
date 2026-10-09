@@ -1,186 +1,49 @@
 {% extends "admin_base.html" %}
-
-{% block title %}Vacancies Dashboard{% endblock %}
-{% block header_title %}Vacancies Dashboard{% endblock %}
+{% block title %}Job Vacancies{% endblock %}
 
 {% block content %}
-
-<style>
-/* ===== DASHBOARD CONTAINER ===== */
-.dashboard-container {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 25px 45px rgba(0,0,0,0.08);
-}
-
-/* Header */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
-
-.dashboard-header h4 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #092a49;
-    margin: 0;
-}
-
-/* Add button */
-.add-btn {
-    background: #007bff;
-    color: #fff;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: 0.2s ease;
-}
-
-.add-btn:hover {
-    background-color: #0056b3;
-}
-
-/* Table */
-.table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-}
-
-.table th, .table td {
-    padding: 14px 16px;
-    font-size: 14px;
-    vertical-align: middle;
-}
-
-.table th {
-    background: #092a49;
-    color: #fff;
-    font-weight: 600;
-}
-
-tbody tr:hover {
-    background-color: #f5faff;
-}
-
-/* Actions */
-.actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.action-btn {
-    padding: 6px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 8px;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* Edit */
-.edit-btn {
-    background-color: #007bff;
-    color: #fff;
-}
-
-.edit-btn:hover {
-    background-color: #0056b3;
-}
-
-/* Delete */
-.delete-btn {
-    background: #dc3545;
-    color: #fff;
-    border: none;
-}
-
-.delete-btn:hover {
-    background-color: #a71d2a;
-}
-
-/* Empty */
-.table tbody tr td[colspan] {
-    text-align: center;
-    color: #777;
-    padding: 20px 0;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-    .dashboard-container {
-        padding: 20px;
-    }
-
-    .dashboard-header h4 {
-        font-size: 20px;
-    }
-
-    .add-btn {
-        width: 100%;
-        text-align: center;
-        margin-top: 10px;
-    }
-}
-</style>
-
-<div class="dashboard-container">
-
-    <div class="dashboard-header">
-        <h4>Vacancies Dashboard</h4>
-        <a href="{% url 'add_vacancy' %}" class="add-btn">+ Add Vacancy</a>
+<div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: #092a49;">Job Vacancies</h2>
+        <a href="{% url 'add_vacancy' %}" style="background: #2ecc71; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-weight: bold;">+ Add Vacancy</a>
     </div>
 
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Location</th>
-                    <th>Role</th>
-                    <th>Package</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for job in jobs %}
-                <tr>
-                    <td>{{ job.title }}</td>
-                    <td>{{ job.location }}</td>
-                    <td>{{ job.role }}</td>
-                    <td>{{ job.package }}</td>
-                    <td>
-                        <div class="actions">
-                            <a href="{% url 'edit_vacancy' job.id %}" class="action-btn edit-btn">Edit</a>
-
-                            <form method="post" action="{% url 'delete_vacancy' job.id %}"
-                                  onsubmit="return confirm('Delete this vacancy?');"
-                                  style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="action-btn delete-btn">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5">No vacancies available.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #092a49; color: white; text-align: left;">
+                <th style="padding: 12px;">Title</th>
+                <th style="padding: 12px;">Role</th>
+                <th style="padding: 12px;">Location</th>
+                <th style="padding: 12px;">Package</th>
+                <th style="padding: 12px;">Status</th>
+                <th style="padding: 12px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr style="border-bottom: 1px solid #ddd;">
+                <td style="padding: 12px; font-weight: bold;">{{ job.title }}</td>
+                <td style="padding: 12px;">{{ job.role }}</td>
+                <td style="padding: 12px;">{{ job.location }}</td>
+                <td style="padding: 12px;">{{ job.package }}</td>
+                <td style="padding: 12px;">
+                    {% if job.is_active %}
+                    <span style="background: #2ecc71; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">Active</span>
+                    {% else %}
+                    <span style="background: #95a5a6; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">Inactive</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 12px;">
+                    <a href="{% url 'edit_vacancy' job.id %}" style="background: #3498db; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px;">Edit</a>
+                    <a href="{% url 'delete_vacancy' job.id %}" style="background: #e74c3c; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; font-size: 12px;" onclick="return confirm('Delete vacancy?')">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 20px; text-align: center; color: #888;">No job vacancies listed.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
 {% endblock %}

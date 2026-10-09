@@ -21,11 +21,13 @@ const Header = () => {
       case 'MD':
         return 'Managing Director Dashboard';
       case 'HR':
-        return 'HR Dashboard';
+        return 'HR Dashboard';  
       case 'Manager':
-        return 'Manager Dashboard';
+        return 'Manager Dashboard';        
       case 'TeamLead':
         return 'Team Lead Dashboard';
+      case 'Client':
+        return 'Client Dashboard';
       default:
         return 'Employee Dashboard';
     }
@@ -129,7 +131,7 @@ const Header = () => {
       </div>
 
       {showLogoutConfirm && (
-        <div style={{
+        <div style={{         
           position: 'fixed',
           top: 0,
           left: 0,

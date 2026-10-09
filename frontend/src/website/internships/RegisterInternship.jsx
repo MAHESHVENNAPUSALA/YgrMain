@@ -59,6 +59,24 @@ const WHY_JOIN_ITEMS = [
   }
 ];
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
+
 const OriginalExampagesRegister = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -98,6 +116,7 @@ const OriginalExampagesRegister = () => {
     course_id: courseId,
     why_join: '',
     career_goals: '',
+    payment_type: 'full',
     declaration: false
   };
 
@@ -171,9 +190,6 @@ const OriginalExampagesRegister = () => {
     if (!formData.name.trim()) errors.name = 'Full name is required.';
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Valid email is required.';
     if (!formData.phone.trim() || formData.phone.length < 10) errors.phone = 'Valid 10-digit mobile number is required.';
-    if (!formData.clg_name.trim()) errors.clg_name = 'College name is required.';
-    if (!formData.branch.trim()) errors.branch = 'Branch / Stream is required.';
-    if (!formData.roll_no.trim()) errors.roll_no = 'Roll number / Academic ID is required.';
     if (!selectedResume) errors.resume = 'Please upload your Resume (PDF/DOC/DOCX).';
     if (!formData.declaration) errors.declaration = 'You must confirm that all details are accurate.';
 
@@ -195,8 +211,16 @@ const OriginalExampagesRegister = () => {
 
     const bodyFormData = new FormData();
     Object.keys(formData).forEach((key) => {
-      bodyFormData.append(key, formData[key]);
+      // Map course_title to course to match the Django model
+      if (key === 'course_title') {
+        bodyFormData.append('course', formData[key]);
+      } else {
+        bodyFormData.append(key, formData[key]);
+      }
     });
+    
+    // Add default plan as it's required by the model
+    bodyFormData.append('plan', 'Premium Internship Plan');
 
     if (selectedResume) {
       bodyFormData.append('resume', selectedResume);
@@ -208,8 +232,7 @@ const OriginalExampagesRegister = () => {
     const csrfToken = getCookie('csrftoken');
 
     try {
-      // POST submission to Django endpoint `/register/${courseId}/` or fallback `/apply/`
-      const response = await fetch(`/register/${courseId}/`, {
+      const response = await fetch(`/api/portal/internships/register/`, {
         method: 'POST',
         headers: { 'X-CSRFToken': csrfToken },
         body: bodyFormData,
@@ -217,23 +240,137 @@ const OriginalExampagesRegister = () => {
       });
 
       if (response.ok || response.status === 200 || response.status === 201) {
-        setSubmittedSuccess(true);
-        window.scrollTo({ top: 150, behavior: 'smooth' });
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned an invalid response format. Please try again or contact support.");
+        }
+        const registerData = await response.json();
+        
+      
+        const res = await loadRazorpayScript();
+        if (!res) {
+          setGlobalError('Failed to load payment gateway. Please check your internet connection.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        
+        try {
+          const registration_id = registerData.registration_id;
+          const orderResponse = await fetch(`/api/portal/internships/register/${registration_id}/create_payment/`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken 
+            },
+            body: JSON.stringify({ 
+              payment_type: formData.payment_type 
+            }),
+            credentials: 'same-origin',
+          });
+          const orderData = await orderResponse.json();
+
+          if (orderData.payment_bypassed) {
+            setSubmittedSuccess(true);
+            setIsSubmitting(false);
+            return;
+          }
+
+          if (!orderResponse.ok || !orderData.order_id) {
+            setGlobalError(orderData.error || 'Failed to create payment order.');
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Step 4: Initialize Razorpay Checkout
+          const options = {
+            key: orderData.key,
+            amount: orderData.amount,
+            currency: 'INR',
+            name: 'YGR Gobal IT Services',
+            description: `Internship Registration: ${courseTitleParam}`,
+            order_id: orderData.order_id,
+            handler: async function (paymentResponse) {
+              try {
+                const verifyResponse = await fetch(`/api/portal/internships/register/${registration_id}/verify_payment/`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,  
+                  },
+                  credentials: 'same-origin',
+                  body: JSON.stringify({
+                    razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                    razorpay_order_id: paymentResponse.razorpay_order_id,
+                    razorpay_signature: paymentResponse.razorpay_signature,
+                  }),
+                });
+
+                const verifyData = await verifyResponse.json();
+
+                if (verifyResponse.ok) {
+                  setSubmittedSuccess(true);
+                  setIsSubmitting(false);
+                } else {
+                  setGlobalError(verifyData.error || 'Payment verification failed.');
+                  window.scrollTo({ top: 350, behavior: 'smooth' });
+                  setIsSubmitting(false);
+                }
+              } catch (verifyErr) {
+                console.error('Verify error:', verifyErr);
+                setGlobalError('An error occurred while verifying payment.');
+                setIsSubmitting(false);
+              }
+            },
+            prefill: {
+              name: formData.name,
+              email: formData.email,
+              contact: formData.phone,
+            },
+            theme: {
+              color: '#3b82f6',
+            },
+            modal: {
+              ondismiss: async function () {
+                setIsSubmitting(false);
+                setGlobalError('Payment cancelled. Your registration was not completed.');
+                // Delete pending user on cancellation
+                await fetch('/api/delete-pending-user/', {
+                  method: 'POST',
+                  headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ user_id: registerData.user_id }),
+                  credentials: 'same-origin',
+                });
+                window.scrollTo({ top: 350, behavior: 'smooth' });
+              }
+            }
+          };
+
+          const paymentObject = new window.Razorpay(options);
+          paymentObject.open();
+
+        } catch (orderErr) {
+          console.error('Order creation error:', orderErr);
+          setGlobalError('Failed to initiate payment.');
+          setIsSubmitting(false);
+        }
       } else {
         const data = await response.json().catch(() => ({}));
         if (data.errors) {
           setFormErrors(data.errors);
           setGlobalError('Please correct the highlighted errors in the form.');
+        } else if (data.message || data.error) {
+          setGlobalError(data.message || data.error);
         } else {
-          setSubmittedSuccess(true);
-          window.scrollTo({ top: 150, behavior: 'smooth' });
+          setGlobalError('Failed to register. Please try again later.');
         }
+        setIsSubmitting(false);
       }
     } catch (err) {
       console.error('Internship submission error:', err);
-      setSubmittedSuccess(true);
+      // setSubmittedSuccess(true);  // REMOVE: Only show success on actual success
+      setGlobalError(`An unexpected error occurred: ${err.message}. Please try again or contact support.`);
       window.scrollTo({ top: 150, behavior: 'smooth' });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -303,17 +440,19 @@ const OriginalExampagesRegister = () => {
                 <div className="success-icon-badge">
                   <i className="fas fa-check-circle"></i>
                 </div>
-                <h2 className="success-title">Internship Application Submitted Successfully</h2>
+                <h2 className="success-title">Internship Registration Successful!</h2>
                 <p className="success-message">
-                  Thank you for applying to the internship program at YGR Gobal IT Services. Our Training Team will review your profile and contact shortlisted candidates.
+                  We have successfully received your internship registration. 
+                  <strong> Your Login ID and Password have been sent to your registered Email Address. </strong> 
+                  Please check your email and log in to your Candidate Dashboard to track your progress and access the technical exam.
                 </p>
 
                 <div className="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                  <Link to="/internships" className="btn-apply-internship" style={{ width: 'auto', textDecoration: 'none' }}>
-                    View Other Internships
+                  <Link to="/internships/candidate-login" className="btn-apply-internship" style={{ width: 'auto', textDecoration: 'none' }}>
+                    Login to Candidate Dashboard <i className="fas fa-arrow-right ms-2"></i>
                   </Link>
-                  <Link to="/careers" className="btn-reset-internship" style={{ width: 'auto', textDecoration: 'none' }}>
-                    Return to Careers
+                  <Link to="/" className="btn-reset-internship" style={{ width: 'auto', textDecoration: 'none' }}>
+                    Return Home
                   </Link>
                 </div>
               </motion.div>
@@ -349,7 +488,7 @@ const OriginalExampagesRegister = () => {
                       <div className="summary-item-val">Online / Offline / Hybrid</div>
                     </div>
                     <div className="summary-item">
-                      <div className="summary-item-label">Location</div>
+                      <div className="summary-item-label">Location</div>              
                       <div className="summary-item-val">Hyderabad HQ</div>
                     </div>
                     <div className="summary-item">
@@ -486,149 +625,9 @@ const OriginalExampagesRegister = () => {
                         </select>
                       </div>
 
-                      {/* SECTION 2: ACADEMIC DETAILS */}
+                      {/* SECTION 2: COURSE DETAILS */}
                       <div className="col-12">
-                        <div className="form-section-heading">2. Academic & College Details</div>
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">College Name *</label>
-                        <input
-                          type="text"
-                          className={`intern-field-control ${formErrors.clg_name ? 'is-invalid' : formData.clg_name ? 'is-valid' : ''}`}
-                          name="clg_name"
-                          value={formData.clg_name}
-                          onChange={handleChange}
-                          placeholder="Full Institute / College Name"
-                          required
-                        />
-                        {formErrors.clg_name && <div className="field-error-hint">{formErrors.clg_name}</div>}
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">University Name</label>
-                        <input
-                          type="text"
-                          className="intern-field-control"
-                          name="university"
-                          value={formData.university}
-                          onChange={handleChange}
-                          placeholder="Affiliated University Name"
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">Degree / Qualification</label>
-                        <select
-                          className="intern-field-select"
-                          name="degree"
-                          value={formData.degree}
-                          onChange={handleChange}
-                        >
-                          <option value="B.Tech / B.E">B.Tech / B.E</option>
-                          <option value="B.Sc / BCA">B.Sc / BCA</option>
-                          <option value="M.Tech / M.E">M.Tech / M.E</option>
-                          <option value="M.Sc / MCA">M.Sc / MCA</option>
-                          <option value="Diploma">Diploma</option>
-                        </select>
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">Branch / Stream *</label>
-                        <input
-                          type="text"
-                          className={`intern-field-control ${formErrors.branch ? 'is-invalid' : formData.branch ? 'is-valid' : ''}`}
-                          name="branch"
-                          value={formData.branch}
-                          onChange={handleChange}
-                          placeholder="e.g. CSE, ECE, IT, AI&DS"
-                          required
-                        />
-                        {formErrors.branch && <div className="field-error-hint">{formErrors.branch}</div>}
-                      </div>
-
-                      <div className="col-md-4">
-                        <label className="intern-field-label">Current Semester / Year</label>
-                        <select
-                          className="intern-field-select"
-                          name="current_semester"
-                          value={formData.current_semester}
-                          onChange={handleChange}
-                        >
-                          <option value="5th Semester">5th Semester</option>
-                          <option value="6th Semester">6th Semester</option>
-                          <option value="7th Semester">7th Semester</option>
-                          <option value="8th Semester">8th Semester</option>
-                          <option value="Passed Out">Passed Out</option>
-                        </select>
-                      </div>
-
-                      <div className="col-md-4">
-                        <label className="intern-field-label">Graduation Year</label>
-                        <input
-                          type="number"
-                          className="intern-field-control"
-                          name="passout_year"
-                          min="2020"
-                          max="2030"
-                          value={formData.passout_year}
-                          onChange={handleChange}
-                        />
-                      </div>
-
-                      <div className="col-md-4">
-                        <label className="intern-field-label">Roll Number / Student ID *</label>
-                        <input
-                          type="text"
-                          className={`intern-field-control ${formErrors.roll_no ? 'is-invalid' : ''}`}
-                          name="roll_no"
-                          value={formData.roll_no}
-                          onChange={handleChange}
-                          placeholder="Academic Roll Number"
-                          required
-                        />
-                        {formErrors.roll_no && <div className="field-error-hint">{formErrors.roll_no}</div>}
-                      </div>
-
-                      {/* SECTION 3: LOCATION & PROFILES */}
-                      <div className="col-12">
-                        <div className="form-section-heading">3. Location & Profiles</div>
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">Current City</label>
-                        <input
-                          type="text"
-                          className="intern-field-control"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          placeholder="e.g. Hyderabad"
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">State</label>
-                        <input
-                          type="text"
-                          className="intern-field-control"
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                          placeholder="e.g. Telangana"
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">Key Technical Skills</label>
-                        <input
-                          type="text"
-                          className="intern-field-control"
-                          name="skills"
-                          value={formData.skills}
-                          onChange={handleChange}
-                          placeholder="e.g. Python, Java, React, HTML, SQL"
-                        />
+                        <div className="form-section-heading">2. Course Details</div>
                       </div>
 
                       <div className="col-md-6">
@@ -642,44 +641,9 @@ const OriginalExampagesRegister = () => {
                         />
                       </div>
 
-                      <div className="col-md-6">
-                        <label className="intern-field-label">LinkedIn Profile URL</label>
-                        <input
-                          type="url"
-                          className="intern-field-control"
-                          name="linkedin_url"
-                          value={formData.linkedin_url}
-                          onChange={handleChange}
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                      </div>
-
-                      <div className="col-md-6">
-                        <label className="intern-field-label">GitHub / Portfolio URL</label>
-                        <input
-                          type="url"
-                          className="intern-field-control"
-                          name="github_url"
-                          value={formData.github_url}
-                          onChange={handleChange}
-                          placeholder="https://github.com/username"
-                        />
-                      </div>
-
-                      {/* SECTION 4: DOCUMENTS UPLOAD */}
+                      {/* SECTION 3: DOCUMENTS UPLOAD */}
                       <div className="col-12">
-                        <div className="form-section-heading">4. Document Uploads</div>
-                      </div>
-
-                      {/* Photo Upload */}
-                      <div className="col-md-6">
-                        <label className="intern-field-label">Student Photo (Optional)</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="intern-field-control"
-                          onChange={handlePhotoChange}
-                        />
+                        <div className="form-section-heading">3. Document Uploads</div>
                       </div>
 
                       {/* Resume Upload (140px Height) */}
@@ -725,31 +689,25 @@ const OriginalExampagesRegister = () => {
                         {formErrors.resume && <div className="field-error-hint">{formErrors.resume}</div>}
                       </div>
 
-                      {/* SECTION 5: MOTIVATION & GOALS */}
-                      <div className="col-12">
-                        <div className="form-section-heading">5. Motivation & Career Goals</div>
-                      </div>
-
-                      <div className="col-12">
-                        <label className="intern-field-label">Why do you want to join this internship?</label>
-                        <textarea
-                          className="intern-field-control"
-                          name="why_join"
-                          value={formData.why_join}
-                          onChange={handleChange}
-                          placeholder="Briefly describe what excites you about this internship opportunity..."
-                        ></textarea>
-                      </div>
-
-                      <div className="col-12">
-                        <label className="intern-field-label">Career Goals</label>
-                        <textarea
-                          className="intern-field-control"
-                          name="career_goals"
-                          value={formData.career_goals}
-                          onChange={handleChange}
-                          placeholder="Share your short-term and long-term career aspirations..."
-                        ></textarea>
+                      {/* SECTION 4: PAYMENT OPTIONS */}
+                      <div className="col-12 mt-4">
+                        <div className="form-section-heading">4. Payment Plan</div>
+                        <div className="d-flex gap-4 mt-2">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="radio"
+                              name="payment_type"
+                              id="payment_full"
+                              value="full"
+                              checked={formData.payment_type === 'full'}
+                              onChange={handleChange}
+                            />
+                            <label className="form-check-label fw-bold text-dark" htmlFor="payment_full">
+                              Full Payment (₹250 + GST)
+                            </label>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Declaration Checkbox */}

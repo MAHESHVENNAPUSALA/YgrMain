@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const OriginalExampagesJobApplicantLogin = () => {
@@ -268,6 +268,12 @@ opacity: 0.95;    }
     .top-bar .social a[href*="youtube.com"]:hover {
 
       color: #ff0000;
+    }
+
+    .top-bar .social a[href*="wa.me"]:hover,
+    .top-bar .social a[href*="whatsapp.com"]:hover {
+
+      color: #25d366;
     }
 
     /* Header */
@@ -581,11 +587,12 @@ opacity: 0.95;    }
 <div class="col-md-4">
 <div class="top-bar-right">
 <div class="social">
-<a href="https://x.com/ygrgobalit2024"><i class="fab fa-x-twitter"></i></a>
-<a href="https://www.facebook.com/profile.php?id=61568888033386"><i class="fab fa-facebook-f"></i></a>
-<a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/?viewAsMember=true/"><i class="fab fa-linkedin-in"></i></a>
-<a href="https://www.instagram.com/ygrgobalitservices/"><i class="fab fa-instagram"></i></a>
-<a href="https://www.youtube.com/@rrtalktrends"><i class="fab fa-youtube"></i></a>
+<a href="https://x.com/ygrgobalit2024" target="_blank" rel="noreferrer"><i class="fab fa-x-twitter"></i></a>
+<a href="https://www.facebook.com/profile.php?id=61568888033386" target="_blank" rel="noreferrer"><i class="fab fa-facebook-f"></i></a>
+<a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/" target="_blank" rel="noreferrer"><i class="fab fa-linkedin-in"></i></a>
+<a href="https://www.instagram.com/ygrgobalitservices/" target="_blank" rel="noreferrer"><i class="fab fa-instagram"></i></a>
+<a href="https://wa.me/917794053340" target="_blank" rel="noreferrer"><i class="fab fa-whatsapp"></i></a>
+<a href="https://www.youtube.com/@rrtalktrends" target="_blank" rel="noreferrer"><i class="fab fa-youtube"></i></a>
 </div>
 </div>
 </div>
@@ -890,6 +897,11 @@ opacity: 0.95;    }
 .footer-social a[href*="youtube.com"]:hover i {
     color: #ff0000;
 }
+ 
+.footer-social a[href*="wa.me"]:hover i,
+.footer-social a[href*="whatsapp.com"]:hover i {
+    color: #25d366;
+}
 
 /* ================= MOBILE VISIBILITY ================= */
 @media (max-width: 767px) {
@@ -957,11 +969,12 @@ opacity: 0.95;    }
 <a href="mailto:info@ygrgobalitservices.com">info@ygrgobalitservices.com</a>
 </p>
 <div class="footer-social">
-<a href="https://x.com/ygrgobalit2024"><i class="fab fa-x-twitter"></i></a>
-<a href="https://www.facebook.com/profile.php?id=61568888033386"><i class="fab fa-facebook-f"></i></a>
-<a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/"><i class="fab fa-linkedin-in"></i></a>
-<a href="https://www.instagram.com/ygrgobalitservices/"><i class="fab fa-instagram"></i></a>
-<a href="https://www.youtube.com/@rrtalktrends"><i class="fab fa-youtube"></i></a>
+<a href="https://x.com/ygrgobalit2024" target="_blank" rel="noreferrer"><i class="fab fa-x-twitter"></i></a>
+<a href="https://www.facebook.com/profile.php?id=61568888033386" target="_blank" rel="noreferrer"><i class="fab fa-facebook-f"></i></a>
+<a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/" target="_blank" rel="noreferrer"><i class="fab fa-linkedin-in"></i></a>
+<a href="https://www.instagram.com/ygrgobalitservices/" target="_blank" rel="noreferrer"><i class="fab fa-instagram"></i></a>
+<a href="https://wa.me/917794053340" target="_blank" rel="noreferrer"><i class="fab fa-whatsapp"></i></a>
+<a href="https://www.youtube.com/@rrtalktrends" target="_blank" rel="noreferrer"><i class="fab fa-youtube"></i></a>
 </div>
 </div>
 <!-- QUICK LINKS -->

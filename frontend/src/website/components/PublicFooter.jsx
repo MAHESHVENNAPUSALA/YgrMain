@@ -21,14 +21,13 @@ const PublicFooter = () => {
             <div className="footer-col brand-col">
               <Link to="/" className="footer-logo-link">
                 <img className="footer-brand-logo" src="/images/logo1.jpeg" alt="YGR Gobal IT Services" />
-                <span className="footer-brand-name">YGR GOBAL</span>
+                <span className="footer-brand-name">YGR IT SERVICES</span>
               </Link>
 
               <p className="footer-brand-bio">
-                Empowering global enterprises with scalable software, cloud infrastructure, AI automation, and digital engineering excellence.
-              </p>
+YGR Gobal IT Services Pvt. Ltd. provides complete IT solutions including software, web & mobile app development, digital marketing, professional IT training, internships, and full stack courses.              </p>
 
-              {/* 5 Social Icons with Subtle Rotation on Hover */}
+              {/* Social Icons */}
               <div className="footer-social-links">
                 <a href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="social-icon">
                   <i className="fab fa-linkedin-in"></i>
@@ -38,6 +37,9 @@ const PublicFooter = () => {
                 </a>
                 <a href="https://www.instagram.com/ygrgobalitservices/" target="_blank" rel="noreferrer" aria-label="Instagram" className="social-icon">
                   <i className="fab fa-instagram"></i>
+                </a>
+                <a href="https://wa.me/917794053340" target="_blank" rel="noreferrer" aria-label="WhatsApp" className="social-icon">
+                  <i className="fab fa-whatsapp"></i>
                 </a>
                 <a href="https://www.youtube.com/@rrtalktrends" target="_blank" rel="noreferrer" aria-label="YouTube" className="social-icon">
                   <i className="fab fa-youtube"></i>
@@ -70,6 +72,7 @@ const PublicFooter = () => {
                 <li><Link to="/services">Mobile Apps</Link></li>
                 <li><Link to="/services">UI / UX Design</Link></li>
                 <li><Link to="/services">QA & Testing</Link></li>
+                <li><Link to="/services">Digital Marketing</Link></li>
               </ul>
             </div>
 
@@ -95,7 +98,7 @@ const PublicFooter = () => {
 
                 <div className="contact-item">
                   <i className="fas fa-clock contact-icon"></i>
-                  <span>Mon - Fri: 9:00 AM - 6:00 PM IST</span>
+                  <span>Mon - Fri: 9:30 AM - 6:30 PM IST</span>
                 </div>
 
                 <a
@@ -114,7 +117,7 @@ const PublicFooter = () => {
           {/* ── PART 3: BOTTOM BAR ── */}
           <div className="footer-bottom-bar">
             <p className="copyright-text">
-              &copy; {new Date().getFullYear()} YGR Gobal IT Services Pvt. Ltd. All Rights Reserved.
+              &copy; 2023 YGR Gobal IT Services Pvt. Ltd. All Rights Reserved.
             </p>
 
             <div className="bottom-links-row">

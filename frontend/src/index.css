@@ -72,9 +72,24 @@ body {
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
+    overflow-x: hidden !important;
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+html {
+    overflow-x: hidden !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari and Opera */
+    width: 0 !important;
+    height: 0 !important;
 }
 
 /* ===== HEADER ===== */

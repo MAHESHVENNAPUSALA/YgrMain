@@ -306,7 +306,7 @@ const TeamList = () => {
                 <i className="fas fa-layer-group"></i>
               </div>
               <div className="stat-value-group">
-                <StatCounterNumber value="250" suffix="+" />
+                <StatCounterNumber value="149" suffix="+" />
                 <span className="stat-title-lbl">Successful Projects</span>
               </div>
             </div>
@@ -316,7 +316,7 @@ const TeamList = () => {
                 <i className="fas fa-award"></i>
               </div>
               <div className="stat-value-group">
-                <StatCounterNumber value="8" suffix="+" />
+                <StatCounterNumber value="6" suffix="+" />
                 <span className="stat-title-lbl">Years of Excellence</span>
               </div>
             </div>

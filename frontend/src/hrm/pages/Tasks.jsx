@@ -48,8 +48,13 @@ const Tasks = () => {
 
   // Task submit details state
   const [selectedTaskToSubmit, setSelectedTaskToSubmit] = useState(null);
+  const [taskDetailModal, setTaskDetailModal] = useState(null);
   const [submissionRemarks, setSubmissionRemarks] = useState('');
   const [submissionFile, setSubmissionFile] = useState(null);
+  
+  const [extensionModalTask, setExtensionModalTask] = useState(null);
+  const [extensionReason, setExtensionReason] = useState('');
+  const [extensionHours, setExtensionHours] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -175,6 +180,24 @@ const Tasks = () => {
     }
   };
 
+  const handleExtensionSubmit = async (e) => {
+    e.preventDefault();
+    if (!extensionModalTask) return;
+    try {
+      await api.post(`/api/tasks/${extensionModalTask.id}/extension/`, {
+        reason: extensionReason,
+        requested_hours: extensionHours
+      });
+      showToast('Extension requested successfully.', 'success');
+      setExtensionModalTask(null);
+      setExtensionReason('');
+      setExtensionHours('');
+      loadData();
+    } catch (err) {
+      showToast(err.response?.data?.detail || 'Failed to request extension.', 'error');
+    }
+  };
+
   const handleMemberSelect = (e) => {
     const values = Array.from(e.target.selectedOptions, (option) => option.value);
     setAssignedMembers(values);
@@ -239,6 +262,81 @@ const Tasks = () => {
           font-size: 12px;
           color: var(--muted);
           font-weight: 600;
+        }
+
+        .task-cards-row {
+          display: flex;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+        .task-square-card {
+          width: calc(33.333% - 14px);
+          min-width: 280px;
+          min-height: 250px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+        @media (max-width: 1024px) {
+          .task-square-card {
+            width: calc(50% - 10px);
+          }
+        }
+        @media (max-width: 640px) {
+          .task-square-card {
+            width: 100%;
+          }
+        }
+        .task-square-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .task-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 12px;
+        }
+        .task-card-title {
+          font-weight: 700;
+          font-size: 1.15rem;
+          color: #0f172a;
+          margin-bottom: 4px;
+        }
+        .task-card-project {
+          font-size: 0.85rem;
+          color: #64748b;
+          font-weight: 600;
+        }
+        .task-card-dates {
+          background: #f8fafc;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 15px;
+          font-size: 0.85rem;
+          color: #475569;
+          border: 1px solid #f1f5f9;
+        }
+        .task-card-dates div {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 6px;
+        }
+        .task-card-dates div:last-child {
+          margin-bottom: 0;
+        }
+        .task-card-actions {
+          margin-top: auto;
+          display: flex;
+          justify-content: flex-end;
+          border-top: 1px solid #f1f5f9;
+          padding-top: 15px;
         }
 
         .assign-task-card {
@@ -353,76 +451,123 @@ const Tasks = () => {
                 <h2>Assigned Workspace Tasks</h2>
               </div>
               <div className="panel-body">
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Task Name</th>
-                        <th>Project</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTasks.length > 0 ? (
-                        filteredTasks.map((t) => (
-                          <tr key={t.id}>
-                            <td style={{ fontWeight: 600 }}>{t.task_name}</td>
-                            <td>{t.project?.project_name || 'General'}</td>
-                            <td>{t.start_date}</td>
-                            <td>{t.end_date}</td>
-                            <td>
-                              <span className={`badge-capsule ${t.status === 'Completed' ? 'success' : t.status === 'Submitted' ? 'info' : 'warning'}`}>
+                <div style={{ padding: '10px 0' }}>
+                  <h3 style={{ marginBottom: '20px', color: '#334155', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', fontSize: '1.2rem', fontWeight: 700 }}>Pending & Assigned Tasks</h3>
+                  <div className="task-cards-row">
+                    {filteredTasks.filter(t => t.status !== 'Completed').length > 0 ? (
+                      filteredTasks.filter(t => t.status !== 'Completed').map(t => {
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        const canStart = !t.start_date || todayStr >= t.start_date;
+                        return (
+                        <div key={t.id} className="task-square-card" onClick={() => setTaskDetailModal(t)} style={{ cursor: 'pointer' }}>
+                          <div>
+                            <div className="task-card-header">
+                              <div>
+                                <div className="task-card-title">{t.task_name}</div>
+                                <div className="task-card-project">📂 {t.project?.project_name || 'General'}</div>
+                              </div>
+                              <span className={`badge-capsule ${t.status === 'Submitted' ? 'info' : 'warning'}`}>
                                 {t.status}
                               </span>
-                            </td>
-                            <td>
-                              {t.status === 'Pending' ? (
-                                // For Pending tasks, any assigned member or leads can submit completion
-                                (t.members?.some(m => m.id === user.id) || ['TeamLead', 'Manager', 'HR', 'MD'].includes(role)) ? (
-                                  <button className="view-btn" onClick={() => setSelectedTaskToSubmit(t)}>
-                                    Submit completion
+                            </div>
+                            <div className="task-card-dates">
+                              <div><span>Start Date:</span> <strong>{t.start_date || 'N/A'}</strong></div>
+                              <div><span>End Date:</span> <strong>{t.end_date || 'N/A'}</strong></div>
+                            </div>
+                            {t.description && (
+                              <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '15px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {t.description}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="task-card-actions">
+                            {t.status === 'Pending' ? (
+                              (t.members?.some(m => m.id === user.id) || ['TeamLead', 'Manager', 'HR', 'MD'].includes(role)) ? (
+                                canStart ? (
+                                  <button className="view-btn" style={{ width: '100%', textAlign: 'center', background: '#3b82f6', color: '#fff', borderColor: '#3b82f6' }} onClick={(e) => { e.stopPropagation(); handleUpdateTaskStatus(t.id, 'In Progress'); }}>
+                                    Start Task
                                   </button>
                                 ) : (
-                                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Pending</span>
-                                )
-                              ) : t.status === 'Submitted' ? (
-                                // For Submitted tasks, leads can Approve or Reject
-                                ['TeamLead', 'Manager', 'HR', 'MD'].includes(role) ? (
-                                  <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button 
-                                      className="view-btn" 
-                                      style={{ background: '#10b981', borderColor: '#10b981', color: '#fff', padding: '4px 10px', fontSize: '11px', borderRadius: '4px' }}
-                                      onClick={() => handleTLTaskReview(t.id, 'submit_to_manager')}
-                                    >
-                                      Approve
-                                    </button>
-                                    <button 
-                                      className="view-btn" 
-                                      style={{ background: '#ef4444', borderColor: '#ef4444', color: '#fff', padding: '4px 10px', fontSize: '11px', borderRadius: '4px' }}
-                                      onClick={() => handleTLTaskReview(t.id, 'return_to_employee')}
-                                    >
-                                      Return to Employee
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 600 }}>Awaiting Approval</span>
+                                  <span style={{ fontSize: '12px', color: 'var(--muted)', background: '#f8fafc', padding: '8px', borderRadius: '6px', width: '100%', textAlign: 'center', display: 'block' }}>Starts on {t.start_date}</span>
                                 )
                               ) : (
-                                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>Completed</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="6" style={{ textAlign: 'center', color: 'var(--muted)' }}>No tasks assigned in this scope.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Pending</span>
+                              )
+                            ) : t.status === 'In Progress' ? (
+                              (t.members?.some(m => m.id === user.id) || ['TeamLead', 'Manager', 'HR', 'MD'].includes(role)) ? (
+                                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                  <button className="view-btn" style={{ flex: 1, textAlign: 'center', background: '#f59e0b', color: '#fff', borderColor: '#f59e0b', padding: '8px', fontSize: '12px', borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setExtensionModalTask(t); }}>
+                                    Extend
+                                  </button>
+                                  <button className="view-btn" style={{ flex: 1, textAlign: 'center', background: '#10b981', color: '#fff', borderColor: '#10b981', padding: '8px', fontSize: '12px', borderRadius: '6px' }} onClick={(e) => { e.stopPropagation(); setSelectedTaskToSubmit(t); }}>
+                                    Submit
+                                  </button>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 600 }}>In Progress</span>
+                              )
+                            ) : t.status === 'Submitted' ? (
+                              ['TeamLead', 'Manager', 'HR', 'MD'].includes(role) ? (
+                                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                  <button 
+                                    className="view-btn" 
+                                    style={{ flex: 1, background: '#10b981', borderColor: '#10b981', color: '#fff', padding: '8px 10px', fontSize: '12px', borderRadius: '6px' }}
+                                    onClick={(e) => { e.stopPropagation(); handleTLTaskReview(t.id, 'submit_to_manager'); }}
+                                  >
+                                    Approve
+                                  </button>
+                                  <button 
+                                    className="view-btn" 
+                                    style={{ flex: 1, background: '#ef4444', borderColor: '#ef4444', color: '#fff', padding: '8px 10px', fontSize: '12px', borderRadius: '6px' }}
+                                    onClick={(e) => { e.stopPropagation(); handleTLTaskReview(t.id, 'return_to_employee'); }}
+                                  >
+                                    Return
+                                  </button>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 600 }}>Awaiting Approval</span>
+                              )
+                            ) : null}
+                          </div>
+                        </div>
+                      )})
+                    ) : (
+                      <p style={{ color: 'var(--muted)', width: '100%', padding: '20px 0' }}>No pending tasks assigned in this scope.</p>
+                    )}
+                  </div>
+
+                  <h3 style={{ marginTop: '40px', marginBottom: '20px', color: '#10b981', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', fontSize: '1.2rem', fontWeight: 700 }}>Completed Tasks</h3>
+                  <div className="task-cards-row">
+                    {filteredTasks.filter(t => t.status === 'Completed').length > 0 ? (
+                      filteredTasks.filter(t => t.status === 'Completed').map(t => (
+                        <div key={t.id} className="task-square-card" style={{ opacity: 0.85, borderLeft: '4px solid #10b981', cursor: 'pointer' }} onClick={() => setTaskDetailModal(t)}>
+                          <div>
+                            <div className="task-card-header">
+                              <div>
+                                <div className="task-card-title" style={{ textDecoration: 'line-through', color: '#64748b' }}>{t.task_name}</div>
+                                <div className="task-card-project">📂 {t.project?.project_name || 'General'}</div>
+                              </div>
+                              <span className="badge-capsule success">
+                                Completed
+                              </span>
+                            </div>
+                            <div className="task-card-dates">
+                              <div><span>Start Date:</span> <strong>{t.start_date || 'N/A'}</strong></div>
+                              <div><span>End Date:</span> <strong>{t.end_date || 'N/A'}</strong></div>
+                            </div>
+                          </div>
+                          <div className="task-card-actions">
+                            <span style={{ fontSize: '13px', color: '#10b981', fontWeight: 700, width: '100%', textAlign: 'center', background: '#d1fae5', padding: '8px', borderRadius: '6px' }}>
+                              ✓ Task Completed
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ color: 'var(--muted)', width: '100%', padding: '20px 0' }}>No completed tasks.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -636,6 +781,101 @@ const Tasks = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                 <button type="button" className="btn" style={{ background: '#64748b', marginTop: 0 }} onClick={() => setSelectedTaskToSubmit(null)}>Cancel</button>
                 <button type="submit" className="btn" style={{ marginTop: 0 }}>Submit Task</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TASK DETAIL MODAL */}
+      {taskDetailModal && (
+        <div className="modal-overlay" onClick={() => setTaskDetailModal(null)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', animation: 'slideUp 0.3s ease' }}>
+            <div className="modal-header">
+              <h3>Task Overview</h3>
+              <button className="modal-close" onClick={() => setTaskDetailModal(null)}>×</button>
+            </div>
+            <div className="modal-body" style={{ textAlign: 'left', padding: '24px' }}>
+              <h4 style={{ fontSize: '1.25rem', color: '#0f172a', marginBottom: '10px' }}>{taskDetailModal.task_name}</h4>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <span className={`badge-capsule ${taskDetailModal.status === 'Completed' ? 'success' : taskDetailModal.status === 'Submitted' ? 'info' : 'warning'}`}>
+                  {taskDetailModal.status}
+                </span>
+                <span className="badge-capsule" style={{ background: '#e0e7ff', color: '#4338ca' }}>
+                  📂 {taskDetailModal.project?.project_name || 'General'}
+                </span>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
+                <h5 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>Description</h5>
+                <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {taskDetailModal.description || 'No description provided.'}
+                </p>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px' }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Start Date</span>
+                  <span style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 600 }}>{taskDetailModal.start_date || 'N/A'}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '6px' }}>Deadline</span>
+                  <span style={{ fontSize: '0.95rem', color: '#ef4444', fontWeight: 600 }}>{taskDetailModal.end_date || 'N/A'}</span>
+                </div>
+                {taskDetailModal.members && taskDetailModal.members.length > 0 && (
+                   <div style={{ gridColumn: 'span 2' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '10px' }}>Assigned Members</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {taskDetailModal.members.map(m => (
+                           <span key={m.id} style={{ background: '#f1f5f9', color: '#334155', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #e2e8f0' }}>
+                              👤 {m.name || m.username || 'Member'}
+                           </span>
+                        ))}
+                      </div>
+                   </div>
+                )}
+                {taskDetailModal.file_url && (
+                  <div style={{ gridColumn: 'span 2', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Submitted Document</span>
+                    <a
+                      href={taskDetailModal.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#eff6ff', color: '#3b82f6', padding: '8px 14px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #bfdbfe', textDecoration: 'none' }}
+                    >
+                      📄 View / Download Document
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXTENSION MODAL */}
+      {extensionModalTask && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Request Deadline Extension</h3>
+              <button className="modal-close" onClick={() => setExtensionModalTask(null)}>×</button>
+            </div>
+            <form onSubmit={handleExtensionSubmit} style={{ textAlign: 'left', padding: '20px' }}>
+              <div className="form-group">
+                <label>Task</label>
+                <input type="text" value={extensionModalTask.task_name} disabled style={{ background: '#f1f5f9', width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }} />
+              </div>
+              <div className="form-group">
+                <label>Reason for Extension</label>
+                <textarea rows="3" value={extensionReason} onChange={(e) => setExtensionReason(e.target.value)} required placeholder="State why you need more time..." style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }} />
+              </div>
+              <div className="form-group">
+                <label>Requested Additional Time (in hours)</label>
+                <input type="number" value={extensionHours} onChange={(e) => setExtensionHours(e.target.value)} required placeholder="e.g. 24" min="1" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                <button type="button" className="btn" style={{ background: '#64748b', marginTop: 0 }} onClick={() => setExtensionModalTask(null)}>Cancel</button>
+                <button type="submit" className="btn" style={{ marginTop: 0 }}>Submit Request</button>
               </div>
             </form>
           </div>

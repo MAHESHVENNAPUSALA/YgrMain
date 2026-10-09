@@ -142,11 +142,17 @@ class ProjectAPIView(APIView):
         # Handle Logo Upload
         project_logo = request.FILES.get('project_logo')
 
+        # Auto-resolve Client ForeignKey from name
+        client_obj = None
+        if client_name:
+            client_obj = Client.objects.filter(Q(name__iexact=client_name) | Q(business_name__iexact=client_name)).first()
+
         try:
             project = Project.objects.create(
                 name=name,
                 description=description,
                 client_name=client_name,
+                client=client_obj,
                 client_contact=client_contact,
                 project_category=project_category,
                 priority=priority,
@@ -272,6 +278,9 @@ class ProjectDetailAPIView(APIView):
                     project.deadline = deadline
             if client_name is not None:
                 project.client_name = client_name
+                client_obj = Client.objects.filter(Q(name__iexact=client_name) | Q(business_name__iexact=client_name)).first()
+                if client_obj:
+                    project.client = client_obj
             if client_contact is not None:
                 project.client_contact = client_contact
             if project_category is not None:
@@ -453,6 +462,13 @@ class TeamListCreateAPIView(APIView):
         )
         project.assigned_teams.add(team)
 
+        # Auto-sync the lead to the project's ChatRoom if it exists
+        from .models import ChatRoom
+        room_name = f"Project: {project.name}"
+        room = ChatRoom.objects.filter(name=room_name, room_type='team').first()
+        if room and lead:
+            room.users.add(lead)
+
         log_project_action(project, "Team Created", user, f"Team '{name}' was created inside the project.")
         notify_user(user, "Team Created", f"Team '{name}' has been successfully created under '{project.name}'.")
 
@@ -507,7 +523,7 @@ class TeamDetailAPIView(APIView):
                     team.lead = None
             else:
                 try:
-                    new_lead = User.objects.get(id=lead_id, role='TeamLead')
+                    new_lead = User.objects.get(id=lead_id, role__in=['TeamLead', 'Employee', 'Manager'])
                     if team.lead != new_lead:
                         old_lead = team.lead
                         team.lead = new_lead
@@ -534,7 +550,7 @@ class TeamDetailAPIView(APIView):
             new_emps = []
             for m_id in members_ids:
                 try:
-                    emp = User.objects.get(id=int(m_id), role='Employee')
+                    emp = User.objects.get(id=int(m_id), role__in=['Employee', 'TeamLead'])
                     new_emps.append(emp)
                 except (User.DoesNotExist, ValueError):
                     pass
@@ -554,6 +570,17 @@ class TeamDetailAPIView(APIView):
             for new_emp in new_emps:
                 new_emp.team_name = team.name
                 new_emp.save()
+
+        # Auto-sync users to related project ChatRooms
+        from .models import ChatRoom
+        for proj in team.projects.all():
+            room_name = f"Project: {proj.name}"
+            room = ChatRoom.objects.filter(name=room_name, room_type='team').first()
+            if room:
+                if team.lead:
+                    room.users.add(team.lead)
+                if team.members.exists():
+                    room.users.add(*team.members.all())
 
         if project:
             log_project_action(project, "Team Updated", user, f"Team '{team.name}' was updated.")
@@ -588,7 +615,7 @@ class TeamMemberAPIView(APIView):
         project = team.projects.first()
 
         # Permissions
-        if user.role not in ['HR', 'MD'] and project.assigned_manager != user:
+        if user.role not in ['HR', 'MD'] and (project and project.assigned_manager != user):
             return Response({"detail": "Access Denied: Only MD, HR, or the assigned Manager can assign team members."}, status=status.HTTP_403_FORBIDDEN)
 
         employee_id = request.data.get('employee_id')
@@ -596,9 +623,9 @@ class TeamMemberAPIView(APIView):
             return Response({"detail": "employee_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            employee = User.objects.get(id=employee_id, role='Employee')
+            employee = User.objects.get(id=employee_id, role__in=['Employee', 'TeamLead'])
         except User.DoesNotExist:
-            return Response({"detail": "Selected user is invalid or not in Employee role."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Selected user is invalid or not in Employee/TeamLead role."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Limit checks
         if team.members.count() >= team.max_size:
@@ -611,12 +638,14 @@ class TeamMemberAPIView(APIView):
         # Check if the employee is already assigned to a team belonging to any active project (Pending, Active, Delayed status)
         active_assignment = Team.objects.filter(
             members=employee,
-            project__status__in=['Pending', 'Active', 'Delayed']
-        ).first()
+            projects__status__in=['Pending', 'Active', 'Delayed']
+        ).exclude(id=team.id).first()
 
         if active_assignment:
+            proj = active_assignment.projects.first()
+            proj_name = proj.name if proj else "another project"
             return Response({
-                "detail": f"Employee is already assigned to active project '{active_assignment.project.name}' under team '{active_assignment.name}'."
+                "detail": f"Employee is already assigned to active project '{proj_name}' under team '{active_assignment.name}'."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         team.members.add(employee)

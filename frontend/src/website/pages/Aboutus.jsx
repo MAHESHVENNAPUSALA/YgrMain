@@ -33,9 +33,9 @@ const AnimatedNumber = ({ value, suffix }) => {
 };
 
 const ABOUT_STATS = [
-  { value: 145, suffix: '+', label: 'Projects Delivered' },
+  { value: 149, suffix: '+', label: 'Projects Delivered' },
   { value: 99, suffix: '%', label: 'Client Satisfaction' },
-  { value: 5, suffix: '+', label: 'Years of Experience' },
+  { value: 6, suffix: '+', label: 'Years of Experience' },
   { value: 24, suffix: '×7', label: 'Technical Support' }
 ];
 
@@ -157,7 +157,7 @@ const TEAM_MEMBERS = [
     specs: 'Digital Marketing • Management',
     avatarBg: '#2D4A6D',
     initials: 'SR',
-    linkedin: 'https://linkedin.com'
+    linkedin: 'https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/'
   }
 ];
 
@@ -299,7 +299,6 @@ const Aboutus = () => {
   const leadershipRef = useRef(null);
   const engineeringRef = useRef(null);
   const techRef = useRef(null);
-  const cultureRef = useRef(null);
   const ctaRef = useRef(null);
 
   const isHeroInView = useInView(heroRef, { once: true, margin: '-10%' });
@@ -309,7 +308,6 @@ const Aboutus = () => {
   const isLeadershipInView = useInView(leadershipRef, { once: true, margin: '-10%' });
   const isEngineeringInView = useInView(engineeringRef, { once: true, margin: '-10%' });
   const isTechInView = useInView(techRef, { once: true, margin: '-10%' });
-  const isCultureInView = useInView(cultureRef, { once: true, margin: '-10%' });
   const isCtaInView = useInView(ctaRef, { once: true, margin: '-10%' });
 
   // Mouse Parallax Physics for Right Visual Composition
@@ -378,15 +376,9 @@ const Aboutus = () => {
                 <span className="ygr-green-highlight">Building Long-Term Digital Partnerships.</span>
               </motion.h1>
 
-              <motion.div className="about-hero-description" variants={fadeUpVariant} style={{ fontSize: '1.05rem', lineHeight: '1.65' }}>
-                <p style={{ marginBottom: '16px' }}>
-                  <strong>YGR Gobal IT Services Pvt. Ltd., is a leading Best IT company in Hyderabad</strong> providing software development, web development, mobile app development, cloud solutions, DevOps services, AWS solutions, corporate training, internships, and professional IT courses. We offer industry-focused training in <strong>Java Full Stack, Python Full Stack, MERN Stack, MEAN Stack, Data Science, Software Testing, UI/UX Design, Artificial Intelligence, and Machine Learning.</strong>
-                </p>
-                <p style={{ marginBottom: '16px' }}>
-                  YGR Gobal IT Services Pvt. Ltd. – Empowering Your Growth Through Technology. The name YGR stands for Your Growth Resource, reflecting our commitment to helping businesses and professionals achieve success through innovative technology solutions. We specialize in software development, AI automation, cloud services, digital transformation, and IT consulting.
-                </p>
+              <motion.div className="about-hero-description" variants={fadeUpVariant} style={{ fontSize: '1.1rem', lineHeight: '1.7' }}>
                 <p>
-                  With a strong focus on quality, innovation, and customer satisfaction, we deliver reliable and scalable solutions that drive business growth. Whether you are a business seeking technology expertise or a student looking to build a successful IT career, YGR Gobal IT Services Pvt. Ltd. is your trusted technology and training partner.
+                  <strong>YGR Gobal IT Services</strong> is a top-rated IT company in Hyderabad, specializing in high-quality <strong>Software, Cloud, AI, and Digital Marketing solutions</strong>. Our name stands for <em>"Your Growth Resource,"</em> and that is our true purpose. We help businesses grow by building powerful technology for them, and we help individuals grow successful tech careers through our expert training and internship programs.
                 </p>
               </motion.div>
 
@@ -512,7 +504,7 @@ const Aboutus = () => {
 
               <motion.h2 className="story-heading" variants={fadeUpVariant}>
                 Transforming Ideas Into <br />
-                <span className="ygr-green-highlight">Digital Excellence</span>
+                <span className="ygr-green-highlight">Business Excellence</span>
               </motion.h2>
 
               <motion.p className="story-subtitle" variants={fadeUpVariant}>
@@ -702,7 +694,7 @@ const Aboutus = () => {
                 </div>
 
                 <h3 className="bento-title">Our Core Values</h3>
-                
+
                 <div className="values-chips-grid">
                   {CORE_VALUE_CHIPS.map((chip) => (
                     <motion.div
@@ -863,7 +855,7 @@ const Aboutus = () => {
                 <i className="fas fa-certificate"></i> 12+ Years IT Leadership
               </span>
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/"
                 target="_blank"
                 rel="noreferrer"
                 className="leader-linkedin-btn"
@@ -1153,114 +1145,6 @@ const Aboutus = () => {
               <div className="innovation-footer-pill">
                 <span className="pill-dot"></span>
                 <span>Continuous R&D • AI Integration • Cloud Native</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── 8. COMPANY CULTURE SECTION ── */}
-      <section className="company-culture-section" ref={cultureRef}>
-        <div className="culture-bg-canvas">
-          <div className="culture-blueprint-grid"></div>
-          <div className="culture-radial-glow blue-glow"></div>
-          <div className="culture-radial-glow green-glow"></div>
-        </div>
-
-        <div className="culture-container">
-          <motion.div
-            className="culture-split-grid"
-            variants={containerVariants}
-            initial="hidden"
-            animate={isCultureInView ? 'visible' : 'hidden'}
-          >
-            <div className="culture-left-content">
-              <motion.div className="culture-eyebrow" variants={fadeUpVariant}>
-                <span className="eyebrow-dot"></span>
-                <span className="eyebrow-title">OUR CULTURE</span>
-              </motion.div>
-
-              <motion.h2 className="culture-heading" variants={fadeUpVariant}>
-                Where Innovation <br />
-                <span className="ygr-green-highlight">Meets Collaboration</span>
-              </motion.h2>
-
-              <motion.p className="culture-description" variants={fadeUpVariant}>
-                At YGR Gobal IT Services, we believe great technology is built by empowered people. Our culture encourages curiosity, continuous learning, collaboration, ownership, and innovation while maintaining a strong commitment to quality and customer success.
-              </motion.p>
-
-              <motion.div className="culture-highlights-grid" variants={fadeUpVariant}>
-                {CULTURE_HIGHLIGHTS.map((item) => (
-                  <motion.div
-                    key={item.title}
-                    className="culture-highlight-card"
-                    whileHover={{ y: -6, scale: 1.02 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <div className="culture-icon-box">
-                      <i className={`fas ${item.icon}`}></i>
-                    </div>
-                    <h3 className="culture-card-title">{item.title}</h3>
-                    <p className="culture-card-desc">{item.desc}</p>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              <motion.div className="culture-featured-quote-card" variants={fadeUpVariant}>
-                <div className="quote-icon-bar">
-                  <i className="fas fa-quote-left"></i>
-                </div>
-                <p className="quote-body-text">
-                  &ldquo;Strong technology is built by strong teams working with a shared vision.&rdquo;
-                </p>
-              </motion.div>
-
-              <motion.div className="culture-cta-wrapper" variants={fadeUpVariant}>
-                <Link to="/careers" className="btn-explore-careers">
-                  <span>Explore Career Opportunities</span>
-                  <span className="cta-arrow-circle">
-                    <i className="fas fa-arrow-right"></i>
-                  </span>
-                </Link>
-              </motion.div>
-            </div>
-
-            <motion.div className="culture-right-visual" variants={fadeUpVariant}>
-              <div className="culture-workspace-panel">
-                <div className="panel-header">
-                  <div className="window-dots">
-                    <span className="dot dot-red"></span>
-                    <span className="dot dot-yellow"></span>
-                    <span className="dot dot-green"></span>
-                  </div>
-                  <span className="panel-tag">YGR Collaborative Workspace Mesh</span>
-                  <span className="status-pill">
-                    <span className="live-dot"></span> Empowered
-                  </span>
-                </div>
-
-                <div className="workspace-nodes-grid">
-                  {WORKspace_NODES.map((node) => (
-                    <motion.div
-                      key={node.label}
-                      className="workspace-node-card"
-                      whileHover={{ scale: 1.03, y: -4 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="workspace-icon-wrapper">
-                        <i className={`fas ${node.icon} ${node.color}`}></i>
-                      </div>
-                      <span className="workspace-node-label">{node.label}</span>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="culture-collaboration-footer">
-                  <div className="collab-pulse-indicator">
-                    <span className="pulse-wave"></span>
-                    <span className="collab-text">Cross-Functional Agile Squads • 100% Ownership</span>
-                  </div>
-                </div>
               </div>
             </motion.div>
           </motion.div>

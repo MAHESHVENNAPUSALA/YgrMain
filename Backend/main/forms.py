@@ -15,7 +15,7 @@ class BlogForm(forms.ModelForm):
 from django import forms
 from .models import InternshipRegistration
 
-class InternshipForm(forms.ModelForm):
-    class Meta:
-        model = InternshipRegistration
-        fields = '__all__'
+class InternshipForm(forms.ModelForm):   
+    class Meta:        
+        model = InternshipRegistration 
+        fields = '__all__'     

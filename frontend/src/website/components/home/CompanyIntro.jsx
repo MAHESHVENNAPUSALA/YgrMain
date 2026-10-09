@@ -15,9 +15,9 @@ const TRUST_POINTS = [
 ];
 
 const TRUST_METRICS = [
-  { value: 145, suffix: '+', label: 'Projects Delivered' },
+  { value: 149, suffix: '+', label: 'Projects Delivered' },
   { value: 99, suffix: '%', label: 'Client Satisfaction' },
-  { value: 5, suffix: '+', label: 'Years of Experience' },
+  { value: 6, suffix: '+', label: 'Years of Experience' },
   { value: 24, suffix: '×7', label: 'Technical Support' },
   { value: 100, suffix: '%', label: 'Transparent Process' }
 ];
@@ -39,7 +39,7 @@ const AnimatedNumber = ({ value, suffix }) => {
 
   useEffect(() => {
     // Sync the rounded value to React state to render
-    return rounded.onChange((latest) => {
+    return rounded.on("change", (latest) => {
       setDisplayValue(latest);
     });
   }, [rounded]);
@@ -283,11 +283,11 @@ const CompanyIntro = () => {
               Technology Partner <br />
               For <span className="ygr-green-highlight">Long-Term Digital Success</span>
             </motion.h2>
-
+ 
             {/* Description Paragraphs */}
             <motion.div className="why-description-block" variants={fadeUpVariant}>
               <p>
-                At YGR Gobal IT Services, we believe technology should create measurable business value.
+                At YGR Gobal IT Services, recognized as the <strong>best IT services company in Hyderabad</strong>, we believe technology should create measurable business value. We are the <strong>best partner to make web applications and mobile applications</strong> that drive digital transformation.
               </p>
               <p>
                 We focus on quality engineering, transparent collaboration, secure development practices, and long-term partnerships to help organizations innovate with confidence.

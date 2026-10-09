@@ -111,14 +111,17 @@ const BlogDetail = () => {
             <div className="author-detail-bar">
               <div className="d-flex align-items-center gap-3">
                 {blog.author?.avatar ? (
-                  <img src={blog.author.avatar} alt={blog.author.name} className="author-avatar-lg" />
+                  <img src={blog.author.avatar} alt={blog.author.name} className="author-avatar-lg" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563EB' }} />
                 ) : (
-                  <div className="author-initials" style={{ width: '48px', height: '48px', fontSize: '1.2rem' }}>
-                    {blog.author?.name ? blog.author.name.charAt(0) : 'Y'}
+                  <div className="author-badge-ring-lg">
+                    <span className="author-ygr-mark">YGR</span>
                   </div>
                 )}
                 <div>
-                  <div className="fw-bold text-dark">{blog.author?.name || 'YGR Tech Team'}</div>
+                  <div className="fw-bold text-dark d-flex align-items-center gap-1">
+                    {blog.author?.name || 'YGR Tech Team'}
+                    <i className="fas fa-check-circle text-primary" style={{ fontSize: '0.88rem' }} title="Verified Engineering Author"></i>
+                  </div>
                   <div className="text-muted small">{blog.author?.role || 'Senior Solutions Architect'}</div>
                 </div>
               </div>
@@ -248,33 +251,60 @@ const BlogDetail = () => {
 
             {/* SHARE BUTTONS */}
             <div className="share-bar">
-              <span className="fw-bold text-dark me-2">Share Article:</span>
+              <span className="fw-bold text-dark me-2">Connect & Share:</span>
               <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                href="https://www.linkedin.com/company/ygr-gobal-it-services-pvt-ltd/"
                 target="_blank"
                 rel="noreferrer"
                 className="share-btn"
-                title="Share on LinkedIn"
+                title="LinkedIn"
               >
                 <i className="fab fa-linkedin-in"></i>
               </a>
               <a
-                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(blog.title)}`}
+                href="https://x.com/ygrgobalit2024"
                 target="_blank"
                 rel="noreferrer"
                 className="share-btn"
-                title="Share on Twitter"
+                title="Twitter / X"
               >
-                <i className="fab fa-twitter"></i>
+                <i className="fab fa-x-twitter"></i>
               </a>
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + ' ' + window.location.href)}`}
+                href="https://www.instagram.com/ygrgobalitservices/"
                 target="_blank"
                 rel="noreferrer"
                 className="share-btn"
-                title="Share on WhatsApp"
+                title="Instagram"
+              >
+                <i className="fab fa-instagram"></i>
+              </a>
+              <a
+                href="https://wa.me/917794053340"
+                target="_blank"
+                rel="noreferrer"
+                className="share-btn"
+                title="WhatsApp"
               >
                 <i className="fab fa-whatsapp"></i>
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61568888033386"
+                target="_blank"
+                rel="noreferrer"
+                className="share-btn"
+                title="Facebook"
+              >
+                <i className="fab fa-facebook-f"></i>
+              </a>
+              <a
+                href="https://www.youtube.com/@rrtalktrends"
+                target="_blank"
+                rel="noreferrer"
+                className="share-btn"
+                title="YouTube"
+              >
+                <i className="fab fa-youtube"></i>
               </a>
               <button type="button" className="share-btn border-0 cursor-pointer" onClick={handleShareCopy} title="Copy Link">
                 <i className="fas fa-link"></i>
@@ -289,11 +319,18 @@ const BlogDetail = () => {
               <div className="p-4 bg-white border rounded-4 shadow-sm mb-4">
                 <h5 className="fw-bold text-dark mb-3">About the Author</h5>
                 <div className="d-flex align-items-center gap-3 mb-3">
-                  <div className="author-initials" style={{ width: '56px', height: '56px', fontSize: '1.4rem' }}>
-                    {blog.author?.name ? blog.author.name.charAt(0) : 'Y'}
-                  </div>
+                  {blog.author?.avatar ? (
+                    <img src={blog.author.avatar} alt={blog.author.name} className="author-avatar-lg" style={{ width: '56px', height: '56px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563EB' }} />
+                  ) : (
+                    <div className="author-badge-ring-lg" style={{ width: '56px', height: '56px' }}>
+                      <span className="author-ygr-mark" style={{ fontSize: '0.95rem' }}>YGR</span>
+                    </div>
+                  )}
                   <div>
-                    <h6 className="fw-bold m-0">{blog.author?.name || 'YGR Tech Team'}</h6>
+                    <h6 className="fw-bold m-0 d-flex align-items-center gap-1">
+                      {blog.author?.name || 'YGR Tech Team'}
+                      <i className="fas fa-check-circle text-primary" style={{ fontSize: '0.85rem' }} title="Verified Author"></i>
+                    </h6>
                     <span className="text-muted small">{blog.author?.role || 'Engineering Lead'}</span>
                   </div>
                 </div>

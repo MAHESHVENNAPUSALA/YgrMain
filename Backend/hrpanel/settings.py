@@ -214,3 +214,24 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+
+
+# Razorpay Keys
+RAZORPAY_KEY_ID = 'rzp_live_Tiy5lQMaITZm1P'
+RAZORPAY_KEY_SECRET = '7Rlcz2F7aNcBU4ijs9O46I5N'
+
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ygrgobalitservices@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'vldzlywnrwakopaq')
+
+

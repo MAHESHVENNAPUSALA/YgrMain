@@ -65,7 +65,7 @@ class HRSettingsAdmin(admin.ModelAdmin):
 @admin.register(TeamLead)
 class TeamLeadAdmin(admin.ModelAdmin):
     list_display = ('employee', 'team_name', 'department', 'email', 'phone', 'promotion_date')
-    search_fields = ('employee__fullname', 'team_name', 'email')
+    search_fields = ('employee__first_name', 'employee__last_name', 'employee__username', 'team_name', 'email')
 
 
 # ==========================
@@ -82,7 +82,9 @@ class ProjectWorkUpdateAdmin(admin.ModelAdmin):
     list_filter = ('project', 'team_lead', 'created_at')
     search_fields = (
         'project__project_id',
-        'team_lead__fullname',
+        'team_lead__first_name',
+        'team_lead__last_name',
+        'team_lead__username',
         'work_details'
     )
     readonly_fields = ('created_at',)
@@ -150,6 +152,18 @@ class UserAdmin(DefaultUserAdmin):
     )
     list_filter = ('role', 'department', 'is_active')
     search_fields = ('username', 'email')
+    readonly_fields = ('emp_id', 'date_joined', 'last_login')
+
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'profile_pic', 'gender', 'date_of_birth', 'address', 'phone', 'aadhaar', 'wnumber')}),
+        ('Employment info', {'fields': ('role', 'emp_id', 'department', 'designation', 'salary', 'date_of_joining', 'status', 'experience_years', 'previous_company', 'team_name', 'reporting_manager', 'document')}),
+        ('Internship info', {'fields': ('course', 'clg_name', 'clg_address', 'roll_no', 'branch', 'photo', 'resume', 'exam_attempt', 'exam_attpemt', 'is_paid', 'razorpay_order_id')}),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
 
 
 
@@ -160,7 +174,7 @@ class UserAdmin(DefaultUserAdmin):
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'lead', 'is_active', 'team_members')   
-    search_fields = ('name', 'lead__fullname')
+    search_fields = ('name', 'lead__first_name', 'lead__last_name', 'lead__username')
     filter_horizontal = ('members',)  
 
     def team_members(self, obj):
@@ -168,7 +182,7 @@ class TeamAdmin(admin.ModelAdmin):
         Returns all members in the team as a comma-separated string with IDs.
         Format: ID - Name
         """
-        return ", ".join([f"{emp.emp_id} - {emp.fullname}" for emp in obj.members.all()]) if obj.members.exists() else "-"
+        return ", ".join([f"{emp.emp_id} - {emp.get_full_name() or emp.username}" for emp in obj.members.all()]) if obj.members.exists() else "-"
     
     team_members.short_description = 'Team Members'
 

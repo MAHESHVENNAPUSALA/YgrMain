@@ -1,0 +1,2 @@
+var e=(e,t=`export.csv`)=>{if(!e||!e.length){alert(`No data available to export`);return}let n=Object.keys(e[0]),r=[n.join(`,`)];e.forEach(e=>{let t=n.map(t=>`"${(``+(e[t]??``)).replace(/"/g,`""`)}"`);r.push(t.join(`,`))});let i=new Blob([r.join(`
+`)],{type:`text/csv;charset=utf-8;`}),a=URL.createObjectURL(i),o=document.createElement(`a`);o.setAttribute(`href`,a),o.setAttribute(`download`,t),o.style.visibility=`hidden`,document.body.appendChild(o),o.click(),document.body.removeChild(o)};export{e as t};

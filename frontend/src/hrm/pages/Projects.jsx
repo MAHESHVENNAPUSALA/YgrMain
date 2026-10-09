@@ -41,6 +41,10 @@ const Projects = () => {
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedTeamForMember, setSelectedTeamForMember] = useState(null);
+  const [selectedMemberId, setSelectedMemberId] = useState('');
+  const [isAssignTLOpen, setIsAssignTLOpen] = useState(false);
+  const [selectedTeamForTL, setSelectedTeamForTL] = useState(null);
+  const [selectedTLId, setSelectedTLId] = useState('');
 
   // Forms State
   const [projectForm, setProjectForm] = useState({
@@ -111,8 +115,8 @@ const Projects = () => {
 
   const loadUsersAndResources = async () => {
     try {
-      // Load all users from messaging users list
-      const usersRes = await api.get('/api/users/');
+      // Load all users from directory list
+      const usersRes = await api.get('/api/users/', { params: { scope: 'directory' } });
       setUsers(usersRes.data || []);
 
       // Load clients
@@ -175,10 +179,10 @@ const Projects = () => {
     }
   };
 
-  // Managers List filter
+  // Managers / Leads / Employees List filter
   const managers = useMemo(() => users.filter(u => u.role === 'Manager'), [users]);
-  const teamLeads = useMemo(() => users.filter(u => u.role === 'TeamLead'), [users]);
-  const employeesList = useMemo(() => users.filter(u => u.role === 'Employee'), [users]);
+  const teamLeads = useMemo(() => users.filter(u => ['TeamLead', 'Employee', 'Manager'].includes(u.role)), [users]);
+  const employeesList = useMemo(() => users.filter(u => ['Employee', 'TeamLead'].includes(u.role)), [users]);
 
   // Project Creation Submit
   const handleCreateProject = async (e) => {
@@ -391,35 +395,43 @@ const Projects = () => {
     }
   };
 
-  // Assign Team Lead
-  const handleQuickAssignTL = async (team) => {
-    const tlOpts = teamLeads.map(t => `${t.id}: ${t.name || t.username}`).join('\n');
-    const input = await showPrompt(`Assign Team Leader to '${team.name}'. Available Leads:\n${tlOpts}\n\nEnter Lead User ID (or leave blank to remove):`);
-    if (input === null) return;
+  // Assign Team Lead Submit
+  const handleAssignTLSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTeamForTL) return;
 
-    const leadId = input.trim() === '' ? null : parseInt(input.trim());
-    if (leadId !== null && isNaN(leadId)) {
-      showToast('Please enter a valid numeric ID.', 'warning');
+    const leadId = selectedTLId === '' ? null : parseInt(selectedTLId);
+    if (selectedTLId !== '' && isNaN(leadId)) {
+      showToast('Please select a valid Team Leader.', 'warning');
       return;
     }
 
     try {
-      await projectsApi.updateTeam(team.id, { lead: leadId });
+      await projectsApi.updateTeam(selectedTeamForTL.id, { lead: leadId });
       showToast('Team Leader updated successfully.', 'success');
+      setIsAssignTLOpen(false);
+      setSelectedTeamForTL(null);
+      setSelectedTLId('');
       await refreshProjectDetails();
     } catch (err) {
       showToast(err.response?.data?.detail || 'Failed to update Team Leader.', 'error');
     }
   };
 
-  // Add Member
-  const handleAddMember = async (empId) => {
-    if (!selectedTeamForMember) return;
+  // Add Member Submit
+  const handleAddMemberSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTeamForMember || !selectedMemberId) {
+      showToast('Please select an employee to add.', 'warning');
+      return;
+    }
+
     try {
-      await projectsApi.addTeamMember(selectedTeamForMember.id, empId);
+      await projectsApi.addTeamMember(selectedTeamForMember.id, selectedMemberId);
       showToast('Employee assigned to team successfully.', 'success');
       setIsAddMemberOpen(false);
       setSelectedTeamForMember(null);
+      setSelectedMemberId('');
       await refreshProjectDetails();
       await loadDashboard();
     } catch (err) {
@@ -1325,11 +1337,7 @@ const Projects = () => {
                     <i className="fa-solid fa-check"></i> Submit Project Report
                   </button>
               )}
-              {role === 'Manager' && (
-                  <button className="projects-btn projects-btn-primary" onClick={() => handleProjectReview('submit')} style={{ background: '#10b981', borderColor: '#10b981' }}>
-                    <i className="fa-solid fa-check"></i> Submit to HR
-                  </button>
-              )}
+
               {role === 'HR' && (
                   <button className="projects-btn projects-btn-primary" onClick={() => handleProjectReview('submit')} style={{ background: '#10b981', borderColor: '#10b981' }}>
                     <i className="fa-solid fa-check"></i> Submit to MD
@@ -1462,10 +1470,28 @@ const Projects = () => {
                             <div style={{ display: 'flex', gap: '6px' }}>
                               {['HR', 'MD', 'Manager'].includes(role) && (
                                 <>
-                                  <button className="projects-btn projects-btn-secondary" style={{ padding: '4px 8px', fontSize: '11.5px' }} onClick={() => handleQuickAssignTL(team)} id={`btnAssignTL-${team.id}`}>
+                                  <button
+                                    className="projects-btn projects-btn-secondary"
+                                    style={{ padding: '4px 8px', fontSize: '11.5px' }}
+                                    onClick={() => {
+                                      setSelectedTeamForTL(team);
+                                      setSelectedTLId(team.lead ? team.lead : (team.lead_detail ? team.lead_detail.id : ''));
+                                      setIsAssignTLOpen(true);
+                                    }}
+                                    id={`btnAssignTL-${team.id}`}
+                                  >
                                     Assign TL
                                   </button>
-                                  <button className="projects-btn projects-btn-secondary" style={{ padding: '4px 8px', fontSize: '11.5px' }} onClick={() => { setSelectedTeamForMember(team); setIsAddMemberOpen(true); }} id={`btnAddMember-${team.id}`}>
+                                  <button
+                                    className="projects-btn projects-btn-secondary"
+                                    style={{ padding: '4px 8px', fontSize: '11.5px' }}
+                                    onClick={() => {
+                                      setSelectedTeamForMember(team);
+                                      setSelectedMemberId('');
+                                      setIsAddMemberOpen(true);
+                                    }}
+                                    id={`btnAddMember-${team.id}`}
+                                  >
                                     Add Member
                                   </button>
                                   <button className="projects-btn projects-btn-danger" style={{ padding: '4px 8px', fontSize: '11.5px' }} onClick={() => handleDeleteTeam(team.id)}>
@@ -1771,15 +1797,7 @@ const Projects = () => {
                       placeholder="e.g. client@email.com"
                     />
                   </div>
-                  <div className="projects-form-group">
-                    <label>Budget ($)</label>
-                    <input
-                      type="number"
-                      value={projectForm.estimated_budget}
-                      onChange={(e) => setProjectForm({ ...projectForm, estimated_budget: e.target.value })}
-                      placeholder="50000"
-                    />
-                  </div>
+
                   <div className="projects-form-group">
                     <label>Category</label>
                     <input
@@ -1824,15 +1842,7 @@ const Projects = () => {
                       id="inpProjectDeadline"
                     />
                   </div>
-                  <div className="projects-form-group">
-                    <label>Project Color Theme</label>
-                    <input
-                      type="color"
-                      value={projectForm.project_color}
-                      onChange={(e) => setProjectForm({ ...projectForm, project_color: e.target.value })}
-                      style={{ padding: '0px', height: '38px', cursor: 'pointer' }}
-                    />
-                  </div>
+
                   <div className="projects-form-group">
                     <label>Assign Project Manager</label>
                     <select value={projectForm.assigned_manager} onChange={(e) => setProjectForm({ ...projectForm, assigned_manager: e.target.value })} id="selAssignManager">
@@ -1842,14 +1852,7 @@ const Projects = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="projects-form-group form-group-full">
-                    <label>Project Logo</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setLogoFile(e.target.files[0])}
-                    />
-                  </div>
+
                 </div>
               </div>
               <div className="projects-modal-footer">
@@ -1907,15 +1910,7 @@ const Projects = () => {
                       onChange={(e) => setProjectForm({ ...projectForm, client_contact: e.target.value })}
                     />
                   </div>
-                  <div className="projects-form-group">
-                    <label>Budget ($)</label>
-                    <input
-                      type="number"
-                      value={projectForm.estimated_budget}
-                      disabled={role !== 'HR' && role !== 'MD'}
-                      onChange={(e) => setProjectForm({ ...projectForm, estimated_budget: e.target.value })}
-                    />
-                  </div>
+
                   <div className="projects-form-group">
                     <label>Category</label>
                     <input
@@ -1957,15 +1952,7 @@ const Projects = () => {
                       onChange={(e) => setProjectForm({ ...projectForm, end_date: e.target.value })}
                     />
                   </div>
-                  <div className="projects-form-group">
-                    <label>Project Color Theme</label>
-                    <input
-                      type="color"
-                      value={projectForm.project_color}
-                      onChange={(e) => setProjectForm({ ...projectForm, project_color: e.target.value })}
-                      style={{ padding: '0px', height: '38px' }}
-                    />
-                  </div>
+
                   <div className="projects-form-group">
                     <label>Project Status</label>
                     <select value={projectForm.status} onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value })} id="selEditProjectStatus">
@@ -2063,33 +2050,82 @@ const Projects = () => {
         </div>
       )}
 
+      {/* ASSIGN TL MODAL */}
+      {isAssignTLOpen && (
+        <div className="projects-modal-overlay">
+          <div className="projects-modal">
+            <div className="projects-modal-header">
+              <h3>Assign Team Leader for '{selectedTeamForTL?.name}'</h3>
+              <button className="projects-modal-close" onClick={() => { setIsAssignTLOpen(false); setSelectedTeamForTL(null); setSelectedTLId(''); }}>×</button>
+            </div>
+            <form onSubmit={handleAssignTLSubmit}>
+              <div className="projects-modal-body">
+                <div className="projects-form-group">
+                  <label>Select Team Leader</label>
+                  <select
+                    value={selectedTLId}
+                    onChange={(e) => setSelectedTLId(e.target.value)}
+                    id="selTeamLeadAssign"
+                  >
+                    <option value="">-- Unassigned (No Team Leader) --</option>
+                    {teamLeads.map(tl => (
+                      <option key={tl.id} value={tl.id}>
+                        {tl.name || `${tl.first_name || ''} ${tl.last_name || ''}`.trim() || tl.username} ({tl.emp_id || 'ID:' + tl.id}) — {tl.role} ({tl.department_display || tl.department || 'N/A'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
+                  Assigning a Team Leader gives them project overview and task management rights for this team.
+                </p>
+              </div>
+              <div className="projects-modal-footer">
+                <button type="button" className="projects-btn projects-btn-secondary" onClick={() => { setIsAssignTLOpen(false); setSelectedTeamForTL(null); setSelectedTLId(''); }}>Cancel</button>
+                <button type="submit" className="projects-btn projects-btn-primary" id="btnSubmitAssignTL">Save Team Lead</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ADD MEMBER MODAL */}
       {isAddMemberOpen && (
         <div className="projects-modal-overlay">
           <div className="projects-modal">
             <div className="projects-modal-header">
               <h3>Assign Employee to Team '{selectedTeamForMember?.name}'</h3>
-              <button className="projects-modal-close" onClick={() => setIsAddMemberOpen(false)}>×</button>
+              <button className="projects-modal-close" onClick={() => { setIsAddMemberOpen(false); setSelectedTeamForMember(null); setSelectedMemberId(''); }}>×</button>
             </div>
-            <div className="projects-modal-body">
-              <div className="projects-form-group">
-                <label>Select Employee *</label>
-                <select onChange={(e) => handleAddMember(e.target.value)} defaultValue="" id="selEmployeeMember">
-                  <option value="" disabled>Choose Employee</option>
-                  {employeesList.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name || emp.username} ({emp.emp_id}) — {emp.department_display || emp.department}
-                    </option>
-                  ))}
-                </select>
+            <form onSubmit={handleAddMemberSubmit}>
+              <div className="projects-modal-body">
+                <div className="projects-form-group">
+                  <label>Select Employee *</label>
+                  <select
+                    value={selectedMemberId}
+                    onChange={(e) => setSelectedMemberId(e.target.value)}
+                    required
+                    id="selEmployeeMember"
+                  >
+                    <option value="" disabled>Choose Employee</option>
+                    {employeesList.map(emp => {
+                      const isAlreadyMember = selectedTeamForMember?.members_detail?.some(m => m.id === emp.id);
+                      return (
+                        <option key={emp.id} value={emp.id} disabled={isAlreadyMember}>
+                          {emp.name || `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.username} ({emp.emp_id || 'ID:' + emp.id}) — {emp.department_display || emp.department || 'N/A'} {isAlreadyMember ? '(Already in team)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
+                  Note: An employee can only be assigned to one active project at a time. The system will prevent double booking.
+                </p>
               </div>
-              <p style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
-                Note: An employee can only be assigned to one active project at a time. The system will prevent double booking.
-              </p>
-            </div>
-            <div className="projects-modal-footer">
-              <button type="button" className="projects-btn projects-btn-secondary" onClick={() => setIsAddMemberOpen(false)}>Close</button>
-            </div>
+              <div className="projects-modal-footer">
+                <button type="button" className="projects-btn projects-btn-secondary" onClick={() => { setIsAddMemberOpen(false); setSelectedTeamForMember(null); setSelectedMemberId(''); }}>Cancel</button>
+                <button type="submit" className="projects-btn projects-btn-primary" id="btnSubmitAddMember" disabled={!selectedMemberId}>Add Member</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

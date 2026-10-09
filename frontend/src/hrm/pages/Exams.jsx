@@ -46,6 +46,15 @@ const Exams = () => {
   });
   const [savingCandidate, setSavingCandidate] = useState(false);
 
+  const fetchScoresOnly = async () => {
+    try {
+      const resultsRes = await api.get('/api/exams/');
+      setResults(resultsRes.data || []);
+    } catch (err) {
+      console.error('Error fetching scores:', err);
+    }
+  };
+
   const loadExamData = async () => {
     setLoading(true);
     try {
@@ -75,6 +84,13 @@ const Exams = () => {
 
   useEffect(() => {
     loadExamData();
+
+    // Auto refresh score log every 8 seconds
+    const interval = setInterval(() => {
+      fetchScoresOnly();
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreateQuestion = async (e) => {
@@ -182,6 +198,19 @@ const Exams = () => {
     }
   };
 
+  // Candidate Exam copy credentials helper
+  const handleCopyCandidateCredentials = (cand) => {
+    const examUrl = `${window.location.origin}/candidate-exam`;
+    const text = `Candidate Online Exam Portal Details:
+Exam Link: ${examUrl}
+Candidate Email: ${cand.email}
+Access Passcode: ${cand.password}
+Evaluation Subject: ${(cand.role || '').toUpperCase()}`;
+
+    navigator.clipboard.writeText(text);
+    showToast(`Exam link & login details for ${cand.username} copied to clipboard!`, 'success');
+  };
+
   return (
     <div>
       <style>{`
@@ -230,29 +259,63 @@ const Exams = () => {
           border-color: var(--accent-blue);
           color: #2563eb;
           font-weight: 700;
-          }
+        }
       `}</style>
 
-      <h2 style={{ color: 'var(--primary-color)', marginBottom: '20px', fontFamily: 'var(--font-display)', fontWeight: 800, textAlign: 'left' }}>Exams & Evaluations Portal</h2>
+      <h2 style={{ color: 'var(--primary-color)', marginBottom: '15px', fontFamily: 'var(--font-display)', fontWeight: 800, textAlign: 'left' }}>Exams & Evaluations Portal</h2>
+
+      {/* HR Guidance Banner */}
+      <div style={{
+        background: '#eff6ff',
+        border: '1px solid #bfdbfe',
+        borderRadius: '8px',
+        padding: '14px 18px',
+        marginBottom: '20px',
+        textAlign: 'left',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        color: '#1e40af',
+        fontSize: '13.5px'
+      }}>
+        <div>
+          <strong>💡 Candidate Online Exam Instructions:</strong> HR creates candidate accounts under the <i>"Create Exam User"</i> tab. Candidates complete their examination on the dedicated candidate portal (<code>/candidate-exam</code>). Scores update automatically in the <i>"Candidate Score Log"</i>.
+        </div>
+        <a
+          href="/candidate-exam"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            background: '#2563eb',
+            color: '#ffffff',
+            padding: '8px 14px',
+            borderRadius: '6px',
+            fontWeight: 600,
+            fontSize: '12.5px',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            marginLeft: '15px'
+          }}
+        >
+          Open Candidate Exam Link ↗
+        </a>
+      </div>
 
       {/* Tabs */}
       <div className="exam-tabs">
-        <div className={`exam-tab ${activeTab === 'scores' ? 'active' : ''}`} onClick={() => { setActiveTab('scores'); setExamResultInfo(null); setExamStarted(false); }}>
+        <div className={`exam-tab ${activeTab === 'scores' ? 'active' : ''}`} onClick={() => setActiveTab('scores')}>
           📋 Candidate Score Log
         </div>
         {['HR', 'MD'].includes(role) && (
-          <div className={`exam-tab ${activeTab === 'questions' ? 'active' : ''}`} onClick={() => { setActiveTab('questions'); setExamResultInfo(null); setExamStarted(false); }}>
+          <div className={`exam-tab ${activeTab === 'questions' ? 'active' : ''}`} onClick={() => setActiveTab('questions')}>
             ❓ Question Bank Pool
           </div>
         )}
         {['HR', 'MD'].includes(role) && (
-          <div className={`exam-tab ${activeTab === 'candidates' ? 'active' : ''}`} onClick={() => { setActiveTab('candidates'); setExamResultInfo(null); setExamStarted(false); }}>
+          <div className={`exam-tab ${activeTab === 'candidates' ? 'active' : ''}`} onClick={() => setActiveTab('candidates')}>
             👤 Create Exam User
           </div>
         )}
-        <div className={`exam-tab ${activeTab === 'take-exam' ? 'active' : ''}`} onClick={() => { setActiveTab('take-exam'); setExamResultInfo(null); setExamStarted(false); }}>
-          ✍️ Candidate Test Gateway
-        </div>
       </div>
 
       {loading ? (
@@ -264,8 +327,16 @@ const Exams = () => {
           {/* 1. CANDIDATE SCORES VIEW */}
           {activeTab === 'scores' && (
             <div className="dashboard-panel-card">
-              <div className="panel-header">
+              <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2>Completed Exam Sessions</h2>
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ background: '#2563eb', padding: '6px 14px', fontSize: '12.5px', borderRadius: '6px' }}
+                  onClick={fetchScoresOnly}
+                >
+                  🔄 Refresh Score Log
+                </button>
               </div>
               <div className="panel-body">
                 <div className="table-wrap">
@@ -280,18 +351,24 @@ const Exams = () => {
                     </thead>
                     <tbody>
                       {results.length > 0 ? (
-                        results.map((r) => (
-                          <tr key={r.id}>
-                            <td style={{ fontWeight: 600 }}>{r.exam_user_name}</td>
-                            <td><span className="badge-capsule info">{(r.exam_language || '').toUpperCase()}</span></td>
-                            <td style={{ fontWeight: 700, color: (r.score ?? 0) >= 60 ? 'var(--success)' : 'var(--danger)' }}>{parseFloat(r.score ?? 0).toFixed(1)}%</td>
-                            <td>
-                              <span className={`badge-capsule ${(r.score ?? 0) >= 60 ? 'success' : 'danger'}`}>
-                                {(r.score ?? 0) >= 60 ? 'Passed' : 'Failed'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))
+                        results.map((r) => {
+                          const scoreVal = r.score ?? r.score_percentage ?? 0;
+                          const isPass = scoreVal >= 60;
+                          return (
+                            <tr key={r.id}>
+                              <td style={{ fontWeight: 600 }}>{r.exam_user_name || 'Candidate User'}</td>
+                              <td><span className="badge-capsule info">{(r.exam_language || '').toUpperCase()}</span></td>
+                              <td style={{ fontWeight: 700, color: isPass ? 'var(--success)' : 'var(--danger)' }}>
+                                {parseFloat(scoreVal).toFixed(1)}%
+                              </td>
+                              <td>
+                                <span className={`badge-capsule ${isPass ? 'success' : 'danger'}`}>
+                                  {isPass ? 'Passed' : 'Failed'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
                           <td colSpan="4" style={{ textAlign: 'center', color: 'var(--muted)' }}>No completed evaluations yet.</td>
@@ -394,6 +471,7 @@ const Exams = () => {
                           <th>Phone</th>
                           <th>Language Module</th>
                           <th>Password Code</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -405,11 +483,22 @@ const Exams = () => {
                               <td>{c.phone_no || '--'}</td>
                               <td><span className="badge-capsule info">{(c.role || '').toUpperCase()}</span></td>
                               <td style={{ fontFamily: 'monospace', fontWeight: 700 }}>{c.password}</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className="view-btn"
+                                  style={{ color: '#2563eb', background: 'rgba(37, 99, 235, 0.1)', fontSize: '12px', padding: '4px 10px', whiteSpace: 'nowrap' }}
+                                  onClick={() => handleCopyCandidateCredentials(c)}
+                                  title="Copy Candidate Portal Link & Credentials"
+                                >
+                                  📋 Copy Link & Login Info
+                                </button>
+                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="5" style={{ textAlign: 'center', color: 'var(--muted)' }}>No candidate user accounts registered.</td>
+                            <td colSpan="6" style={{ textAlign: 'center', color: 'var(--muted)' }}>No candidate user accounts registered.</td>
                           </tr>
                         )}
                       </tbody>
@@ -480,72 +569,6 @@ const Exams = () => {
                     </button>
                   </form>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* 4. TAKE TEST VIEW */}
-          {activeTab === 'take-exam' && (
-            <div className="dashboard-panel-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              <div className="panel-header">
-                <h2>Evaluation Test Sheet</h2>
-              </div>
-              <div className="panel-body">
-                {examResultInfo ? (
-                  <div style={{ padding: '20px', textAlign: 'center' }}>
-                    <h3 style={{ color: 'var(--success)' }}>Test Evaluated!</h3>
-                    <p style={{ fontSize: '18px', margin: '15px 0' }}>Your score details: <b>{(examResultInfo.score ?? 0).toFixed(1)}%</b></p>
-                    <p style={{ color: 'var(--muted)' }}>Correct answers: {examResultInfo.correct_answers} out of {examResultInfo.total_questions}</p>
-                    <button className="btn" style={{ marginTop: '20px' }} onClick={() => setExamResultInfo(null)}>
-                      Finish review
-                    </button>
-                  </div>
-                ) : examStarted ? (
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
-                      <span>Candidate email: <b>{candEmail}</b></span>
-                      <span>Module language: <b>{newLanguage.toUpperCase()}</b></span>
-                    </div>
-
-                    <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
-                      {examQuestions.map((q, idx) => (
-                        <div className="exam-question-card" key={q.id}>
-                          <p style={{ fontWeight: 700 }}>{idx + 1}. {q.question_text}</p>
-                          <button type="button" className={`exam-option-btn ${candidateAnswers[q.id] === 'A' ? 'active' : ''}`} onClick={() => handleSelectOption(q.id, 'A')}>A. {q.option_a}</button>
-                          <button type="button" className={`exam-option-btn ${candidateAnswers[q.id] === 'B' ? 'active' : ''}`} onClick={() => handleSelectOption(q.id, 'B')}>B. {q.option_b}</button>
-                          <button type="button" className={`exam-option-btn ${candidateAnswers[q.id] === 'C' ? 'active' : ''}`} onClick={() => handleSelectOption(q.id, 'C')}>C. {q.option_c}</button>
-                          <button type="button" className={`exam-option-btn ${candidateAnswers[q.id] === 'D' ? 'active' : ''}`} onClick={() => handleSelectOption(q.id, 'D')}>D. {q.option_d}</button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button className="btn" disabled={submittingExam} style={{ width: '100%', marginTop: '20px' }} onClick={handleSubmitExam}>
-                      {submittingExam ? 'Evaluating responses...' : 'Submit Evaluation responses'}
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleStartCandidateExam} style={{ textAlign: 'left' }}>
-                    <div className="form-group">
-                      <label>Candidate Email</label>
-                      <input type="email" value={candEmail} onChange={(e) => setCandEmail(e.target.value)} required placeholder="e.g. candidate@domain.com" />
-                    </div>
-                    <div className="form-group">
-                      <label>Candidate Access Code / Password</label>
-                      <input type="password" value={candPassword} onChange={(e) => setCandPassword(e.target.value)} required />
-                    </div>
-                    <div className="form-group">
-                      <label>Select Test Language</label>
-                      <select value={newLanguage} onChange={(e) => setNewLanguage(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                        {languages.map((l, i) => (
-                          <option key={i} value={l.value}>{l.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <button type="submit" className="btn" style={{ width: '100%', marginTop: '10px' }}>
-                      Authenticate and Start Test
-                    </button>
-                  </form>
-                )}
               </div>
             </div>
           )}

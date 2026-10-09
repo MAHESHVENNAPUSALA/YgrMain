@@ -15,10 +15,18 @@ const NAV_LINKS = [
   },
   { label: 'Services', to: '/services' },
   { label: 'Portfolio', to: '/portfolio' },
+  {
+    label: 'Internships',
+    to: '/careers',
+    children: [
+      { label: 'Python Full Stack', to: '/register-internship?course_id=2&title=Python%20Full%20Stack%20Development', desc: '6 Months Internship Program' },
+      { label: 'Java Full Stack', to: '/register-internship?course_id=3&title=Java%20Full%20Stack%20Development', desc: '6 Months Internship Program' },
+      { label: 'Digital Marketing', to: '/register-internship?course_id=4&title=Digital%20Marketing', desc: '3 Months Internship Program' },
+    ]
+  },
   { label: 'Careers', to: '/careers' },
   { label: 'Blog', to: '/blog' },
   { label: 'Contact', to: '/contact' },
-
 ];
 
 const PublicHeader = () => {
@@ -159,8 +167,11 @@ const PublicHeader = () => {
               />
             </div>
             <div className="brand-text">
-              <span className="brand-name">GOBAL</span>
-              <span className="brand-tag">IT SERVICES</span>
+              <span className="brand-tag">
+                {'IT SERVICES'.split('').map((char, index) => (
+                  <span key={index}>{char === ' ' ? '\u00A0' : char}</span>
+                ))}
+              </span>
             </div>
           </Link>
 

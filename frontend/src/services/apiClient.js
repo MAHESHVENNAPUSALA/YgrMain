@@ -14,7 +14,7 @@ const getBaseURL = () => {
   }
 
   // Production domain hosted on standard HTTP/HTTPS ports (proxied by Nginx/Passenger)
-  if (hostname.includes('rrgobalitservices.com')) {
+  if (hostname.includes('ygrgobalitservices.com')) {
     return `${protocol}//${hostname}`;
   }
 

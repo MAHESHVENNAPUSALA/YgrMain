@@ -200,58 +200,63 @@ const Testimonials = () => {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-            {clientTestimonials.map((t, idx) => (
-              <div
-                key={t.id || idx}
-                style={{
-                  backgroundColor: '#F8FAFC',
-                  borderRadius: '20px',
-                  padding: '28px',
-                  border: '1px solid #E2E8F0',
-                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justify: 'space-between'
-                }}
-              >
-                <div>
-                  <div style={{ color: '#F59E0B', fontSize: '14px', marginBottom: '14px' }}>
-                    ★★★★★
-                  </div>
-                  <p style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6', fontStyle: 'italic', marginBottom: '20px' }}>
-                    &ldquo;{t.message || t.feedback}&rdquo;
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
-                  <div
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #0F2B46, #1E88E5)',
-                      color: '#FFFFFF',
-                      fontWeight: '700',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justify: 'center',
-                      fontSize: '16px'
-                    }}
-                  >
-                    {(t.client_name || t.name || 'C').charAt(0)}
-                  </div>
+          <div className="testimonials-marquee-wrapper">
+            <div className="testimonials-marquee-group">
+              {clientTestimonials.map((t, idx) => (
+                <div key={`t1-${t.id || idx}`} className="testimonial-marquee-card">
                   <div>
-                    <h5 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0F172A' }}>
-                      {t.client_name || t.name}
-                    </h5>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
-                      {t.company_name || t.company} {t.country ? `• ${t.country}` : ''}
+                    <div className="testimonial-stars">
+                      ★★★★★
+                    </div>
+                    <p className="testimonial-text">
+                      &ldquo;{t.message || t.feedback}&rdquo;
                     </p>
                   </div>
+                  <div className="testimonial-author-section">
+                    <div className="testimonial-avatar">
+                      {(t.client_name || t.name || 'C').charAt(0)}
+                    </div>
+                    <div>
+                      <h5 className="testimonial-author-name">
+                        {t.client_name || t.name}
+                      </h5>
+                      <p className="testimonial-author-desc">
+                        {t.company_name || t.company} {t.country ? `• ${t.country}` : ''}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Duplicate group for seamless marquee loop */}
+            <div className="testimonials-marquee-group" aria-hidden="true">
+              {clientTestimonials.map((t, idx) => (
+                <div key={`t2-${t.id || idx}`} className="testimonial-marquee-card">
+                  <div>
+                    <div className="testimonial-stars">
+                      ★★★★★
+                    </div>
+                    <p className="testimonial-text">
+                      &ldquo;{t.message || t.feedback}&rdquo;
+                    </p>
+                  </div>
+                  <div className="testimonial-author-section">
+                    <div className="testimonial-avatar">
+                      {(t.client_name || t.name || 'C').charAt(0)}
+                    </div>
+                    <div>
+                      <h5 className="testimonial-author-name">
+                        {t.client_name || t.name}
+                      </h5>
+                      <p className="testimonial-author-desc">
+                        {t.company_name || t.company} {t.country ? `• ${t.country}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

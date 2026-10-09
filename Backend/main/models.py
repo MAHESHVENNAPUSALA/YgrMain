@@ -116,6 +116,9 @@ class Internships(models.Model):
     duration = models.CharField(max_length=100,blank=True,null=True)
     description = models.TextField(max_length=100,blank=True,null=True)
     syllabus=models.CharField(max_length=1000,blank=True,null=True)
+    skills = models.CharField(max_length=200,blank=True,null=True)
+    certificate = models.CharField(max_length=100,blank=True,null=True)
+    stipend = models.CharField(max_length=100,blank=True,null=True)
     # âœ… New field to store completed/ticked topics by admin
     completed_topics = models.JSONField(default=list, blank=True, null=True)
     def __str__(self):
@@ -412,12 +415,21 @@ def delete_old_rejected_users():
 from django.db import models
 
 class InternshipRegistration(models.Model):
+    registration_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=15)
     email = models.EmailField()
+    password = models.CharField(max_length=128, null=True, blank=True)
 
     course = models.CharField(max_length=100)
     address = models.TextField(null=True, blank=True)
+
+    clg_name = models.CharField(max_length=255, null=True, blank=True)
+    roll_no = models.CharField(max_length=50, null=True, blank=True)
+    branch = models.CharField(max_length=100, null=True, blank=True)
+    photo = models.ImageField(upload_to="internship_photos/", null=True, blank=True)
+    resume = models.FileField(upload_to="internship_resumes/", null=True, blank=True)
+    wphone = models.CharField(max_length=15, null=True, blank=True)
 
     plan = models.CharField(max_length=50)
 
@@ -431,10 +443,112 @@ class InternshipRegistration(models.Model):
     razorpay_order_id = models.CharField(max_length=255)
     amount_paid = models.FloatField()
 
+    graduation_year = models.IntegerField(null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    technical_skills = models.TextField(null=True, blank=True)
+    preferred_work_mode = models.CharField(max_length=50, choices=[('Online', 'Online'), ('Hybrid', 'Hybrid'), ('Offline', 'Offline')], default='Online')
+    terms_accepted = models.BooleanField(default=False)
+    privacy_accepted = models.BooleanField(default=False)
+    
+    STATUS_CHOICES = [
+        ('Registration Pending', 'Registration Pending'),
+        ('Registered', 'Registered'),
+        ('Payment Initiated', 'Payment Initiated'),
+        ('Paid', 'Paid'),
+        ('Exam Scheduled', 'Exam Scheduled'),
+        ('Exam Completed', 'Exam Completed'),
+        ('Qualified', 'Qualified'),
+        ('Not Qualified', 'Not Qualified'),
+        ('Interview 1 Scheduled', 'Interview 1 Scheduled'),
+        ('Interview 1 Completed', 'Interview 1 Completed'),
+        ('Interview 2 Scheduled', 'Interview 2 Scheduled'),
+        ('Interview 2 Completed', 'Interview 2 Completed'),
+        ('Selected', 'Selected'),
+        ('Not Selected', 'Not Selected'),
+        ('Offer Issued', 'Offer Issued'),
+        ('Offer Accepted', 'Offer Accepted'),
+        ('Offer Declined', 'Offer Declined'),
+        ('Onboarding', 'Onboarding'),
+        ('Onboarded', 'Onboarded')
+    ]
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Registration Pending')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
+
+class InternshipInterview(models.Model):
+    registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='interviews')
+    round_number = models.IntegerField(choices=[(1, 'Round 1'), (2, 'Round 2')])
+    scheduled_date = models.DateTimeField()
+    duration_minutes = models.IntegerField(default=30)
+    mode = models.CharField(max_length=50, choices=[('Online', 'Online'), ('Offline', 'Offline')], default='Online')
+    meeting_url_or_venue = models.CharField(max_length=255, null=True, blank=True)
+    interviewer = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=50, choices=[
+        ('Scheduled', 'Scheduled'),
+        ('Completed', 'Completed'),
+        ('Qualified', 'Qualified'),
+        ('Not Qualified', 'Not Qualified'),
+        ('Rescheduled', 'Rescheduled'),
+        ('Cancelled', 'Cancelled')
+    ], default='Scheduled')
+    feedback = models.TextField(null=True, blank=True)
+    score = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class InternshipOffer(models.Model):
+    registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='offers')
+    offer_reference_number = models.CharField(max_length=100, unique=True)
+    start_date = models.DateField()
+    duration = models.CharField(max_length=100)
+    work_mode = models.CharField(max_length=50)
+    mentor_name = models.CharField(max_length=255)
+    stipend_terms = models.TextField()
+    acceptance_deadline = models.DateTimeField()
+    status = models.CharField(max_length=50, choices=[
+        ('Issued', 'Issued'),
+        ('Accepted', 'Accepted'),
+        ('Declined', 'Declined'),
+        ('Expired', 'Expired'),
+        ('Withdrawn', 'Withdrawn')
+    ], default='Issued')
+    offer_pdf = models.FileField(upload_to="internship_offers/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class OnboardingTask(models.Model):
+    registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='onboarding_tasks')
+    task_name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class InternshipExamSession(models.Model):
+    registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='exam_sessions')
+    exam_date = models.DateTimeField(null=True, blank=True)
+    duration_minutes = models.IntegerField(default=60)
+    passing_score = models.IntegerField(default=50)
+    started_at = models.DateTimeField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    score = models.IntegerField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=[
+        ('Scheduled', 'Scheduled'),
+        ('Started', 'Started'),
+        ('Completed', 'Completed'),
+        ('Missed', 'Missed')
+    ], default='Scheduled')
+    is_qualified = models.BooleanField(null=True, blank=True)
+    token = models.CharField(max_length=64, unique=True, null=True, blank=True)
+
+class InternshipExamAnswer(models.Model):
+    exam_session = models.ForeignKey(InternshipExamSession, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey('Question', on_delete=models.CASCADE)
+    selected_option = models.CharField(max_length=1, null=True, blank=True)
+    is_correct = models.BooleanField(null=True, blank=True)
+
 
 
 class Payment(models.Model):

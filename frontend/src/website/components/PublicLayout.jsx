@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import PublicHeader from './PublicHeader';
 import PublicFooter from './PublicFooter';
+import WhatsAppFloatingIcon from './WhatsAppFloatingIcon';
 
 const PublicLayout = ({ hideHeaderFooter = false }) => {
   const location = useLocation();
@@ -45,6 +46,37 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
       document.body.style.height = originalHeight;
     };
   }, []);
+
+  // ── Dynamic SEO Page Titles ──
+  useEffect(() => {
+    const path = location.pathname.toLowerCase();
+
+    if (path === '/' || path === '/home') {
+      document.title = 'Best IT Services in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/about')) {
+      document.title = 'Best Digital Marketing in Hyderabad - YGR Gobal IT Services';
+    } else if (
+      path.startsWith('/careers') ||
+      path.startsWith('/global-internships') ||
+      path.startsWith('/vacancies') ||
+      path.startsWith('/register-internship') ||
+      path.startsWith('/internships')
+    ) {
+      document.title = 'Best Internship in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/team')) {
+      document.title = 'Best Website Design in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/services')) {
+      document.title = 'Best Mobile App Services in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/portfolio')) {
+      document.title = 'End to End IT Services in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/blog')) {
+      document.title = 'Best Web Application Service in Hyderabad - YGR Gobal IT Services';
+    } else if (path.startsWith('/contact') || path.startsWith('/client-registration')) {
+      document.title = 'Best IT Services in Hyderabad - YGR Gobal IT Services';
+    } else {
+      document.title = 'Best IT Services in Hyderabad - YGR Gobal IT Services';
+    }
+  }, [location.pathname]);
 
   // ── Global Scroll Reveal Engine (Site-wide Desktop Scroll Reveal Transitions) ──
   useEffect(() => {
@@ -109,13 +141,16 @@ const PublicLayout = ({ hideHeaderFooter = false }) => {
   }, [location.pathname]);
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {!hideHeaderFooter && <PublicHeader />}
-      <main style={{ flex: 1, width: '100%' }}>
-        <Outlet />
-      </main>
-      {!hideHeaderFooter && <PublicFooter />}
-    </div>
+    <>
+      <div style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {!hideHeaderFooter && <PublicHeader />}
+        <main style={{ flex: 1, width: '100%' }}>
+          <Outlet />
+        </main>
+        {!hideHeaderFooter && <PublicFooter />}
+      </div>
+      <WhatsAppFloatingIcon />
+    </>
   );
 };
 

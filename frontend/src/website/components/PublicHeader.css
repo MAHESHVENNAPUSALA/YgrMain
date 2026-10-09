@@ -164,8 +164,8 @@
 .brand-logo {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  align-items: stretch; /* Stretch to align text width with logo width */
+  gap: 0;
   text-decoration: none;
   color: #0F172A;
   transition: transform 0.2s ease;
@@ -179,38 +179,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
+  height: 65px; /* Increased to restore the original large logo size */
 }
 
 .logo-img-wrapper img {
   max-width: 100%;
-  max-height: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
 .brand-text {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.brand-name {
-  font-family: var(--font-poppins), sans-serif;
-  font-weight: 800;
-  font-size: 0.8rem;
-  letter-spacing: -0.01em;
-  color: #2D4A6D;
-  line-height: 1;
+  width: 100%;
+  margin-top: -10px; /* Adjust gap */
+  padding: 0 12%; /* Squeeze the text inward so it starts at Y and ends at R */
 }
 
 .brand-tag {
-  font-size: 0.5rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #5E9133;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.65rem; /* Increased font size slightly */
+  font-weight: normal; /* Removed bold font weight */
+  color: #5E9133; /* Changed to green */
   text-transform: uppercase;
-  margin-top: 1px;
+  line-height: 0;
 }
 
 /* Desktop Navigation List (Luxurious 40px Spacing) */
@@ -731,18 +725,14 @@
     padding: 0 14px;
     border-radius: 16px;
   }
-  .brand-name {
-    font-size: 1rem;
-  }
   .brand-tag {
-    font-size: 0.6rem;
+    font-size: 0.38rem;
   }
   .logo-img-wrapper {
-    width: 42px;
-    height: 42px;
+    height: 45px;
   }
   .brand-logo {
-    gap: 10px;
+    gap: 0;
   }
 }
 
@@ -753,12 +743,11 @@
     width: calc(100% - 12px);
     padding: 0 12px;
   }
-  .brand-name {
-    font-size: 0.9rem;
+  .brand-tag {
+    font-size: 0.32rem;
   }
   .logo-img-wrapper {
-    width: 36px;
-    height: 36px;
+    height: 40px;
   }
   .hamburger-toggle {
     width: 26px;

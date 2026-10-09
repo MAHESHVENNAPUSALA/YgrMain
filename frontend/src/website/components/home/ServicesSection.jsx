@@ -6,7 +6,7 @@ import './ServicesSection.css';
 const SERVICES_BENTO = [
   {
     id: 'enterprise',
-    size: 'hero-large', // 2 columns span on desktop
+    size: 'medium', // 1 column span
     title: 'Enterprise Software Development',
     desc: 'Scalable web platforms, microservices architecture, and enterprise core systems engineered for global performance.',
     icon: 'fa-layer-group',
@@ -83,6 +83,16 @@ const SERVICES_BENTO = [
     visualType: 'sla-support',
     tag: '24/7 SLA Support',
     accentColor: '#5E9133'
+  },
+  {
+    id: 'digital-marketing',
+    size: 'standard',
+    title: 'Digital Marketing & SEO',
+    desc: 'Data-driven marketing, SEO optimization, and social media growth strategies.',
+    icon: 'fa-bullhorn',
+    visualType: 'digital-marketing',
+    tag: 'Marketing & Growth',
+    accentColor: '#D36B1C'
   }
 ];
 
@@ -161,6 +171,12 @@ const RenderCardVisual = ({ visualType }) => {
           <span className="sla-badge"><i className="fas fa-shield-halved"></i> 24/7 SLA Active</span>
         </div>
       );
+    case 'digital-marketing':
+      return (
+        <div className="preview-box sla-preview">
+          <span className="sla-badge"><i className="fas fa-arrow-trend-up"></i> Growth Optimized</span>
+        </div>
+      );
     default:
       return null;
   }
@@ -212,12 +228,12 @@ const ServicesSection = () => {
           </div>
 
           <h2 className="expertise-heading">
-            Comprehensive Digital Solutions <br />
-            Built to Scale Your Business
+            Premium IT Solutions <br />
+            To Power Your Business
           </h2>
 
           <p className="expertise-description">
-            From enterprise software and cloud platforms to AI-powered automation and mobile applications, we deliver end-to-end technology solutions that help businesses innovate, optimize operations, and achieve sustainable growth.
+            From enterprise software and cloud platforms to AI-powered automation, mobile applications, and digital marketing, we deliver end-to-end technology solutions that help businesses innovate, optimize operations, and achieve sustainable growth.
           </p>
         </motion.div>
 
@@ -241,8 +257,10 @@ const ServicesSection = () => {
                 <div className="icon-badge" style={{ color: service.accentColor }}>
                   <i className={`fas ${service.icon}`}></i>
                 </div>
-                <span className="category-tag">{service.tag}</span>
-                <i className="fas fa-arrow-up-right card-arrow-icon"></i>
+                <div className="card-top-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="category-tag">{service.tag}</span>
+                  <i className="fas fa-arrow-up-right card-arrow-icon"></i>
+                </div>
               </div>
 
               {/* Title & One-line Description */}
