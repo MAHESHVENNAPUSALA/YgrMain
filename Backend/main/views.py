@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from .models import *
 from .forms import BlogForm, ProjectForm
  
@@ -122,6 +122,7 @@ def admin_logout(request):
 
 # ================= BASIC PAGES (REACT SPA) =================
 
+@ensure_csrf_cookie
 def home(request, *args, **kwargs):
     return render(request, 'index.html')
 
@@ -778,6 +779,7 @@ def save_answer(request):
 
 
 @login_required
+@csrf_exempt
 def submit_exam(request):
     user = request.user
     user_answers = UserAnswer.objects.filter(user=user)
@@ -885,8 +887,8 @@ def create_order(request):
         auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
     )
 
-    base_amount = 250  # ₹250
-    gst = round(base_amount * 0.18, 2)
+    base_amount = 1  # ₹1
+    gst = 0
     total = base_amount + gst
 
     emi_part = None
@@ -1547,7 +1549,6 @@ def internship_users_dashboard(request):
     from .models import InternshipRegistration
     users = InternshipRegistration.objects.all().order_by('-created_at')
     
-    # We don't have scores linked to InternshipRegistration, but we'll pass an empty list for compatibility
     scores = []
     
     return render(request, 'exampages/internship_users_dashboard.html', {
