@@ -9,6 +9,26 @@ from pathlib import Path
 # ---------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+import os
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / '.env')
+except ImportError:
+    pass
+
+# Built-in .env loader fallback
+_env_path = BASE_DIR / '.env'
+if _env_path.exists():
+    try:
+        with open(_env_path, 'r', encoding='utf-8') as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith('#') and '=' in _line:
+                    _k, _v = _line.split('=', 1)
+                    os.environ[_k.strip()] = _v.strip()
+    except Exception:
+        pass
+
 
 # ---------------------------------------------------------
 # SECURITY SETTINGS
@@ -23,6 +43,9 @@ ALLOWED_HOSTS = [
     "www.rrgobalitservices.com",
     "ygrgobalitservices.com",
     "www.ygrgobalitservices.com",
+    "ygrglobalitservices.com",
+    "www.ygrglobalitservices.com",
+    "*",
 ]
 
 AUTH_USER_MODEL = 'hr.User'
@@ -171,12 +194,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "https://rrgobalitservices.com",
     "https://www.rrgobalitservices.com",
-    "http://rrgobalitservices.com",
+    "http://rrgobalitservices.com",   
     "http://www.rrgobalitservices.com",
     "https://ygrgobalitservices.com",
     "https://www.ygrgobalitservices.com",
     "http://ygrgobalitservices.com",
     "http://www.ygrgobalitservices.com",
+    "https://ygrglobalitservices.com",
+    "https://www.ygrglobalitservices.com",
+    "http://ygrglobalitservices.com",
+    "http://www.ygrglobalitservices.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -191,6 +218,10 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.ygrgobalitservices.com",
     "http://ygrgobalitservices.com",
     "http://www.ygrgobalitservices.com",
+    "https://ygrglobalitservices.com",
+    "https://www.ygrglobalitservices.com",
+    "http://ygrglobalitservices.com",
+    "http://www.ygrglobalitservices.com",
 ]
 
 # ---------------------------------------------------------
@@ -216,22 +247,22 @@ REST_FRAMEWORK = {
 }
 
 
-# Razorpay Keys
-RAZORPAY_KEY_ID = 'rzp_live_Tiy5lQMaITZm1P'
-RAZORPAY_KEY_SECRET = '7Rlcz2F7aNcBU4ijs9O46I5N'
+# =========================================================
+# RAZORPAY CONFIGURATION
+# =========================================================
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_TlvaqL8eJ1KsLc")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "jvWNoGHd1R6K5iJZz4jqsV4s")
 
-import os
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'ygrgobalitservices@gmail.com')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'vldzlywnrwakopaq')
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 25))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False').lower() in ('true', '1')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 10))
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'info@ygrgobalitservices.com')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+SITE_URL = os.getenv('SITE_URL', 'https://ygrgobalitservices.com')
 
 

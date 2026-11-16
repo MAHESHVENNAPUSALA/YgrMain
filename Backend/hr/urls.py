@@ -41,8 +41,13 @@ urlpatterns = [
     path('api/holidays/<int:pk>/', api_views.HolidayAPIView.as_view(), name='api_holiday_detail'),
     path('api/holidays/<int:pk>/action/', api_views.HolidayActionAPIView.as_view(), name='api_holiday_action'),
     path('api/payslips/', api_views.PayslipAPIView.as_view(), name='api_payslips'),
+    path('api/payslips/calculate/', api_views.PayslipCalculateAPIView.as_view(), name='api_payslip_calculate'),
     path('api/payslips/<int:pk>/', api_views.PayslipDetailAPIView.as_view(), name='api_payslip_detail'),
+    path('api/payslips/<int:pk>/download/', api_views.PayslipDownloadAPIView.as_view(), name='api_payslip_download'),
+    path('api/payslips/<int:pk>/action/', api_views.PayslipActionAPIView.as_view(), name='api_payslip_action'),
+    path('api/payslips/<int:pk>/send-email/', api_views.PayslipEmailAPIView.as_view(), name='api_payslip_send_email'),
     path('api/salary-structures/', api_views.SalaryStructureAPIView.as_view(), name='api_salary_structures'),
+    path('api/salary-structures/history/', api_views.SalaryHistoryAPIView.as_view(), name='api_salary_structures_history'),
     path('api/projects/', project_views.ProjectAPIView.as_view(), name='api_projects'),
     path('api/projects/<int:pk>/', project_views.ProjectDetailAPIView.as_view(), name='api_project_detail'),
     path('api/projects/<int:pk>/archive/', project_views.ProjectArchiveAPIView.as_view(), name='api_project_archive'),
@@ -99,7 +104,38 @@ urlpatterns = [
     path('api/create-team/', api_views.CreateTeamGroupAPIView.as_view(), name='api_create_team'),
     path('api/forward-message/', api_views.ForwardMessageAPIView.as_view(), name='api_forward_message'),
     path('api/all-chatrooms/', api_views.AllChatRoomsAPIView.as_view(), name='api_all_chatrooms'),
+
+    # Employee Documents (Offer Letters, Joining Letters, Relieving Letters, etc.)
+    path('api/employee-documents/', api_views.EmployeeDocumentAPIView.as_view(), name='api_employee_documents'),
+    path('api/employee-documents/<int:pk>/', api_views.EmployeeDocumentDetailAPIView.as_view(), name='api_employee_document_detail'),
+    path('api/employee-documents/<int:pk>/send-email/', api_views.EmployeeDocumentEmailAPIView.as_view(), name='api_employee_document_send_email'),
+    path('api/email-history/', api_views.DocumentEmailHistoryAPIView.as_view(), name='api_email_history'),
+
+    # Recruitment Candidates
+    path('api/candidates/', api_views.RecruitmentCandidatesAPIView.as_view(), name='api_candidates'),
+
+    # Offer Letters Management
+    path('api/offer-policy-versions/', api_views.OfferLetterPolicyAPIView.as_view(), name='api_offer_policy_versions'),
+    path('api/offer-policy-versions/<int:pk>/', api_views.OfferLetterPolicyDetailAPIView.as_view(), name='api_offer_policy_version_detail'),
+    path('api/offer-policy-versions/<int:pk>/publish/', api_views.OfferLetterPolicyPublishAPIView.as_view(), name='api_offer_policy_version_publish'),
+    path('api/offer-letters/', api_views.OfferLetterAPIView.as_view(), name='api_offer_letters'),
+    path('api/offer-letters/<int:pk>/', api_views.OfferLetterDetailAPIView.as_view(), name='api_offer_letter_detail'),
+    path('api/offer-letters/<int:pk>/action/', api_views.OfferLetterActionAPIView.as_view(), name='api_offer_letter_action'),
+    path('api/offer-letters/<int:pk>/audit/', api_views.OfferLetterAuditAPIView.as_view(), name='api_offer_letter_audit'),
+    path('api/offer-letters/<int:pk>/preview/', api_views.OfferLetterPreviewAPIView.as_view(), name='api_offer_letter_preview'),
+    path('api/offer-letters/preview-draft/', api_views.OfferLetterPreviewAPIView.as_view(), name='api_offer_letter_preview_draft'),
+    path('api/offer-letters/<int:pk>/download/', api_views.OfferLetterDownloadAPIView.as_view(), name='api_offer_letter_download'),
+    path('api/offer-letters/<int:pk>/send-email/', api_views.OfferLetterSendEmailAPIView.as_view(), name='api_offer_letter_send_email'),
+
+    # Joining Letters Management
+    path('api/joining-letters/', api_views.JoiningLetterAPIView.as_view(), name='api_joining_letters'),
+    path('api/joining-letters/<int:pk>/', api_views.JoiningLetterDetailAPIView.as_view(), name='api_joining_letter_detail'),
+    path('api/joining-letters/<int:pk>/action/', api_views.JoiningLetterActionAPIView.as_view(), name='api_joining_letter_action'),
+    path('api/joining-letters/<int:pk>/preview/', api_views.JoiningLetterPreviewAPIView.as_view(), name='api_joining_letter_preview'),
+    path('api/joining-letters/<int:pk>/download/', api_views.JoiningLetterDownloadAPIView.as_view(), name='api_joining_letter_download'),
+    path('api/joining-letters/<int:pk>/send-email/', api_views.JoiningLetterSendEmailAPIView.as_view(), name='api_joining_letter_send_email'),
 ]
+
 
 
 

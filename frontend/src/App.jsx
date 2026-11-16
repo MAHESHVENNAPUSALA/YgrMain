@@ -66,6 +66,10 @@ const ServiceCreate = lazy(() => import('./hrm/pages/ServiceCreate'));
 const InvoiceCreate = lazy(() => import('./hrm/pages/InvoiceCreate'));
 const SalaryStructures = lazy(() => import('./hrm/pages/SalaryStructures'));
 const HRInternshipCandidates = lazy(() => import('./hrm/pages/HRInternshipCandidates'));
+const EmployeeDocuments = lazy(() => import('./hrm/pages/EmployeeDocuments'));
+const OfferLetters = lazy(() => import('./hrm/pages/OfferLetters'));
+const OfferPolicyTemplates = lazy(() => import('./hrm/pages/OfferPolicyTemplates'));
+const JoiningLetters = lazy(() => import('./hrm/pages/JoiningLetters'));
 
 const AdminRedirect = () => {
   const backendHost =
@@ -102,12 +106,19 @@ function App() {
             {/* ── PUBLIC COMPANY WEBSITE ── */}
             {renderWebsiteRoutes()}
 
+            {/* ── DEDICATED STANDALONE PROCTORED EXAM (NO PUBLIC HEADER/FOOTER) ── */}
+            <Route path="/internships/exam/:token" element={<CandidateExam />} />
+            <Route path="/candidate-exam/:token" element={<CandidateExam />} />
+
             {/* ── INTERNSHIP PORTAL ── */}
             <Route element={<PublicLayout />}>
               <Route path={ROUTES.VACANCIES} element={<Vacancies />} />
               <Route path="/internships/candidate-login" element={<CandidateLogin />} />
+              <Route path="/candidate-login" element={<CandidateLogin />} />
               <Route path="/internships/candidate-dashboard/:registrationId" element={<CandidateDashboard />} />
-              <Route path="/internships/exam/:token" element={<CandidateExam />} />
+              <Route path="/candidate-dashboard/:registrationId" element={<CandidateDashboard />} />
+              <Route path="/internships/candidate-dashboard" element={<CandidateDashboard />} />
+              <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
               <Route path="/legacy/exampages/internship_list" element={<Navigate to={ROUTES.GLOBAL_INTERNSHIPS} replace />} />
               <Route path="/legacy/exampages/job_applicant_login" element={<JobApplicantLogin />} />
             </Route>
@@ -195,6 +206,7 @@ function App() {
               <Route path="profile/edit" element={<Profile />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="payslips" element={<Payslips />} />
+              <Route path="payslips/:id" element={<Payslips />} />
               <Route path="payroll" element={<Payroll />} />
               <Route path="holidays" element={<HolidayCalendar />} />
               <Route path="holiday-approvals" element={<HolidayCalendar />} />
@@ -205,6 +217,11 @@ function App() {
               <Route path="calls" element={<Calls />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="exams" element={<Exams />} />
+              <Route path="employee-documents" element={<EmployeeDocuments />} />
+              <Route path="my-documents" element={<EmployeeDocuments />} />
+              <Route path="offer-letters" element={<OfferLetters />} />
+              <Route path="offer-policy-templates" element={<OfferPolicyTemplates />} />
+              <Route path="joining-letters" element={<JoiningLetters />} />
 
               {/* Account Registration */}
               <Route path="register" element={<Register />} />

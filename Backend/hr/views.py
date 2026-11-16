@@ -4286,8 +4286,8 @@ def employee_dashboard(request):
 
     tasks = Task.objects.filter(members=user)
 
-    # Fetch latest published payslip
-    latest_payslip = Payslip.objects.filter(employee=user, is_published=True).order_by('-year', '-month').first()
+    # Fetch latest published payslip (Approved or Paid only)
+    latest_payslip = Payslip.objects.filter(employee=user, is_published=True, status__in=['Approved', 'Paid']).order_by('-year', '-month').first()
 
     context = {
         "team_lead": team_lead,
@@ -5332,6 +5332,7 @@ def calculate_payroll_data(employee, year, month):
     from datetime import date, timedelta
     from django.db.models import Q
     from .models import Attendance, Leave, Holiday, SalaryStructure, HRSettings
+    hr_settings = HRSettings.get_settings()
 
     year = int(year)
     month = int(month)
@@ -6020,13 +6021,23 @@ from django.core.files.base import ContentFile
 from .models import Payslip, PayslipDownloadLog, Holiday, SalaryStructure, PayrollAuditLog, User
 
 def number_to_words(num):
-    num = int(num)
-    if num <= 0:
-        return 'Zero'
+    from decimal import Decimal
+    try:
+        val = Decimal(str(num))
+    except Exception:
+        val = Decimal('0.00')
+    if val <= Decimal('0.00'):
+        return 'Zero Rupees Only'
+        
+    rupees = int(val)
+    paise = int(round((val - Decimal(rupees)) * 100))
+    
     a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
     b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
     
     def to_words(n):
+        if n == 0:
+            return ''
         if n < 20:
             return a[n]
         if n < 100:
@@ -6039,7 +6050,10 @@ def number_to_words(num):
             return to_words(n // 100000) + ' Lakh' + ((' ' + to_words(n % 100000)) if n % 100000 else '')
         return to_words(n // 10000000) + ' Crore' + ((' ' + to_words(n % 10000000)) if n % 10000000 else '')
         
-    return to_words(num) + ' Rupees Only'
+    rupees_part = to_words(rupees) if rupees > 0 else 'Zero'
+    if paise > 0:
+        return f"{rupees_part} Rupees and {to_words(paise)} Paise Only"
+    return f"{rupees_part} Rupees Only"
 
 
 _fonts_registered = False
@@ -6152,38 +6166,89 @@ def _register_pdf_fonts():
 def generate_payslip_pdf_file(payslip):
     _register_pdf_fonts()
     from io import BytesIO
+    import os as _os
+    import base64 as _b64
+    from django.utils import timezone
+    from .payslip_utils import clean_employee_name, get_clean_department, get_clean_designation
     template_path = 'employee/payslip_pdf.html'
-    
-    logo_file = finders.find('images/Logo.png')
-    if logo_file:
-        logo_path = "file:///" + logo_file.replace("\\", "/")
-    else:
-        logo_file2 = finders.find('images/logo1.png')
-        logo_path = "file:///" + logo_file2.replace("\\", "/") if logo_file2 else ""
 
+    # Build a base64 data URI for genuine transparent logo
+    logo_data_uri = ''
+    found_logo = None
+    for candidate in ('images/logo.png', 'images/logo1-removebg-preview.png'):
+        f = finders.find(candidate)
+        if f and _os.path.isfile(f):
+            found_logo = f
+            break
+
+    if not found_logo:
+        base_dir = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+        for p in (
+            _os.path.join(base_dir, 'main', 'static', 'images', 'logo.png'),
+            _os.path.join(base_dir, 'hr', 'static', 'images', 'logo.png'),
+        ):
+            if _os.path.isfile(p):
+                found_logo = p
+                break
+
+    if found_logo and _os.path.isfile(found_logo):
+        with open(found_logo, 'rb') as _f:
+            _raw = _f.read()
+        logo_data_uri = 'data:image/png;base64,' + _b64.b64encode(_raw).decode('ascii')
+
+    MONTHS = ['January','February','March','April','May','June',
+              'July','August','September','October','November','December']
+    month_name = MONTHS[payslip.month - 1] if 1 <= payslip.month <= 12 else str(payslip.month)
+
+    emp = payslip.employee
+    employee_display_name = clean_employee_name(emp, payslip.employee_name)
+    designation_display = get_clean_designation(payslip)
+    department_display = get_clean_department(payslip)
+
+    joining_date_display = emp.date_of_joining.strftime('%d %b %Y') if emp and emp.date_of_joining else '—'
+    payment_date_display = payslip.payment_date.strftime('%d %b %Y') if payslip.payment_date else 'End of Month'
+    
+    approved_by_display = ''
+    if payslip.approved_by:
+        approved_by_display = clean_employee_name(payslip.approved_by)
+
+    generated_on_display = timezone.now().strftime('%d %b %Y, %I:%M %p')
+
+    emp_id = emp.emp_id if emp and emp.emp_id else '—'
     context = {
         'payslip': payslip,
-        'logo_path': logo_path,
+        'month_name': month_name,
+        'employee_emp_id': emp_id,
+        'employee_display_name': employee_display_name,
+        'designation_display': designation_display,
+        'department_display': department_display,
+        'joining_date_display': joining_date_display,
+        'payment_date_display': payment_date_display,
+        'approved_by_display': approved_by_display,
+        'generated_on_display': generated_on_display,
+        'logo_data_uri': logo_data_uri,
         'amount_in_words': number_to_words(payslip.net_salary),
     }
-    
+
     template = get_template(template_path)
     html = template.render(context)
-    
+
     pdf_buffer = BytesIO()
     pisa_status = pisa.CreatePDF(html, dest=pdf_buffer, encoding='UTF-8')
     if not pisa_status.err:
-        pdf_name = f"payslip_{payslip.employee.emp_id}_{payslip.month}_{payslip.year}.pdf"
+        emp_id = emp.emp_id if emp and emp.emp_id else 'EMP'
+        pdf_name = f"payslip_{emp_id}_{payslip.month}_{payslip.year}.pdf"
         payslip.payslip_pdf.save(pdf_name, ContentFile(pdf_buffer.getvalue()), save=False)
         return True
     return False
+
 
 
 # --------------- EMPLOYEE: My Payslips ---------------
 @login_required
 def my_payslips(request):
     user = request.user
-    payslips = Payslip.objects.filter(employee=user, is_published=True).order_by('-year', '-month')
+    payslips = Payslip.objects.filter(employee=user, is_published=True, status__in=['Approved', 'Paid']).order_by('-year', '-month')
 
     # Filters
     filter_month = request.GET.get('month')
@@ -6209,7 +6274,7 @@ def my_payslips(request):
     total_count = payslips.count()
 
     # Available years for filter
-    years = Payslip.objects.filter(employee=user, is_published=True).values_list('year', flat=True).distinct().order_by('-year')
+    years = Payslip.objects.filter(employee=user, is_published=True, status__in=['Approved', 'Paid']).values_list('year', flat=True).distinct().order_by('-year')
     current_year = datetime.now().year
     fy_options = [(y, f"FY {y}-{str(y+1)[2:]}") for y in range(current_year, current_year - 5, -1)]
 
@@ -6237,7 +6302,7 @@ def view_payslip(request, pk):
         messages.error(request, "Access denied.")
         return redirect('home')
         
-    if request.user.role not in ('HR', 'MD') and not payslip.is_published:
+    if request.user.role not in ('HR', 'MD') and (not payslip.is_published or payslip.status not in ('Approved', 'Paid')):
         messages.error(request, "This payslip is not published yet.")
         return redirect('my_payslips')
         
@@ -6245,7 +6310,7 @@ def view_payslip(request, pk):
     if request.user.role in ('HR', 'MD'):
         history = Payslip.objects.filter(employee=payslip.employee).order_by('-year', '-month')
     else:
-        history = Payslip.objects.filter(employee=payslip.employee, is_published=True).order_by('-year', '-month')
+        history = Payslip.objects.filter(employee=payslip.employee, is_published=True, status__in=['Approved', 'Paid']).order_by('-year', '-month')
         
     return render(request, 'employee/payslip_detail.html', {
         'payslip': payslip,
@@ -6263,7 +6328,7 @@ def download_payslip(request, pk):
         messages.error(request, "Access denied.")
         return redirect('home')
         
-    if request.user.role not in ('HR', 'MD') and not payslip.is_published:
+    if request.user.role not in ('HR', 'MD') and (not payslip.is_published or payslip.status not in ('Approved', 'Paid')):
         messages.error(request, "This payslip is not published yet.")
         return redirect('my_payslips')
         
@@ -6790,43 +6855,12 @@ def hr_payslip_email(request, pk):
         generate_payslip_pdf_file(payslip)
         payslip.save()
         
-    from django.core.mail import EmailMessage
-    from django.conf import settings
-    
-    subject = f"Payslip for {payslip.month_name} {payslip.year} - YGR Technologies"
-    body = (
-        f"Dear {payslip.employee_name or payslip.employee.get_full_name() or payslip.employee.username},\n\n"
-        f"Please find attached your salary statement (payslip) for the month of {payslip.month_name} {payslip.year}.\n\n"
-        f"Take-Home Net Salary: ₹{payslip.net_salary:,.2f}\n"
-        f"Payment Status: {payslip.status}\n\n"
-        f"Best Regards,\n"
-        f"HR Team\n"
-        f"YGR Technologies"
-    )
-    
-    email = EmailMessage(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL or 'hr@ygrteam.com',
-        [payslip.employee.email]
-    )
-    
-    if payslip.payslip_pdf:
-        email.attach_file(payslip.payslip_pdf.path)
-        
-    try:
-        email.send()
-        messages.success(request, f"Payslip emailed to {payslip.employee.email} successfully.")
-        ip = request.META.get('REMOTE_ADDR')
-        PayrollAuditLog.objects.create(
-            payslip=payslip,
-            performed_by=request.user,
-            action='EMAIL',
-            ip_address=ip,
-            details=f"Emailed payslip to {payslip.employee.email}"
-        )
-    except Exception as e:
-        messages.error(request, f"Failed to send email: {str(e)}")
+    from main.email_service import YGREmailService
+    ok, reason = YGREmailService.send_payslip(payslip.id, sender_id=request.user.id, force=True)
+    if ok:
+        messages.success(request, f"Payslip email queued for {payslip.employee.email} successfully.")
+    else:
+        messages.error(request, f"Failed to send email: {reason}")
         
     return redirect('hr_payslip_list')
 

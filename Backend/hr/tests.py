@@ -5,6 +5,23 @@ from .models import ChatRoom, ChatMessage, GroupMessage, UserPresence, CompanyAn
 from django.utils import timezone
 from datetime import timedelta
 import json
+from datetime import date
+from io import BytesIO
+from unittest.mock import patch
+from rest_framework.test import APIRequestFactory, force_authenticate
+from xhtml2pdf import pisa
+from pypdf import PdfReader
+from .models import OfferLetter, OfferLetterAudit, OfferLetterPolicyVersion
+from .api_views import (
+    OFFER_POLICY_SECTION_KEYS,
+    OfferLetterAPIView,
+    OfferLetterActionAPIView,
+    OfferLetterPolicyAPIView,
+    OfferLetterPolicyDetailAPIView,
+    OfferLetterPolicyPublishAPIView,
+    OfferLetterAuditAPIView,
+    OfferLetterPreviewAPIView,
+)
 
 User = get_user_model()
 
@@ -271,4 +288,240 @@ class CollaborationChatTests(TestCase):
         self.assertEqual(data['status'], 'success')
         self.assertTrue(len(data['meetings']) > 0)
         self.assertEqual(data['meetings'][0]['title'], 'Sprint Planning')
+
+
+class OfferDocumentPipelineTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.hr_user = User.objects.create_user(username='offer_hr', password='pass', role='HR', email='hr-offer@test.com')
+        self.md_user = User.objects.create_user(username='offer_md', password='pass', role='MD', email='md-offer@test.com')
+
+    def _published_policy(self):
+        sections = {
+            key: f'Approved company policy wording for {key}. ' * 8
+            for key in OFFER_POLICY_SECTION_KEYS
+        }
+        policy = OfferLetterPolicyVersion.objects.create(
+            name='Employment Terms',
+            version='test-1',
+            employment_category='All',
+            employment_type='All',
+            effective_date=date.today() - timedelta(days=1),
+            company_details=self._company_details(),
+            sections=sections,
+            annexures=self._approved_annexures(),
+            status='Published',
+            legal_approved=True,
+            legal_reviewer_name='Qualified Reviewer',
+            legal_approval_note='Reviewed for test coverage.',
+            created_by=self.md_user,
+        )
+        return policy
+
+    def _company_details(self):
+        return {
+            'legal_name': 'YGR Global IT Services Pvt. Ltd.',
+            'registered_office_address': 'Registered office address used by test fixtures.',
+            'cin': 'TEST-CIN-0001',
+            'gstin': '',
+            'official_email': 'hr@example.test',
+            'website': 'https://example.test',
+            'authorized_signatory_name': 'Authorized Test Signatory',
+            'authorized_signatory_title': 'Managing Director',
+        }
+
+    def _approved_annexures(self):
+        undertaking_sections = {
+            key: f'Approved undertaking language for {key}. ' * 8
+            for key in (
+                'confidential_information', 'data_handling', 'confidentiality_obligations',
+                'intellectual_property', 'return_deletion', 'employee_acknowledgement',
+            )
+        }
+        return [
+            {'code': 'B', 'title': 'Approved benefits', 'benefit_sections': {
+                key: f'Approved benefits wording for {key}. ' * 8
+                for key in ('medical_insurance', 'leave_entitlements', 'paid_holidays', 'training_development', 'performance_incentives', 'other_benefits')
+            }, 'enabled': True},
+            {'code': 'C', 'title': 'Confidentiality and IP undertaking', 'sections': undertaking_sections, 'enabled': True},
+            {'code': 'D', 'title': 'Joining documentation checklist', 'items': ['PAN', 'Identity proof', 'Address proof', 'Education certificates', 'Bank details'], 'enabled': True},
+        ]
+
+    def test_policy_requires_review_and_published_versions_are_locked(self):
+        sections = {key: f'Approved company policy wording for {key}. ' * 8 for key in OFFER_POLICY_SECTION_KEYS}
+        payload = {
+            'name': 'Employment Terms',
+            'version': '2026-test',
+            'employment_category': 'All',
+            'employment_type': 'All',
+            'effective_date': date.today().isoformat(),
+            'company_details': {},
+            'sections': sections,
+            'annexures': [],
+        }
+        request = self.factory.post('/api/offer-policy-versions/', payload, format='json')
+        force_authenticate(request, user=self.hr_user)
+        created = OfferLetterPolicyAPIView.as_view()(request)
+        self.assertEqual(created.status_code, 201)
+        policy_id = created.data['id']
+
+        request = self.factory.post(f'/api/offer-policy-versions/{policy_id}/publish/', {}, format='json')
+        force_authenticate(request, user=self.hr_user)
+        blocked = OfferLetterPolicyPublishAPIView.as_view()(request, pk=policy_id)
+        self.assertEqual(blocked.status_code, 400)
+
+        payload.update({
+            'legal_approved': True,
+            'legal_reviewer_name': 'Qualified Reviewer',
+            'legal_approval_note': 'Reviewed for test coverage.',
+            'company_details': self._company_details(),
+            'annexures': self._approved_annexures(),
+        })
+        request = self.factory.put(f'/api/offer-policy-versions/{policy_id}/', payload, format='json')
+        force_authenticate(request, user=self.md_user)
+        updated = OfferLetterPolicyDetailAPIView.as_view()(request, pk=policy_id)
+        self.assertEqual(updated.status_code, 200)
+
+        request = self.factory.post(f'/api/offer-policy-versions/{policy_id}/publish/', {}, format='json')
+        force_authenticate(request, user=self.md_user)
+        published = OfferLetterPolicyPublishAPIView.as_view()(request, pk=policy_id)
+        self.assertEqual(published.status_code, 200)
+        self.assertEqual(published.data['status'], 'Published')
+
+        request = self.factory.put(f'/api/offer-policy-versions/{policy_id}/', payload, format='json')
+        force_authenticate(request, user=self.md_user)
+        immutable = OfferLetterPolicyDetailAPIView.as_view()(request, pk=policy_id)
+        self.assertEqual(immutable.status_code, 400)
+
+    def test_approval_snapshots_policy_and_preview_uses_snapshot(self):
+        policy = self._published_policy()
+        offer_payload = {
+            'candidate_name': 'Fresher Sample',
+            'candidate_email': 'fresher@test.com',
+            'candidate_address': '12 Test Street, Hyderabad, Telangana',
+            'job_title': 'Software Engineer',
+            'department': 'Engineering',
+            'employment_type': 'Full-time',
+            'employment_category': 'Fresher',
+            'work_location': 'Hyderabad',
+            'reporting_manager_name': 'Engineering Manager',
+            'offered_ctc': '1200000.00',
+            'monthly_gross': '90000.00',
+            'basic_salary': '50000.00',
+            'hra': '25000.00',
+            'special_allowance': '15000.00',
+            'provident_fund': '10000.00',
+            'joining_date': (date.today() + timedelta(days=30)).isoformat(),
+            'offer_validity_date': (date.today() + timedelta(days=7)).isoformat(),
+            'policy_version': policy.id,
+            'annexures': ['B', 'C', 'D'],
+            'status': 'Draft',
+        }
+        request = self.factory.post('/api/offer-letters/', offer_payload, format='json')
+        force_authenticate(request, user=self.hr_user)
+        created = OfferLetterAPIView.as_view()(request)
+        self.assertEqual(created.status_code, 201, created.data)
+        offer_id = created.data['id']
+
+        offer = OfferLetter.objects.get(pk=offer_id)
+        offer.offered_ctc = 1100000
+        offer.save(update_fields=['offered_ctc'])
+        request = self.factory.post(f'/api/offer-letters/{offer_id}/action/', {'action': 'approve'}, format='json')
+        force_authenticate(request, user=self.md_user)
+        mismatch = OfferLetterActionAPIView.as_view()(request, pk=offer_id)
+        self.assertEqual(mismatch.status_code, 400)
+        offer.offered_ctc = 1200000
+        offer.save(update_fields=['offered_ctc'])
+
+        with patch('hr.letter_service.generate_offer_letter_pdf', return_value=(False, 'mock failure')):
+            request = self.factory.post(f'/api/offer-letters/{offer_id}/action/', {'action': 'approve'}, format='json')
+            force_authenticate(request, user=self.md_user)
+            failed_pdf = OfferLetterActionAPIView.as_view()(request, pk=offer_id)
+        self.assertEqual(failed_pdf.status_code, 500)
+        offer.refresh_from_db()
+        self.assertEqual(offer.status, 'Draft')
+        self.assertEqual(offer.policy_snapshot, {})
+
+        with patch('hr.letter_service.generate_offer_letter_pdf', return_value=(True, '/mock.pdf')):
+            request = self.factory.post(f'/api/offer-letters/{offer_id}/action/', {'action': 'approve'}, format='json')
+            force_authenticate(request, user=self.md_user)
+            approved = OfferLetterActionAPIView.as_view()(request, pk=offer_id)
+        self.assertEqual(approved.status_code, 200, approved.data)
+        offer = OfferLetter.objects.get(pk=offer_id)
+        self.assertEqual(offer.policy_snapshot['version'], 'test-1')
+        self.assertTrue(OfferLetterAudit.objects.filter(offer=offer, action='approved').exists())
+        request = self.factory.get(f'/api/offer-letters/{offer_id}/audit/')
+        force_authenticate(request, user=self.hr_user)
+        audit = OfferLetterAuditAPIView.as_view()(request, pk=offer_id)
+        self.assertEqual(audit.status_code, 200)
+        self.assertTrue(any(event['action'] == 'approved' for event in audit.data))
+
+        policy.sections = {key: 'Changed future wording.' for key in OFFER_POLICY_SECTION_KEYS}
+        policy.save(update_fields=['sections'])
+        request = self.factory.get(f'/api/offer-letters/{offer_id}/preview/')
+        force_authenticate(request, user=self.hr_user)
+        preview = OfferLetterPreviewAPIView.as_view()(request, pk=offer_id)
+        self.assertEqual(preview['Content-Type'], 'application/pdf')
+        pdf_text = '\n'.join(page.extract_text() or '' for page in PdfReader(BytesIO(preview.content)).pages)
+        self.assertIn('Approved company policy wording for appointment.', pdf_text)
+        self.assertNotIn('Changed future wording.', pdf_text)
+
+    def test_employee_categories_generate_multipage_pdfs(self):
+        from hr.letter_service import render_offer_letter_html
+
+        long_text = 'Approved policy content for document pagination. ' * 35
+        sections = {key: long_text for key in OFFER_POLICY_SECTION_KEYS}
+        for category in ('Fresher', 'Experienced', 'Senior', 'Contract'):
+            offer = OfferLetter(
+                candidate_name=f'{category} Candidate',
+                candidate_email='candidate@test.com',
+                job_title='Software Engineer',
+                department='Engineering',
+                employment_type='Contract' if category == 'Contract' else 'Full-time',
+                employment_category=category,
+                work_location='Hyderabad',
+                offered_ctc=1200000,
+                monthly_gross=90000,
+                basic_salary=50000,
+                hra=25000,
+                special_allowance=15000,
+                provident_fund=10000,
+                joining_date=date.today() + timedelta(days=30),
+                reference_number=f'YGR/TEST/{category}',
+                created_at=timezone.now(),
+                policy_snapshot={
+                    'name': 'Employment Terms',
+                    'version': 'test-1',
+                    'sections': sections,
+                    'company_details': self._company_details(),
+                    'annexures': self._approved_annexures() + [{'code': 'E', 'title': 'Role conditions', 'content': 'Role conditions fixture.', 'enabled': True}],
+                },
+            )
+            html = render_offer_letter_html(offer)
+            output = BytesIO()
+            result = pisa.CreatePDF(html, dest=output, encoding='UTF-8')
+            self.assertFalse(result.err)
+            reader = PdfReader(BytesIO(output.getvalue()))
+            self.assertGreaterEqual(len(reader.pages), 4, category)
+            page_text = [page.extract_text() or '' for page in reader.pages]
+            extracted = '\n'.join(page_text)
+            for page_number, text in enumerate(page_text, start=1):
+                self.assertTrue(text.strip(), f'Unexpected blank page {page_number} for {category}')
+                self.assertIn(f'Page {page_number} of {len(reader.pages)}', text)
+            self.assertIn(category, extracted)
+            self.assertIn('Candidate declaration', extracted)
+            for code in ('Annexure A', 'Annexure B', 'Annexure C', 'Annexure D', 'Annexure E'):
+                self.assertIn(code, extracted)
+
+    def test_non_hr_cannot_manage_policy_or_create_offer(self):
+        employee = User.objects.create_user(username='offer_employee', password='pass', role='Employee', email='employee@test.com')
+        request = self.factory.get('/api/offer-policy-versions/')
+        force_authenticate(request, user=employee)
+        policies = OfferLetterPolicyAPIView.as_view()(request)
+        self.assertEqual(policies.status_code, 403)
+
+        request = self.factory.post('/api/offer-letters/', {'candidate_name': 'Unauthorized'}, format='json')
+        force_authenticate(request, user=employee)
+        created = OfferLetterAPIView.as_view()(request)
+        self.assertEqual(created.status_code, 403)
 

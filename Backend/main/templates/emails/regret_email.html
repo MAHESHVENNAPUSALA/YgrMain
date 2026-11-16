@@ -1,0 +1,27 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear {{ candidate_name }},</p>
+
+<p>Thank you for participating in the <strong>YGR Global IT Services Pvt. Ltd.</strong> All-India Internship Selection Program.</p>
+
+<p>After evaluating your performance in the <strong>{{ stage_name }}</strong>, we regret to inform you that you have not met the qualification criteria for this selection round.</p>
+
+<div class="candidate-details">
+    <p><strong>Registration ID:</strong> {{ registration_id }}</p>
+    <p><strong>Internship Domain:</strong> {{ course }}</p>
+    <p><strong>Stage:</strong> {{ stage_name }}</p>
+    <p><strong>Status:</strong> Not Qualified</p>
+</div>
+
+<p>We appreciate the time, preparation, and effort you invested in the selection process.</p>
+<p>Thank you for considering YGR Global IT Services Pvt. Ltd. We wish you every success in your academic and professional journey.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ site_url }}/internships/candidate-dashboard/{{ registration_id }}" class="btn">View Candidate Dashboard</a>
+</div>
+
+<p>Regards,<br>
+<strong>HR &amp; Recruitment Team</strong><br>
+YGR Global IT Services Pvt. Ltd.</p>
+{% endblock %}

@@ -1315,8 +1315,16 @@ class Payslip(models.Model):
         ('Generated', 'Generated'),
         ('Pending Approval', 'Pending Approval'),
         ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
         ('Paid', 'Paid'),
         ('Cancelled', 'Cancelled'),
+    ]
+
+    EMAIL_STATUS_CHOICES = [
+        ('Not Sent', 'Not Sent'),
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
     ]
 
     employee = models.ForeignKey(
@@ -1382,6 +1390,16 @@ class Payslip(models.Model):
     approved_at = models.DateTimeField(null=True, blank=True)
     recalculated_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='recalculated_payslips')
     recalculated_at = models.DateTimeField(null=True, blank=True)
+
+    # Email Delivery Tracking
+    email_status = models.CharField(max_length=20, choices=EMAIL_STATUS_CHOICES, default='Not Sent')
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error = models.TextField(blank=True, null=True)
+
+    # Rejection Details
+    rejection_reason = models.TextField(blank=True, null=True)
+    rejected_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_payslips')
+    rejected_at = models.DateTimeField(null=True, blank=True)
 
     # Detailed Attendance Metrics
     unpaid_leave_days = models.PositiveSmallIntegerField(default=0)
@@ -1554,6 +1572,7 @@ class HolidayNotification(models.Model):
 
 class SalaryStructure(models.Model):
     employee = models.OneToOneField('User', on_delete=models.CASCADE, related_name='salary_structure')
+    effective_date = models.DateField(default=timezone.now)
     monthly_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     # Earnings structure (monthly bases)
@@ -1590,23 +1609,90 @@ class SalaryStructure(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def gross_salary(self):
+        from decimal import Decimal
+        return (
+            Decimal(str(self.basic_salary or 0)) +
+            Decimal(str(self.hra or 0)) +
+            Decimal(str(self.transport_allowance or 0)) +
+            Decimal(str(self.medical_allowance or 0)) +
+            Decimal(str(self.special_allowance or 0)) +
+            Decimal(str(self.bonus or 0))
+        )
+
+    @property
+    def total_deductions(self):
+        from decimal import Decimal
+        return (
+            Decimal(str(self.pf_amount or 0)) +
+            Decimal(str(self.esi_amount or 0)) +
+            Decimal(str(self.pt_amount or 0)) +
+            Decimal(str(self.tds_amount or 0)) +
+            Decimal(str(self.other_deductions or 0))
+        )
+
+    @property
+    def net_salary(self):
+        from decimal import Decimal
+        val = self.gross_salary - self.total_deductions
+        return max(val, Decimal('0.00'))
+
     def __str__(self):
         return f"Salary Structure - {self.employee.username}"
+
+
+class SalaryHistory(models.Model):
+    employee = models.ForeignKey('User', on_delete=models.CASCADE, related_name='salary_history')
+    effective_date = models.DateField(default=timezone.now)
+    revised_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='revised_salaries')
+    reason = models.CharField(max_length=255, blank=True, default='Salary Revision')
+    
+    monthly_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bonus = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    pf_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    esi_deduction = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    professional_tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tds = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    gross_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_deductions = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-effective_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.employee.username} - ₹{self.net_salary} (Eff: {self.effective_date})"
 
 
 class PayrollAuditLog(models.Model):
     ACTION_CHOICES = [
         ('GENERATE', 'Payroll Generated'),
         ('REGENERATE', 'Payroll Regenerated'),
+        ('APPROVE', 'Payslip Approved'),
+        ('REJECT', 'Payslip Rejected'),
         ('LOCK', 'Payslip Locked'),
         ('UNLOCK', 'Payslip Unlocked'),
         ('PAID', 'Salary Marked as Paid'),
         ('EMAIL', 'Payslip Emailed'),
         ('DOWNLOAD', 'Payslip Downloaded'),
+        ('SALARY_REVISION', 'Salary Revision'),
+        ('EMPLOYEE_UPDATE', 'Employee Details Updated'),
+        ('ATTENDANCE_CORRECTION', 'Attendance Corrected'),
     ]
     payslip = models.ForeignKey(Payslip, on_delete=models.CASCADE, related_name='audit_logs', null=True, blank=True)
     performed_by = models.ForeignKey('User', on_delete=models.CASCADE)
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     details = models.TextField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -2063,5 +2149,280 @@ class ClientLead(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class EmployeeDocument(models.Model):
+    DOCUMENT_TYPES = [
+        ('offer_letter', 'Offer Letter'),
+        ('joining_letter', 'Joining Letter'),
+        ('appointment_letter', 'Appointment Letter'),
+        ('relieving_letter', 'Relieving Letter'),
+        ('other', 'Other Document'),
+    ]
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Approved', 'Approved'),
+        ('Issued', 'Issued'),
+        ('Revoked', 'Revoked'),
+    ]
+    EMAIL_STATUS_CHOICES = [
+        ('Not Sent', 'Not Sent'),
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
+    ]
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='employee_documents')
+    candidate = models.ForeignKey('JobApplication', on_delete=models.SET_NULL, null=True, blank=True, related_name='candidate_documents')
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    title = models.CharField(max_length=200)
+    reference_number = models.CharField(max_length=100, blank=True, null=True)
+    file = models.FileField(upload_to='employee_documents/', blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Approved')
+    issue_date = models.DateField(default=timezone.now)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_employee_documents')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    email_status = models.CharField(max_length=20, choices=EMAIL_STATUS_CHOICES, default='Not Sent')
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        emp_name = self.employee.username if self.employee else (self.candidate.first_name if self.candidate else 'Unknown')
+        return f"{self.title} ({emp_name})"
+
+
+class DocumentEmailLog(models.Model):
+    STATUS_CHOICES = [
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
+    ]
+    document_type = models.CharField(max_length=50) # 'payslip', 'offer_letter', 'joining_letter', 'relieving_letter'
+    document_id = models.CharField(max_length=50)
+    recipient_email = models.EmailField()
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='received_document_emails')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_document_emails')
+    subject = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Sending')
+    error_details = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"[{self.status}] {self.document_type} -> {self.recipient_email} at {self.timestamp}"
+
+
+class OfferLetterPolicyVersion(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Published', 'Published'),
+        ('Retired', 'Retired'),
+    ]
+
+    name = models.CharField(max_length=150)
+    version = models.CharField(max_length=40)
+    employment_category = models.CharField(max_length=50, default='All')
+    employment_type = models.CharField(max_length=50, default='All')
+    effective_date = models.DateField(null=True, blank=True)
+    company_details = models.JSONField(default=dict, blank=True)
+    sections = models.JSONField(default=dict, blank=True)
+    annexures = models.JSONField(default=list, blank=True)
+    requires_md_approval = models.BooleanField(default=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Draft')
+    legal_approved = models.BooleanField(default=False)
+    legal_reviewer_name = models.CharField(max_length=150, blank=True, default='')
+    legal_approval_note = models.TextField(blank=True, default='')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_offer_policies')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-effective_date', '-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'version'], name='unique_offer_policy_version'),
+        ]
+
+    def __str__(self):
+        return f'{self.name} ({self.version})'
+
+
+class OfferLetterAudit(models.Model):
+    offer = models.ForeignKey('OfferLetter', on_delete=models.CASCADE, related_name='audit_events')
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='offer_letter_audit_events')
+    action = models.CharField(max_length=40)
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class OfferLetter(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Pending Approval', 'Pending Approval'),
+        ('Approved', 'Approved'),
+        ('Issued', 'Issued'),
+        ('Sent', 'Sent'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+        ('Expired', 'Expired'),
+    ]
+    RESPONSE_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    ]
+    EMAIL_STATUS_CHOICES = [
+        ('Not Sent', 'Not Sent'),
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
+    ]
+
+    candidate = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True, blank=True, related_name='offer_letters')
+    employee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='offer_letters')
+
+    # Candidate details
+    candidate_name = models.CharField(max_length=150)
+    candidate_email = models.EmailField()
+    candidate_phone = models.CharField(max_length=20, blank=True, default='')
+    candidate_address = models.TextField(blank=True, default='')
+
+    # Job & Role details
+    job_title = models.CharField(max_length=150)
+    department = models.CharField(max_length=100)
+    employment_type = models.CharField(max_length=50, default='Full-time')
+    work_location = models.CharField(max_length=150, default='Hyderabad, Telangana')
+    reporting_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinate_offers')
+    reporting_manager_name = models.CharField(max_length=150, blank=True, default='')
+
+    # Compensation details (INR)
+    offered_ctc = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    monthly_gross = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    hra = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    special_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    provident_fund = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    transport_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    medical_allowance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    other_allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    gratuity = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    variable_pay = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    employee_pf_deduction = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    employer_esi = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    employee_esi = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    professional_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    other_deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    # Dates & Terms
+    joining_date = models.DateField()
+    offer_validity_date = models.DateField(null=True, blank=True)
+    probation_period_months = models.PositiveIntegerField(default=0)
+    notice_period_days = models.PositiveIntegerField(default=0)
+    reference_number = models.CharField(max_length=100, unique=True)
+    document_version = models.PositiveSmallIntegerField(default=1)
+
+    # Workflow & Approval
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Draft')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_offers')
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    # Generated PDF
+    pdf_file = models.FileField(upload_to='offer_letters/', blank=True, null=True)
+
+    # Email Delivery Tracking
+    email_status = models.CharField(max_length=20, choices=EMAIL_STATUS_CHOICES, default='Not Sent')
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error = models.TextField(blank=True, null=True)
+
+    # Candidate Acceptance Tracking
+    candidate_response = models.CharField(max_length=20, choices=RESPONSE_CHOICES, default='Pending')
+    candidate_response_notes = models.TextField(blank=True, null=True)
+    response_date = models.DateTimeField(null=True, blank=True)
+
+    terms_and_conditions = models.TextField(blank=True, null=True)
+    employment_category = models.CharField(max_length=50, default='General')
+    policy_version = models.ForeignKey(OfferLetterPolicyVersion, on_delete=models.SET_NULL, null=True, blank=True, related_name='offers')
+    policy_snapshot = models.JSONField(default=dict, blank=True)
+    annexures = models.JSONField(default=list, blank=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_offers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Offer: {self.candidate_name} ({self.reference_number}) - {self.status}"
+
+
+class JoiningLetter(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Approved', 'Approved'),
+        ('Issued', 'Issued'),
+        ('Sent', 'Sent'),
+    ]
+    EMAIL_STATUS_CHOICES = [
+        ('Not Sent', 'Not Sent'),
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
+    ]
+
+    offer_letter = models.ForeignKey(OfferLetter, on_delete=models.SET_NULL, null=True, blank=True, related_name='joining_letters')
+    candidate = models.ForeignKey(JobApplication, on_delete=models.SET_NULL, null=True, blank=True, related_name='joining_letters')
+    employee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='joining_letters')
+
+    employee_name = models.CharField(max_length=150)
+    employee_email = models.EmailField()
+    employee_phone = models.CharField(max_length=20, blank=True, default='')
+    employee_address = models.TextField(blank=True, default='')
+    employee_id_number = models.CharField(max_length=50, blank=True, null=True)
+
+    designation = models.CharField(max_length=150)
+    department = models.CharField(max_length=100)
+    employment_type = models.CharField(max_length=50, default='Full-time')
+    work_location = models.CharField(max_length=150, default='Hyderabad, Telangana')
+    reporting_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinate_joining')
+    reporting_manager_name = models.CharField(max_length=150, blank=True, default='')
+
+    actual_joining_date = models.DateField()
+    probation_period_months = models.PositiveIntegerField(default=3)
+    working_hours = models.CharField(max_length=100, default='9:30 AM to 6:30 PM (Mon - Fri)')
+
+    reference_number = models.CharField(max_length=100, unique=True)
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Draft')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_joining_letters')
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    pdf_file = models.FileField(upload_to='joining_letters/', blank=True, null=True)
+
+    email_status = models.CharField(max_length=20, choices=EMAIL_STATUS_CHOICES, default='Not Sent')
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error = models.TextField(blank=True, null=True)
+
+    special_terms = models.TextField(blank=True, null=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_joining_letters')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Joining: {self.employee_name} ({self.reference_number}) - {self.status}"
+
+
 
 

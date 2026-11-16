@@ -8,6 +8,7 @@ export { default as invoicesApi } from './invoices';
 export { default as examsApi } from './exams';
 export { default as hrApi } from './hr';
 export { default as projectsApi } from './projects';
+export { default as documentsApi } from './documents';
 
 // Default export the core Axios instance for compatibility
 export { default } from '../apiClient';

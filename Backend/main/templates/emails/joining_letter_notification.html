@@ -1,0 +1,32 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear <strong>{{ employee_name }}</strong>,</p>
+
+<p>Welcome to <strong>YGR Gobal IT Services</strong>! We are pleased to formally issue your <strong>Joining Letter &amp; Appointment Confirmation</strong> for the role of <strong>{{ designation }}</strong>.</p>
+
+<p>Your official Joining Letter is attached to this email as a PDF document for your records.</p>
+
+<div class="candidate-details">
+    <p><strong>Designation:</strong> {{ designation }}</p>
+    <p><strong>Department:</strong> {{ department }}</p>
+    <p><strong>Effective Date of Joining:</strong> {{ actual_joining_date }}</p>
+    {% if employee_id_number %}
+    <p><strong>Employee ID:</strong> {{ employee_id_number }}</p>
+    {% endif %}
+    <p><strong>Work Location:</strong> {{ work_location }}</p>
+    <p><strong>Reference No:</strong> {{ reference_number }}</p>
+</div>
+
+<p>Please review the details in the attached document. You can also log into your HRMS Employee Portal to check your onboarding details, attendance, and official company records.</p>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ site_url }}/login" class="btn">Access HRMS Employee Portal</a>
+</div>
+
+<p>If you have any questions or require assistance during your onboarding, please do not hesitate to contact the HR department at <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+
+<p>Warm Regards,<br>
+<strong>Human Resources Department</strong><br>
+YGR Gobal IT Services Pvt. Ltd.</p>
+{% endblock %}

@@ -34,19 +34,43 @@ class HRMSAccessControlMiddleware:
             'viewlogins', 'hr_login', 'tl_login', 'employee_login', 
             'manager_login', 'login', 'exam_login', 'exam_register',
             'react_app', 'register', 'apply', 'job_application',
+            'spa_fallback', 'home', 'about', 'aboutus', 'about_clean', 'aboutus_clean',
+            'services', 'services_clean', 'portfolio', 'portfolio_clean',
+            'careers', 'careers_clean', 'contact', 'contact_clean',
+            'blog_clean', 'blog_list', 'blogs_clean', 'blogs_list',
+            'blog_detail_slug_clean', 'blog_detail_slug', 'blog_detail_id',
+            'team_clean', 'team_list',
+            'global_internships', 'global_internships_clean',
+            'internships', 'internships_list',
+            'internship_detail', 'internship_detail_clean',
+            'register_internship', 'register_internship_clean',
+            'client_registration', 'client_registration_clean',
+            'candidate_exam', 'candidate_exam_clean',
+            'candidate_dashboard_slug', 'candidate_dashboard_slug_clean',
+            'candidate_dashboard_direct', 'candidate_dashboard_direct_clean',
+            'candidate_dashboard_home', 'candidate_dashboard_home_clean',
+            'internships_candidate_dashboard', 'internships_candidate_dashboard_clean',
+            'candidate_login', 'candidate_login_clean',
+            'candidate_login_direct', 'candidate_login_direct_clean',
+            'candidate_exam_session', 'candidate_exam_session_clean',
+            'vacancies', 'vacancies_clean',
+            'terms', 'terms_clean', 'privacy', 'privacy_clean',
+            'cookies', 'cookies_clean', 'help', 'faqs', 'refund', 'shipping',
         }
         
+        public_path_prefixes = (
+            '/admin', '/admin-', '/dashboard/', '/projects/', '/login', '/assets/',
+            '/internships', '/candidate-', '/vacancies', '/register-internship',
+            '/global-internships', '/careers', '/about', '/aboutus', '/services',
+            '/portfolio', '/contact', '/team', '/blog', '/blogs', '/client-',
+            '/terms', '/privacy', '/cookies', '/help', '/faqs', '/refund', '/shipping',
+            '/legacy/',
+        )
         is_public = (
             url_name in public_url_names or 
             (view_name and view_name.startswith('admin:')) or 
-            path == '/admin' or
-            path.startswith('/admin/') or
-            path.startswith('/admin-') or
-            path.startswith('/dashboard/') or
-            path.startswith('/projects/') or
             path == '/' or
-            path.startswith('/login') or    # Allow React login page
-            path.startswith('/assets/')     # Allow Vite asset files
+            path.startswith(public_path_prefixes)
         )
         
         # 1. Route Protection: Redirect unauthenticated users to unified login

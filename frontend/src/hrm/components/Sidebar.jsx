@@ -342,6 +342,34 @@ const Sidebar = () => {
             <NavLink to="/employee-list" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-user"></i> Employee List</NavLink>
           </div>
 
+          <NavLink to="/employees" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-users-gear" style={{ color: '#2563eb' }}></i>
+            <span>Employee Management</span>
+          </NavLink>
+
+          <NavLink to="/finance/salary-structures" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-wallet" style={{ color: '#10b981' }}></i>
+            <span>Salary & Payroll</span>
+          </NavLink>
+
+          <NavLink to="/offer-letters" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-envelope-open-text" style={{ color: '#2563eb' }}></i>
+            <span>Offer Letters</span>
+          </NavLink>
+          <NavLink to="/offer-policy-templates" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-file-shield" style={{ color: '#0f766e' }}></i>
+            <span>Offer Policy Templates</span>
+          </NavLink>
+
+          <NavLink to="/joining-letters" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-file-signature" style={{ color: '#0f766e' }}></i>
+            <span>Joining Letters</span>
+          </NavLink>
+
+          <NavLink to="/employee-documents" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-file-contract" style={{ color: '#6366f1' }}></i>
+            <span>Staff Documents</span>
+          </NavLink>
 
           <NavLink to="/leave-requests" className={({ isActive }) => isActive ? 'active' : ''}>
             <i className="fa-solid fa-calendar-check" style={{ color: '#eab308' }}></i>
@@ -389,35 +417,48 @@ const Sidebar = () => {
       {/* HR PERMISSIONS */}
       {user.role === 'HR' && (
         <>
-          <NavLink to="/register" className={({ isActive }) => isActive ? 'active' : ''}>
-            <i className="fa-solid fa-users-gear" style={{ color: '#ec4899' }}></i>
-            <span>Accounts</span>
+          <NavLink to="/employees" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-users" style={{ color: '#2563eb' }}></i>
+            <span>Employee Management</span>
+          </NavLink>
+
+          <NavLink to="/finance/salary-structures" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-wallet" style={{ color: '#10b981' }}></i>
+            <span>Salary & Payroll</span>
+          </NavLink>
+
+          <NavLink to="/attendance-list" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-calendar-check" style={{ color: '#eab308' }}></i>
+            <span>Attendance Management</span>
           </NavLink>
 
           <div className="menu-item" onClick={() => toggleMenu('hrMenu')}>
-            <span><i className="fa-solid fa-users" style={{ color: '#f59e0b' }}></i> HR Tools</span>
+            <span><i className="fa-solid fa-toolbox" style={{ color: '#f59e0b' }}></i> HR Tools & Letters</span>
             <i className={`fa-solid fa-angle-down ${menus.hrMenu ? 'fa-rotate-180' : ''}`} style={{ marginLeft: 'auto', transition: 'transform 0.2s' }}></i>
           </div>
           <div className={`dropdown ${menus.hrMenu ? 'active' : ''}`}>
+            <NavLink to="/register" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-user-plus"></i> Register Account</NavLink>
             <NavLink to="/leave-status" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-calendar-check"></i> Leave Portal</NavLink>
             <NavLink to="/hr-approved-leaves" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-clipboard-check"></i> HR Approved Leaves</NavLink>
             <NavLink to="/leave-requests" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-calendar-minus"></i> All Leave Requests</NavLink>
+            <NavLink to="/offer-letters" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-envelope-open-text"></i> Offer Letters</NavLink>
+            <NavLink to="/offer-policy-templates" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-file-shield"></i> Offer Policy Templates</NavLink>
+            <NavLink to="/joining-letters" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-file-signature"></i> Joining Letters</NavLink>
+            <NavLink to="/employee-documents" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-file-contract"></i> Staff Documents</NavLink>
           </div>
 
           <div className="menu-item" onClick={() => toggleMenu('attendanceMenu')}>
-            <span><i className="fa-solid fa-calendar-check" style={{ color: '#eab308' }}></i> Attendance</span>
+            <span><i className="fa-solid fa-clock" style={{ color: '#eab308' }}></i> Attendance Views</span>
             <i className={`fa-solid fa-angle-down ${menus.attendanceMenu ? 'fa-rotate-180' : ''}`} style={{ marginLeft: 'auto', transition: 'transform 0.2s' }}></i>
           </div>
           <div className={`dropdown ${menus.attendanceMenu ? 'active' : ''}`}>
             <NavLink to="/attendance-list" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-clipboard-user"></i> Daily Registry</NavLink>
             <NavLink to="/monthly-attendance" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-calendar-days"></i> Monthly Summary</NavLink>
-            <NavLink to="/attendance-correct" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-pen-to-square"></i> Correction (Single)</NavLink>
-            <NavLink to="/attendance-correct-bulk" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-layer-group"></i> Correction (Bulk)</NavLink>
-            <NavLink to="/attendance" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-calendar-check"></i> My Attendance</NavLink>
+            <NavLink to="/attendance" className={({ isActive }) => isActive ? 'active' : ''}><i className="fa-solid fa-calendar-check"></i> My Punch In/Out</NavLink>
           </div>
 
           <div className="menu-item" onClick={() => toggleMenu('financeMenu')}>
-            <span><i className="fa-solid fa-wallet" style={{ color: '#10b981' }}></i> Finance</span>
+            <span><i className="fa-solid fa-receipt" style={{ color: '#10b981' }}></i> Invoicing & Finance</span>
             <i className={`fa-solid fa-angle-down ${menus.financeMenu ? 'fa-rotate-180' : ''}`} style={{ marginLeft: 'auto', transition: 'transform 0.2s' }}></i>
           </div>
           <div className={`dropdown ${menus.financeMenu ? 'active' : ''}`}>
@@ -586,6 +627,10 @@ const Sidebar = () => {
           <NavLink to="/payslips" className={({ isActive }) => isActive ? 'active' : ''}>
             <i className="fa-solid fa-file-invoice-dollar" style={{ color: '#10b981' }}></i>
             <span>My Payslips</span>
+          </NavLink>
+          <NavLink to="/my-documents" className={({ isActive }) => isActive ? 'active' : ''}>
+            <i className="fa-solid fa-file-contract" style={{ color: '#6366f1' }}></i>
+            <span>My Documents</span>
           </NavLink>
           <NavLink to="/holidays" className={({ isActive }) => isActive ? 'active' : ''}>
             <i className="fa-solid fa-calendar-days" style={{ color: '#f43f5e' }}></i>

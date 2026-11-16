@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Joining Letter – {{ letter.employee_name }} – {{ letter.reference_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 14mm 16mm 14mm 16mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            color: #1a2942;
+            line-height: 1.45;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            position: relative;
+        }
+
+        /* WATERMARK */
+        .watermark-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .watermark-wrap img {
+            width: 320px;
+            height: auto;
+            opacity: 0.06;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        .header-outer {
+            border-bottom: 2.5px solid #1a2942;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-logo-cell {
+            width: 120px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .header-logo-cell img {
+            width: 85px;
+            height: auto;
+        }
+
+        .header-center-cell {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .company-name {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #1a2942;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .company-tagline {
+            font-size: 7.5pt;
+            color: #5e7a99;
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .header-right-cell {
+            width: 140px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .doc-badge {
+            display: inline-block;
+            background: #0f766e;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 3px;
+            margin-bottom: 3px;
+        }
+
+        /* META BAR */
+        .meta-bar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 8pt;
+            border-bottom: 1px solid #dce4ec;
+            padding-bottom: 6px;
+        }
+
+        .meta-bar td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        /* EMPLOYEE INFO BOX */
+        .employee-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3.5px solid #0f766e;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 8.5pt;
+        }
+
+        .employee-name {
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        /* SUBJECT & SALUTATION */
+        .subject-line {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #0f766e;
+            margin: 10px 0 8px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+
+        .paragraph {
+            margin: 6px 0;
+            text-align: justify;
+        }
+
+        /* SECTION HEADINGS */
+        .section-head {
+            font-size: 8.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #0f766e;
+            background: #f0fdfa;
+            padding: 4px 8px;
+            margin: 10px 0 6px 0;
+            border-left: 3px solid #0f766e;
+        }
+
+        /* DETAILS TABLE */
+        .info-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 8pt;
+        }
+
+        .info-tbl td {
+            padding: 4px 7px;
+            border: 0.5px solid #dce4ec;
+            vertical-align: middle;
+        }
+
+        .info-tbl .lbl {
+            width: 25%;
+            font-weight: bold;
+            color: #5e7a99;
+            background: #f8fafc;
+            text-transform: uppercase;
+            font-size: 7pt;
+            letter-spacing: 0.3px;
+        }
+
+        .info-tbl .val {
+            width: 25%;
+            color: #1a2942;
+            font-weight: 500;
+        }
+
+        /* TERMS LIST */
+        .terms-list {
+            margin: 6px 0;
+            padding-left: 18px;
+            font-size: 8pt;
+        }
+
+        .terms-list li {
+            margin-bottom: 4px;
+        }
+
+        /* SIGNATURE SECTION */
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+
+        .sig-cell {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 10px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #1a2942;
+            width: 180px;
+            margin-top: 40px;
+            padding-top: 4px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #1a2942;
+        }
+
+        .sig-title {
+            font-size: 7pt;
+            color: #64748b;
+        }
+
+        /* FOOTER */
+        .footer-note {
+            margin-top: 16px;
+            padding-top: 6px;
+            border-top: 0.5px solid #cbd5e1;
+            font-size: 6.5pt;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- WATERMARK -->
+    {% if logo_data_uri %}
+    <div class="watermark-wrap">
+        <img src="{{ logo_data_uri }}" alt="" />
+    </div>
+    {% endif %}
+
+    <div class="content">
+        <!-- HEADER -->
+        <div class="header-outer">
+            <table class="header-table">
+                <tr>
+                    <td class="header-logo-cell">
+                        {% if logo_data_uri %}
+                        <img src="{{ logo_data_uri }}" alt="YGR Logo" />
+                        {% else %}
+                        <div style="font-size:20pt; font-weight:bold; color:#1a2942;">YGR</div>
+                        {% endif %}
+                    </td>
+                    <td class="header-center-cell">
+                        <div class="company-name">YGR Gobal IT Services</div>
+                        <div class="company-tagline">Human Resources Department &bull; Hyderabad, Telangana, India</div>
+                        <div class="company-tagline">contact@ygrgobalitservices.com &bull; www.ygrgobalitservices.com</div>
+                    </td>
+                    <td class="header-right-cell">
+                        <div class="doc-badge">Joining Letter</div>
+                        <div style="font-size:7.5pt; color:#64748b; margin-top:3px;">CONFIDENTIAL</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- META BAR -->
+        <table class="meta-bar">
+            <tr>
+                <td style="text-align: left;">
+                    <strong>Ref No:</strong> {{ letter.reference_number }}
+                </td>
+                <td style="text-align: right;">
+                    <strong>Date of Issue:</strong> {{ letter.created_at|date:"F d, Y" }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- EMPLOYEE DETAILS BOX -->
+        <div class="employee-box">
+            <div class="employee-name">{{ letter.employee_name }}</div>
+            {% if letter.employee_address %}
+            <div>{{ letter.employee_address|linebreaksbr }}</div>
+            {% endif %}
+            <div>Email: {{ letter.employee_email }}{% if letter.employee_phone %} &bull; Phone: {{ letter.employee_phone }}{% endif %}{% if letter.employee_id_number %} &bull; Employee ID: <strong>{{ letter.employee_id_number }}</strong>{% endif %}</div>
+        </div>
+
+        <!-- SUBJECT -->
+        <div class="subject-line">
+            SUBJECT: APPOINTMENT &amp; JOINING CONFIRMATION FOR THE POSITION OF {{ letter.designation|upper }}
+        </div>
+
+        <div class="paragraph">
+            Dear <strong>{{ letter.employee_name }}</strong>,
+        </div>
+
+        <div class="paragraph">
+            We are delighted to formally confirm your joining and appointment with <strong>YGR Gobal IT Services</strong> ("the Company") in the position of <strong>{{ letter.designation }}</strong>, effective from <strong>{{ letter.actual_joining_date|date:"F d, Y" }}</strong>. We take immense pleasure in welcoming you to our team.
+        </div>
+
+        <!-- APPOINTMENT DETAILS -->
+        <div class="section-head">1. Employment &amp; Reporting Particulars</div>
+        <table class="info-tbl">
+            <tr>
+                <td class="lbl">Designation</td>
+                <td class="val">{{ letter.designation }}</td>
+                <td class="lbl">Department</td>
+                <td class="val">{{ letter.department }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Employee ID</td>
+                <td class="val"><strong>{{ letter.employee_id_number|default:"Allocated on Joining" }}</strong></td>
+                <td class="lbl">Employment Type</td>
+                <td class="val">{{ letter.employment_type }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Effective Joining Date</td>
+                <td class="val"><strong>{{ letter.actual_joining_date|date:"F d, Y" }}</strong></td>
+                <td class="lbl">Work Location</td>
+                <td class="val">{{ letter.work_location }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Reporting Manager</td>
+                <td class="val">{{ letter.reporting_manager_name|default:"Department Head" }}</td>
+                <td class="lbl">Standard Working Hours</td>
+                <td class="val">{{ letter.working_hours }}</td>
+            </tr>
+        </table>
+
+        <!-- TERMS OF JOINING -->
+        <div class="section-head">2. Applicable Terms &amp; Conditions</div>
+        <div class="paragraph">
+            {% if letter.special_terms %}
+                {{ letter.special_terms|linebreaksbr }}
+            {% else %}
+                <ol class="terms-list">
+                    <li><strong>Probation Period:</strong> You will be on probation for a period of <strong>{{ letter.probation_period_months }} months</strong> from your date of joining. Upon successful completion of your probation, your employment may be confirmed in writing.</li>
+                    <li><strong>Roles and Responsibilities:</strong> You are expected to perform the duties and assignments entrusted to you with diligence, integrity, and professionalism according to company standards.</li>
+                    <li><strong>Confidentiality &amp; Intellectual Property:</strong> You shall strictly maintain the secrecy of the company's proprietary information, client data, and software assets. Any intellectual property created during employment remains the exclusive property of YGR Gobal IT Services.</li>
+                    <li><strong>Code of Conduct &amp; Policies:</strong> You agree to abide by all internal regulations, HR policies, security guidelines, and health &amp; safety standards in force.</li>
+                </ol>
+            {% endif %}
+        </div>
+
+        <div class="paragraph" style="margin-top: 10px;">
+            Please sign and return the duplicate copy of this letter as an acknowledgment of your acceptance of the terms and conditions outlined above. We look forward to a mutually rewarding relationship.
+        </div>
+
+        <!-- SIGNATURES -->
+        <table class="signatures-table">
+            <tr>
+                <td class="sig-cell" style="text-align: left;">
+                    <div>Yours sincerely,</div>
+                    <div style="font-weight: bold; color: #1a2942;">For YGR Gobal IT Services</div>
+                    <div class="sig-line">
+                        {% if letter.approved_by %}{{ letter.approved_by.get_full_name|default:letter.approved_by.username }}{% else %}HR Department{% endif %}
+                    </div>
+                    <div class="sig-title">Authorized Signatory &bull; Human Resources</div>
+                </td>
+                <td class="sig-cell" style="text-align: right;">
+                    <div style="text-align: left; display: inline-block;">
+                        <div>Acknowledged &amp; Confirmed:</div>
+                        <div style="font-weight: bold; color: #0f766e;">Employee Acceptance</div>
+                        <div class="sig-line">
+                            Signature &amp; Date
+                        </div>
+                        <div class="sig-title">{{ letter.employee_name }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="footer-note">
+            Official Joining Document issued by YGR Gobal IT Services HRMS Portal &bull; Ref: {{ letter.reference_number }}
+        </div>
+    </div>
+
+</body>
+</html>

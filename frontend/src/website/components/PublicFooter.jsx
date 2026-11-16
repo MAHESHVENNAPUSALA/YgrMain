@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '../../shared/constants/routes';
 import './PublicFooter.css';
 
 const PublicFooter = () => {
@@ -121,11 +122,11 @@ YGR Gobal IT Services Pvt. Ltd. provides complete IT solutions including softwar
             </p>
 
             <div className="bottom-links-row">
-              <Link to="/privacy">Privacy Policy</Link>
+              <Link to={ROUTES.PRIVACY || "/privacy"}>Privacy Policy</Link>
               <span className="dot-divider">•</span>
-              <Link to="/terms">Terms of Service</Link>
+              <Link to={ROUTES.TERMS || "/terms"}>Terms of Service</Link>
               <span className="dot-divider">•</span>
-              <Link to="/cookies">Cookie Policy</Link>
+              <Link to={ROUTES.COOKIES || "/cookies"}>Cookie Policy</Link>
             </div>
 
             <p className="credit-text">Designed by YGR Gobal IT Services</p>

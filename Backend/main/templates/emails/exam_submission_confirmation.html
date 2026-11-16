@@ -1,0 +1,35 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear {{ candidate_name }},</p>
+
+<p>Your online technical assessment for the <strong>{{ course }}</strong> Internship program at <strong>YGR Global IT Services Pvt. Ltd.</strong> has been submitted successfully.</p>
+
+<div class="candidate-details" style="background-color: #ecfdf5; border-left: 4px solid #10b981; margin: 20px 0;">
+    <p style="margin: 0 0 10px 0; font-weight: bold; color: #065f46; font-size: 15px;">✓ Assessment Submission Receipt</p>
+    <p style="margin: 4px 0;"><strong>Candidate Name:</strong> {{ candidate_name }}</p>
+    <p style="margin: 4px 0;"><strong>Registration ID:</strong> {{ registration_id }}</p>
+    <p style="margin: 4px 0;"><strong>Domain / Track:</strong> {{ course }}</p>
+    <p style="margin: 4px 0;"><strong>Submission Status:</strong> Successfully Submitted & Under HR Evaluation</p>
+    <p style="margin: 4px 0;"><strong>Proctoring Audit:</strong> Verified & Submitted</p>
+</div>
+
+<p><strong>What Happens Next:</strong></p>
+<ul>
+    <li>Your examination responses and proctoring audit log have been updated directly in the <strong>HR Evaluation Dashboard</strong>.</li>
+    <li>Our recruitment panel will evaluate your performance according to the qualification benchmark.</li>
+    <li>Candidates who qualify will be invited for <strong>Round 1 (Technical Interview)</strong> via email and through your Candidate Dashboard.</li>
+</ul>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ site_url }}/internships/candidate-dashboard/{{ registration_id }}" class="btn">View Candidate Dashboard</a>
+</div>
+
+<p>You can monitor your live selection journey anytime at:<br>
+<small style="color: #6c757d; word-break: break-all;">{{ site_url }}/internships/candidate-dashboard/{{ registration_id }}</small></p>
+
+<p>Warm regards,<br>
+<strong>Human Resources & Technical Recruitment Team</strong><br>
+YGR Global IT Services Pvt. Ltd.<br>
+<small style="color: #6c757d;">Hyderabad, Telangana | {{ display_domain }}</small></p>
+{% endblock %}

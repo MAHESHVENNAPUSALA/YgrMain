@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Employment Offer - {{ offer.candidate_name }} - {{ offer.reference_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 0;
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 16mm;
+                width: 178mm;
+                top: 7mm;
+                height: 18mm;
+            }
+            @frame content_frame {
+                left: 16mm;
+                width: 178mm;
+                top: 29mm;
+                height: 243mm;
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 16mm;
+                width: 178mm;
+                top: 278mm;
+                height: 11mm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            color: #202b3c;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        #header_content {
+            border-bottom: 1.5pt solid #152b49;
+            padding-bottom: 4mm;
+        }
+
+        .header-table, .meta-table, .details-table, .salary-table, .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logo-cell {
+            width: 28mm;
+            vertical-align: middle;
+        }
+
+        .logo-cell img {
+            width: 25mm;
+            height: auto;
+        }
+
+        .company-cell {
+            vertical-align: middle;
+            padding-left: 2mm;
+        }
+
+        .company-name {
+            color: #152b49;
+            font-size: 12pt;
+            font-weight: bold;
+        }
+
+        .company-contact {
+            color: #53677f;
+            font-size: 7.5pt;
+            margin-top: 1mm;
+        }
+
+        .classification {
+            width: 37mm;
+            text-align: right;
+            vertical-align: middle;
+            color: #244b79;
+            font-size: 7pt;
+            font-weight: bold;
+        }
+
+        .classification span {
+            display: block;
+            color: #53677f;
+            font-weight: normal;
+            margin-top: 1mm;
+        }
+
+        #footer_content {
+            border-top: 0.6pt solid #b9c5d2;
+            padding-top: 2mm;
+            color: #5c6e83;
+            font-size: 7pt;
+        }
+
+        .footer-table {
+            width: 100%;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .meta-table {
+            margin-bottom: 5mm;
+            color: #52657b;
+            font-size: 8pt;
+        }
+
+        .meta-table td {
+            padding: 1mm 0;
+        }
+
+        .meta-right {
+            text-align: right;
+        }
+
+        .candidate-box {
+            background-color: #f3f6f9;
+            border-left: 3pt solid #244b79;
+            padding: 3mm 4mm;
+            margin-bottom: 4mm;
+        }
+
+        .candidate-name {
+            color: #152b49;
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .candidate-subline {
+            color: #52657b;
+            font-size: 8pt;
+            margin-top: 1mm;
+        }
+
+        .subject {
+            color: #152b49;
+            font-weight: bold;
+            border-bottom: 0.7pt solid #aebaca;
+            padding-bottom: 2mm;
+            margin: 0 0 4mm;
+        }
+
+        p {
+            margin: 0 0 3mm;
+        }
+
+        .section-title {
+            background-color: #eaf0f6;
+            border-left: 2.5pt solid #244b79;
+            color: #152b49;
+            font-size: 9pt;
+            font-weight: bold;
+            padding: 2mm 3mm;
+            margin: 4mm 0 2mm;
+            -pdf-keep-with-next: true;
+        }
+
+        .details-table td {
+            border: 0.5pt solid #cbd4df;
+            padding: 2mm;
+            vertical-align: top;
+        }
+
+        .details-label {
+            width: 22%;
+            background-color: #f5f7fa;
+            color: #53677f;
+            font-size: 7.5pt;
+            font-weight: bold;
+        }
+
+        .details-value {
+            width: 28%;
+        }
+
+        .policy-copy {
+            text-align: justify;
+            white-space: normal;
+        }
+
+        .policy-copy p {
+            margin-bottom: 2mm;
+        }
+
+        .salary-table {
+            font-size: 8pt;
+            margin: 2mm 0 4mm;
+        }
+
+        .salary-table th {
+            background-color: #152b49;
+            color: #ffffff;
+            text-align: left;
+            padding: 2mm;
+        }
+
+        .salary-table th.num, .salary-table td.num {
+            text-align: right;
+        }
+
+        .salary-table td {
+            border: 0.5pt solid #cbd4df;
+            padding: 1.8mm 2mm;
+        }
+
+        .total-row td {
+            background-color: #edf2f7;
+            color: #152b49;
+            font-weight: bold;
+        }
+
+        .note {
+            color: #53677f;
+            font-size: 8pt;
+        }
+
+        .annexure {
+            page-break-before: always;
+        }
+
+        .annexure-title {
+            color: #152b49;
+            font-size: 13pt;
+            font-weight: bold;
+            border-bottom: 1.2pt solid #244b79;
+            padding-bottom: 2mm;
+            margin-bottom: 4mm;
+        }
+
+        .signature-table {
+            margin-top: 5mm;
+            -pdf-keep-with-next: true;
+        }
+
+        .signature-cell {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 4mm;
+        }
+
+        .signature-space {
+            height: 18mm;
+            border-bottom: 0.7pt solid #152b49;
+            margin-bottom: 2mm;
+        }
+
+        .signature-label {
+            color: #53677f;
+            font-size: 7.5pt;
+        }
+
+        .legal-note {
+            color: #53677f;
+            font-size: 7pt;
+            margin-top: 3mm;
+        }
+    </style>
+</head>
+<body>
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td class="logo-cell">
+                    {% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="YGR Global logo">{% endif %}
+                </td>
+                <td class="company-cell">
+                    <div class="company-name">YGR Global IT Services Pvt. Ltd.</div>
+                    <div class="company-contact">Human Resources | Hyderabad, India | {{ company_email }} | {{ company_website }}</div>
+                </td>
+                <td class="classification">EMPLOYMENT OFFER<span>CONFIDENTIAL</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="footer_content">
+        <table class="footer-table">
+            <tr>
+                <td>YGR Global IT Services Pvt. Ltd. | Ref: {{ offer.reference_number }}</td>
+                <td class="footer-right">Page <pdf:pagenumber> of <pdf:pagecount></td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="meta-table">
+        <tr>
+            <td><strong>Document reference:</strong> {{ offer.reference_number }} · Version {{ offer.document_version }}</td>
+            <td class="meta-right"><strong>Issue date:</strong> {{ offer.created_at|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Policy version:</strong> {{ policy_snapshot.name|default:"Policy wording not captured" }}{% if policy_snapshot.version %} / {{ policy_snapshot.version }}{% endif %}</td>
+            <td class="meta-right"><strong>Offer deadline:</strong> {{ offer.offer_validity_date|default:offer.joining_date|date:"F d, Y" }}</td>
+        </tr>
+    </table>
+
+    <div class="candidate-box">
+        <div class="candidate-name">{{ offer.candidate_name }}</div>
+        {% if offer.candidate_address %}<div>{{ offer.candidate_address|linebreaksbr }}</div>{% endif %}
+        <div class="candidate-subline">{{ offer.candidate_email }}{% if offer.candidate_phone %} | {{ offer.candidate_phone }}{% endif %}</div>
+    </div>
+
+    <div class="subject">OFFER OF EMPLOYMENT: {{ offer.job_title|upper }}</div>
+    <p>Dear {{ offer.candidate_name }},</p>
+    <p>YGR Global IT Services Pvt. Ltd. is pleased to make this employment offer on the terms set out below and in the applicable, identified policy version and annexures.</p>
+
+    <div class="section-title">Employment Details</div>
+    <table class="details-table">
+        <tr><td class="details-label">Designation</td><td class="details-value">{{ offer.job_title }}</td><td class="details-label">Department</td><td class="details-value">{{ offer.department }}</td></tr>
+        <tr><td class="details-label">Category</td><td class="details-value">{{ offer.employment_category }}</td><td class="details-label">Employment type</td><td class="details-value">{{ offer.employment_type }}</td></tr>
+        <tr><td class="details-label">Work location</td><td class="details-value">{{ offer.work_location }}</td><td class="details-label">Reporting manager</td><td class="details-value">{{ offer.reporting_manager_name|default:"As communicated by HR" }}</td></tr>
+        <tr><td class="details-label">Proposed joining date</td><td class="details-value">{{ offer.joining_date|date:"F d, Y" }}</td><td class="details-label">Annual CTC</td><td class="details-value">INR {{ offer.offered_ctc|floatformat:2 }}</td></tr>
+        <tr><td class="details-label">Probation period</td><td class="details-value">{% if offer.probation_period_months %}{{ offer.probation_period_months }} months{% else %}As stated in applicable policy{% endif %}</td><td class="details-label">Notice period</td><td class="details-value">{% if offer.notice_period_days %}{{ offer.notice_period_days }} days{% else %}As stated in applicable policy{% endif %}</td></tr>
+    </table>
+
+    {% for section in policy_sections %}
+        <div class="section-title">{{ forloop.counter }}. {{ section.title }}</div>
+        <div class="policy-copy">
+            {% if section.content %}{{ section.content|linebreaksbr }}{% else %}<p>Company-approved wording for this section is not configured. This draft must not be issued until the applicable policy version is selected and approved.</p>{% endif %}
+        </div>
+        {% if section.title == "Offer Acceptance" %}
+            <p>This offer is valid through {{ offer.offer_validity_date|default:offer.joining_date|date:"F d, Y" }}. Acceptance must be completed by signing and dating below, subject to the stated deadline.</p>
+            <table class="signature-table">
+                <tr>
+                    <td class="signature-cell">
+                        <strong>For YGR Global IT Services Pvt. Ltd.</strong>
+                        <div class="signature-space"></div>
+                        <div>{% if offer.approved_by %}{{ offer.approved_by.get_full_name|default:offer.approved_by.username }}{% else %}Authorized HR Signatory{% endif %}</div>
+                        <div class="signature-label">Authorized signatory | Date</div>
+                    </td>
+                    <td class="signature-cell">
+                        <strong>Candidate acceptance</strong>
+                        <div class="signature-space"></div>
+                        <div>{{ offer.candidate_name }}</div>
+                        <div class="signature-label">Signature | Date</div>
+                    </td>
+                </tr>
+            </table>
+        {% endif %}
+    {% endfor %}
+
+    {% for clause in optional_clauses %}
+        <div class="section-title">{{ clause.title }}</div>
+        <div class="policy-copy">{{ clause.content|linebreaksbr }}</div>
+    {% endfor %}
+
+    {% if offer.terms_and_conditions %}
+        <div class="section-title">Additional Offer-Specific Terms</div>
+        <div class="policy-copy">{{ offer.terms_and_conditions|linebreaksbr }}</div>
+    {% endif %}
+
+    <div class="annexure">
+        <div class="annexure-title">Annexure A - Detailed Salary Structure</div>
+        <p>Amounts are in Indian Rupees (INR). Monthly and annual values below are calculated from the component amounts entered for this offer.</p>
+        <table class="salary-table">
+            <thead><tr><th>Compensation component</th><th class="num">Monthly (INR)</th><th class="num">Annual (INR)</th></tr></thead>
+            <tbody>
+                {% for row in salary_rows %}
+                    <tr><td>{{ row.label }}</td><td class="num">{{ row.monthly|floatformat:2 }}</td><td class="num">{{ row.annual|floatformat:2 }}</td></tr>
+                {% endfor %}
+                <tr><td>Gross salary (before employee deductions)</td><td class="num">{{ gross_monthly|floatformat:2 }}</td><td class="num">{{ gross_annual|floatformat:2 }}</td></tr>
+                <tr><td>Employer contributions shown above</td><td class="num">{{ employer_contributions|floatformat:2 }}</td><td class="num">{{ employer_contributions_annual|floatformat:2 }}</td></tr>
+                <tr class="total-row"><td>Entered component total (CTC basis)</td><td class="num">{{ monthly_ctc|floatformat:2 }}</td><td class="num">{{ offer.offered_ctc|floatformat:2 }}</td></tr>
+                <tr class="total-row"><td>Annual Cost to Company (CTC)</td><td class="num">{{ monthly_ctc|floatformat:2 }}</td><td class="num">{{ offer.offered_ctc|floatformat:2 }}</td></tr>
+            </tbody>
+        </table>
+        <p class="note">Gross salary is the sum of listed salary components excluding employer contributions. CTC may include additional approved benefits only when explicitly itemized. The known deductions below may not include all statutory or tax items, so estimated take-home pay is not calculated.</p>
+        <p class="note">Known monthly deductions entered for this offer: employee PF INR {{ offer.employee_pf_deduction|floatformat:2 }} and other deductions INR {{ offer.other_deductions|floatformat:2 }} (total INR {{ known_deductions|floatformat:2 }}). This is not a take-home estimate; statutory deductions and tax depend on applicable rules and employee declarations.</p>
+        {% if component_ctc_annual != offer.offered_ctc %}<p class="note"><strong>Reconciliation required:</strong> entered component values total INR {{ component_ctc_annual|floatformat:2 }} annually, which differs from the stated CTC. HR must reconcile this schedule before issue.</p>{% endif %}
+    </div>
+
+    {% for annexure in annexures %}
+        <div class="annexure">
+            <div class="annexure-title">Annexure {{ annexure.code }} - {{ annexure.title }}</div>
+            <div class="policy-copy">{{ annexure.content|linebreaksbr }}</div>
+        </div>
+    {% endfor %}
+
+    <p class="legal-note">This document records the policy version identified above. Company policy terms require authorized HR/legal review before publication. Applicable statutory requirements prevail where they cannot lawfully be varied by agreement.</p>
+</body>
+</html>

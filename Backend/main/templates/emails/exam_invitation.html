@@ -1,0 +1,35 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear {{ candidate_name }},</p>
+
+<p>We are pleased to invite you to the online screening examination for the <strong>YGR Global IT Services Pvt. Ltd.</strong> All-India Internship Selection Program.</p>
+
+<div class="candidate-details">
+    <p><strong>Registration ID:</strong> {{ registration_id }}</p>
+    <p><strong>Domain:</strong> {{ course }}</p>
+    <p><strong>Duration:</strong> {{ duration }} Minutes</p>
+    <p><strong>Valid for:</strong> 48 Hours</p>
+</div>
+
+<div class="candidate-details" style="background-color: #fff8e1; border-left: 4px solid #f59e0b; margin-top: 16px;">
+    <p style="margin: 0 0 8px 0; font-weight: bold; color: #b45309;">🔐 Your Candidate Portal Login Credentials</p>
+    <p style="margin: 4px 0;"><strong>Registration ID:</strong> {{ registration_id }}</p>
+    <p style="margin: 4px 0;"><strong>Password:</strong> {{ password }}</p>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #6c757d;">Use these credentials to log in to your Candidate Dashboard at <a href="{{ site_url }}/internships/candidate-login" style="color: #0d6efd; font-weight: 600;">Candidate Login</a> to track your selection status.</p>
+</div>
+
+<p>Please ensure you have a stable internet connection before beginning the assessment. The test must be completed in a single session without tab switching.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ site_url }}/internships/exam/{{ exam_token }}" class="btn">Start Examination</a>
+</div>
+
+<p>If the button above does not work, copy and paste this link into your browser:<br>
+<small style="color: #6c757d; word-break: break-all;">{{ site_url }}/internships/exam/{{ exam_token }}</small></p>
+
+<p>Best of luck!<br>
+Regards,<br>
+<strong>Technical Assessment Team</strong><br>
+YGR Global IT Services Pvt. Ltd.</p>
+{% endblock %}

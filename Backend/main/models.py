@@ -178,7 +178,7 @@ class Question(models.Model):
 
 class UserAnswer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey('hr.Question', on_delete=models.CASCADE, related_name='main_user_answers')
     selected_option = models.CharField(max_length=1)  # 'A', 'B', 'C', or 'D'
     submitted_at = models.DateTimeField(auto_now=True)
     
@@ -497,6 +497,7 @@ class InternshipInterview(models.Model):
     ], default='Scheduled')
     feedback = models.TextField(null=True, blank=True)
     score = models.IntegerField(null=True, blank=True)
+    scorecard = models.JSONField(default=dict, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class InternshipOffer(models.Model):
@@ -517,6 +518,18 @@ class InternshipOffer(models.Model):
     ], default='Issued')
     offer_pdf = models.FileField(upload_to="internship_offers/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class InternshipEmailLog(models.Model):
+    registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='email_logs')
+    email_type = models.CharField(max_length=100)
+    subject = models.CharField(max_length=255)
+    recipient = models.EmailField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default='Sent')
+    error_message = models.TextField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.email_type} to {self.recipient} at {self.sent_at}"
     
 class OnboardingTask(models.Model):
     registration = models.ForeignKey(InternshipRegistration, on_delete=models.CASCADE, related_name='onboarding_tasks')
@@ -543,11 +556,41 @@ class InternshipExamSession(models.Model):
     is_qualified = models.BooleanField(null=True, blank=True)
     token = models.CharField(max_length=64, unique=True, null=True, blank=True)
 
+    # AI Proctoring & Anti-Cheating Monitoring
+    warning_count = models.IntegerField(default=0)
+    max_warnings = models.IntegerField(default=3)
+    total_tab_switches = models.IntegerField(default=0)
+    total_fullscreen_exits = models.IntegerField(default=0)
+    total_blur_events = models.IntegerField(default=0)
+    webcam_violations = models.IntegerField(default=0)
+    proctoring_status = models.CharField(max_length=50, choices=[
+        ('Clean', 'Clean'),
+        ('Warnings Issued', 'Warnings Issued'),
+        ('Disqualified', 'Disqualified')
+    ], default='Clean')
+    submission_reason = models.CharField(max_length=200, default='Normal Submission')
+    proctoring_snapshot = models.TextField(blank=True, null=True)
+
 class InternshipExamAnswer(models.Model):
     exam_session = models.ForeignKey(InternshipExamSession, on_delete=models.CASCADE, related_name='answers')
-    question = models.ForeignKey('Question', on_delete=models.CASCADE)
+    question = models.ForeignKey('hr.Question', on_delete=models.CASCADE)
     selected_option = models.CharField(max_length=1, null=True, blank=True)
     is_correct = models.BooleanField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class InternshipExamViolation(models.Model):
+    exam_session = models.ForeignKey(InternshipExamSession, on_delete=models.CASCADE, related_name='violations')
+    violation_type = models.CharField(max_length=100)
+    warning_number = models.IntegerField(default=1)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.TextField(blank=True, null=True)
+    snapshot = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"{self.exam_session.registration.registration_id} - {self.violation_type} (Warning #{self.warning_number})"
 
 
 

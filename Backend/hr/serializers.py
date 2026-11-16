@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Attendance, Payslip, Task, Project, AttendanceCorrection, Leave, Holiday, SalaryStructure, DailyReport, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, Team, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, LeaveApprovalStep, ProjectReview
+from .models import Attendance, Payslip, PayrollAuditLog, Task, Project, AttendanceCorrection, Leave, Holiday, SalaryStructure, SalaryHistory, DailyReport, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, Team, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, LeaveApprovalStep, ProjectReview, OfferLetter, JoiningLetter, JobApplication
 
 User = get_user_model()
 
@@ -20,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'role',
+            'is_active',
             'profile_pic',
             'profile_pic_url',
             'emp_id',
@@ -38,6 +39,7 @@ class UserSerializer(serializers.ModelSerializer):
             'previous_company',
             'aadhaar',
             'document',
+            'reporting_manager',
             'reporting_manager_name',
             'team_leader_name',
             'project',
@@ -320,15 +322,60 @@ class TaskSerializer(serializers.ModelSerializer):
         except Exception:
             return None
 
+class PayrollAuditLogSerializer(serializers.ModelSerializer):
+    performed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PayrollAuditLog
+        fields = [
+            'id',
+            'action',
+            'performed_by',
+            'performed_by_name',
+            'ip_address',
+            'details',
+            'timestamp',
+        ]
+
+    def get_performed_by_name(self, obj):
+        if obj.performed_by:
+            return obj.performed_by.get_full_name() or obj.performed_by.username
+        return 'System'
+
+
 class PayslipSerializer(serializers.ModelSerializer):
     net_salary = serializers.ReadOnlyField()
+    gross_salary = serializers.ReadOnlyField()
+    total_deductions = serializers.ReadOnlyField()
     month_name = serializers.ReadOnlyField()
+    employee_emp_id = serializers.ReadOnlyField(source='employee.emp_id')
+    employee_email = serializers.ReadOnlyField(source='employee.email')
+    employee_name = serializers.SerializerMethodField()
+    designation = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
+    approved_by_name = serializers.SerializerMethodField()
+    rejected_by_name = serializers.SerializerMethodField()
+    audit_logs = PayrollAuditLogSerializer(many=True, read_only=True)
+
+    def get_employee_name(self, obj):
+        from .payslip_utils import clean_employee_name
+        return clean_employee_name(obj.employee, obj.employee_name)
+
+    def get_designation(self, obj):
+        from .payslip_utils import get_clean_designation
+        return get_clean_designation(obj)
+
+    def get_department(self, obj):
+        from .payslip_utils import get_clean_department
+        return get_clean_department(obj)
 
     class Meta:
         model = Payslip
         fields = [
             'id',
             'employee',
+            'employee_emp_id',
+            'employee_email',
             'month',
             'year',
             'basic_salary',
@@ -337,16 +384,23 @@ class PayslipSerializer(serializers.ModelSerializer):
             'medical_allowance',
             'special_allowance',
             'bonus',
+            'gross_salary',
             'pf_deduction',
             'esi_deduction',
             'professional_tax',
             'tds',
             'loan_deduction',
             'other_deductions',
+            'total_deductions',
             'working_days',
             'days_present',
             'days_absent',
             'leaves_taken',
+            'unpaid_leave_days',
+            'half_days',
+            'holidays',
+            'week_offs',
+            'sandwich_leave_days',
             'status',
             'payment_date',
             'is_published',
@@ -364,9 +418,31 @@ class PayslipSerializer(serializers.ModelSerializer):
             'loss_of_pay',
             'needs_recalculation',
             'generated_at',
+            'approved_by',
+            'approved_by_name',
+            'approved_at',
+            'rejected_by',
+            'rejected_by_name',
+            'rejected_at',
+            'rejection_reason',
+            'email_status',
+            'email_sent_at',
+            'email_error',
+            'notes',
             'net_salary',
             'month_name',
+            'audit_logs',
         ]
+
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return None
+
+    def get_rejected_by_name(self, obj):
+        if obj.rejected_by:
+            return obj.rejected_by.get_full_name() or obj.rejected_by.username
+        return None
 
 
 class AttendanceCorrectionSerializer(serializers.ModelSerializer):
@@ -461,6 +537,9 @@ class SalaryStructureSerializer(serializers.ModelSerializer):
     employee_name = serializers.ReadOnlyField(source='employee.username')
     employee_full_name = serializers.SerializerMethodField()
     employee_details = serializers.SerializerMethodField()
+    gross_salary = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_deductions = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    net_salary = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = SalaryStructure
@@ -476,8 +555,25 @@ class SalaryStructureSerializer(serializers.ModelSerializer):
                 "name": obj.employee.get_full_name() or obj.employee.username,
                 "emp_id": obj.employee.emp_id,
                 "department": obj.employee.department,
+                "designation": obj.employee.designation,
+                "role": obj.employee.role,
+                "email": obj.employee.email,
             }
         return None
+
+
+class SalaryHistorySerializer(serializers.ModelSerializer):
+    employee_name = serializers.ReadOnlyField(source='employee.username')
+    revised_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SalaryHistory
+        fields = '__all__'
+
+    def get_revised_by_name(self, obj):
+        if obj.revised_by:
+            return obj.revised_by.get_full_name() or obj.revised_by.username
+        return 'System'
 
 
 class DailyReportSerializer(serializers.ModelSerializer):
@@ -681,13 +777,84 @@ class ResultSerializer(serializers.ModelSerializer):
         return 'Unknown Candidate'
 
 
+class CandidateSummarySerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobApplication
+        fields = [
+            'id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
+            'current_address', 'permanent_address', 'current_city', 'job_role', 'department',
+            'employment_type', 'status', 'preferred_job_location'
+        ]
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
 
 
+class OfferLetterSerializer(serializers.ModelSerializer):
+    approved_by_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    reporting_manager_display = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OfferLetter
+        fields = '__all__'
+
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return None
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return None
+
+    def get_reporting_manager_display(self, obj):
+        if obj.reporting_manager:
+            return obj.reporting_manager.get_full_name() or obj.reporting_manager.username
+        return obj.reporting_manager_name or 'Department Head'
+
+    def get_pdf_url(self, obj):
+        if obj.pdf_file:
+            return obj.pdf_file.url
+        return None
 
 
+class JoiningLetterSerializer(serializers.ModelSerializer):
+    approved_by_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    reporting_manager_display = serializers.SerializerMethodField()
+    offer_reference = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
 
+    class Meta:
+        model = JoiningLetter
+        fields = '__all__'
 
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return None
 
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return None
 
+    def get_reporting_manager_display(self, obj):
+        if obj.reporting_manager:
+            return obj.reporting_manager.get_full_name() or obj.reporting_manager.username
+        return obj.reporting_manager_name or 'Department Head'
 
+    def get_offer_reference(self, obj):
+        if obj.offer_letter:
+            return obj.offer_letter.reference_number
+        return None
 
+    def get_pdf_url(self, obj):
+        if obj.pdf_file:
+            return obj.pdf_file.url
+        return None

@@ -1,0 +1,35 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear {{ employee_name }},</p>
+
+<p>Please find attached your official <strong>{{ document_title }}</strong> from <strong>YGR Global IT Services Pvt. Ltd.</strong></p>
+
+<div class="candidate-details">
+    <p><strong>Document:</strong> {{ document_title }}</p>
+    <p><strong>Reference No:</strong> {{ reference_number|default:"N/A" }}</p>
+    <p><strong>Issue Date:</strong> {{ issue_date|default:"Current" }}</p>
+    <p><strong>Employee ID:</strong> {{ employee_emp_id|default:"N/A" }}</p>
+    <p><strong>Designation:</strong> {{ designation|default:"Staff" }}</p>
+</div>
+
+<p>The signed and verified PDF document has been attached to this email for your records and reference.</p>
+
+{% if custom_message %}
+<p style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13.5px;">
+    {{ custom_message }}
+</p>
+{% endif %}
+
+<p>You may also log into your employee portal at any time to review your verified documents, payroll statements, and corporate credentials.</p>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ site_url }}/login" class="btn">Log In to Employee Portal</a>
+</div>
+
+<p>For any queries or assistance regarding this document, please contact the HR department at <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>.</p>
+
+<p>Warm Regards,<br>
+<strong>Human Resources Department</strong><br>
+YGR Global IT Services Pvt. Ltd.</p>
+{% endblock %}

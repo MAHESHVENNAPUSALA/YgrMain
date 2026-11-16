@@ -267,11 +267,46 @@ const PublicHeader = () => {
 
           {/* Right Action CTA Button (Breathing room & 50px height) */}
           <div className="nav-actions">
-            <Link to="/login" className="btn-portal-cta">
-              <span className="cta-accent-dot"></span>
-              <span>Portal Login</span>
-              <i className="fas fa-arrow-right cta-arrow"></i>
-            </Link>
+            <div 
+              className="portal-login-dropdown-wrapper" 
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setActiveDropdown('portalLogin')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
+              <button className="btn-portal-cta">
+                <span className="cta-accent-dot"></span>
+                <span>Portal Login</span>
+                <i className={`fas fa-chevron-down cta-arrow ${activeDropdown === 'portalLogin' ? 'rotate' : ''}`} style={{ transition: 'transform 0.3s' }}></i>
+              </button>
+              
+              <AnimatePresence>
+                {activeDropdown === 'portalLogin' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="glass-dropdown"
+                    style={{ right: 0, left: 'auto', minWidth: '280px', top: '100%', marginTop: '10px' }}
+                  >
+                    <div className="dropdown-grid" style={{ gridTemplateColumns: '1fr', padding: '15px' }}>
+                      <Link to="/login" className="dropdown-item" onClick={() => setActiveDropdown(null)}>
+                        <div className="dropdown-item-content">
+                          <span className="dropdown-item-title"><i className="fas fa-user-tie" style={{marginRight: '8px', color: '#1657A1'}}></i>Employee Login</span>
+                          <span className="dropdown-item-desc">Access YGR Internal HRMS Portal</span>
+                        </div>
+                      </Link>
+                      <Link to="/internships/candidate-login" className="dropdown-item" onClick={() => setActiveDropdown(null)}>
+                        <div className="dropdown-item-content">
+                          <span className="dropdown-item-title"><i className="fas fa-graduation-cap" style={{marginRight: '8px', color: '#5E9133'}}></i>Candidate Login</span>
+                          <span className="dropdown-item-desc">Access Internship & Training Portal</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Mobile Hamburger Toggle */}
             <button

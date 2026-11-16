@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Employment Offer - {{ offer.candidate_name }} - {{ offer.reference_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 40mm 20mm 20mm 20mm;
+            @frame header_frame {
+                -pdf-frame-content: header_content;
+                left: 18mm;
+                width: 174mm;
+                top: 6mm;
+                height: 30mm;
+            }
+            @frame footer_frame {
+                -pdf-frame-content: footer_content;
+                left: 20mm;
+                width: 170mm;
+                top: 278mm;
+                height: 10mm;
+            }
+        }
+
+        body {
+            margin: 0;
+            color: #202b39;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.42;
+        }
+
+        #header_content {
+            border-bottom: 1.2pt solid #193653;
+            padding-bottom: 3mm;
+        }
+
+        .header-table, .footer-table, .meta-table, .role-table, .salary-table, .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .brand-mark {
+            width: 18mm;
+            vertical-align: middle;
+        }
+
+        .brand-mark img {
+            display: block;
+            width: 14mm;
+            height: 14mm;
+        }
+
+        .brand-name-cell {
+            vertical-align: middle;
+        }
+
+        .brand-name {
+            color: #193653;
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .brand-details {
+            color: #5b6878;
+            font-size: 6.7pt;
+            margin-top: 1mm;
+        }
+
+        .doc-classification {
+            width: 35mm;
+            text-align: right;
+            vertical-align: middle;
+            color: #193653;
+            font-size: 7pt;
+            font-weight: bold;
+        }
+
+        .doc-classification span {
+            display: block;
+            margin-top: 1mm;
+            color: #667487;
+            font-size: 6.5pt;
+            font-weight: normal;
+        }
+
+        #footer_content {
+            border-top: 0.6pt solid #aeb9c5;
+            padding-top: 2mm;
+            color: #586777;
+            font-size: 7pt;
+        }
+
+        .footer-right {
+            text-align: right;
+        }
+
+        .meta-table {
+            margin-bottom: 6mm;
+            color: #48596c;
+            font-size: 8pt;
+        }
+
+        .meta-table td {
+            padding: 1mm 0;
+        }
+
+        .meta-right {
+            text-align: right;
+        }
+
+        .recipient {
+            margin: 0 0 5mm;
+            line-height: 1.45;
+        }
+
+        .recipient-name {
+            color: #193653;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .subject {
+            margin: 5mm 0;
+            padding: 2.5mm 0;
+            border-top: 0.7pt solid #193653;
+            border-bottom: 0.7pt solid #193653;
+            color: #193653;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        p {
+            margin: 0 0 3mm;
+            text-align: justify;
+        }
+
+        .letter-intro {
+            margin-bottom: 4mm;
+        }
+
+        .role-table {
+            margin: 2mm 0 4mm;
+            font-size: 8pt;
+        }
+
+        .role-table td {
+            border: 0.5pt solid #c8d1dc;
+            padding: 2.2mm 2.5mm;
+            vertical-align: top;
+        }
+
+        .role-label {
+            width: 23%;
+            background: #f2f5f8;
+            color: #4c5c6e;
+            font-size: 7.3pt;
+            font-weight: bold;
+        }
+
+        .role-value {
+            width: 27%;
+            color: #202b39;
+        }
+
+        .compensation-callout {
+            border-top: 1pt solid #193653;
+            border-bottom: 1pt solid #193653;
+            margin: 3mm 0 4mm;
+            padding: 3mm 0;
+            color: #193653;
+            font-size: 10pt;
+            font-weight: bold;
+        }
+
+        .closing {
+            margin-top: 4mm;
+        }
+
+        .signatory-name {
+            color: #193653;
+            font-weight: bold;
+        }
+
+        .signatory-meta {
+            color: #5b6878;
+            font-size: 8pt;
+        }
+
+        .terms-start, .annexure-start {
+            page-break-before: always;
+        }
+
+        .document-heading {
+            margin: 0 0 2mm;
+            color: #193653;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+
+        .document-subheading {
+            margin: 0 0 5mm;
+            color: #617083;
+            font-size: 8pt;
+        }
+
+        .clause {
+            margin: 0 0 3.6mm;
+        }
+
+        .clause-title {
+            margin: 0 0 1.4mm;
+            color: #193653;
+            font-size: 9.2pt;
+            font-weight: bold;
+        }
+
+        .clause-content {
+            text-align: justify;
+        }
+
+        .clause-subclauses {
+            margin: 1.5mm 0 0 5mm;
+            padding: 0;
+        }
+
+        .clause-subclauses li {
+            margin: 0 0 1.4mm;
+            padding-left: 1mm;
+            text-align: justify;
+        }
+
+        .draft-placeholder {
+            color: #8a4b16;
+            font-style: italic;
+        }
+
+        .annexure-label {
+            margin: 0 0 2mm;
+            color: #667487;
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .annexure-heading {
+            margin: 0 0 4mm;
+            padding-bottom: 2mm;
+            border-bottom: 1.2pt solid #193653;
+            color: #193653;
+            font-size: 15pt;
+            font-weight: bold;
+        }
+
+        .annexure-intro {
+            color: #526174;
+            font-size: 8pt;
+            margin-bottom: 4mm;
+        }
+
+        .salary-table {
+            margin: 3mm 0 4mm;
+            font-size: 8pt;
+        }
+
+        .salary-table th {
+            border: 0.5pt solid #193653;
+            background: #193653;
+            color: #ffffff;
+            padding: 2.3mm;
+            text-align: left;
+        }
+
+        .salary-table th.amount,
+        .salary-table td.amount {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .salary-table td {
+            border: 0.5pt solid #c8d1dc;
+            padding: 2mm 2.3mm;
+            vertical-align: top;
+        }
+
+        .salary-table .total-row td {
+            background: #edf2f6;
+            color: #193653;
+            font-weight: bold;
+        }
+
+        .salary-note {
+            color: #5b6878;
+            font-size: 7.5pt;
+            margin-top: 2mm;
+        }
+
+        .benefit-section {
+            margin: 0 0 3mm;
+        }
+
+        .benefit-heading {
+            margin: 0 0 1mm;
+            color: #193653;
+            font-weight: bold;
+        }
+
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 3mm;
+            font-size: 8.5pt;
+        }
+
+        .checklist-table td {
+            border-bottom: 0.5pt solid #c8d1dc;
+            padding: 2.2mm;
+        }
+
+        .check-box {
+            width: 10mm;
+            text-align: center;
+            border: 0.7pt solid #193653 !important;
+            padding: 2mm !important;
+        }
+
+        .undertaking-content {
+            margin-top: 2mm;
+            text-align: justify;
+        }
+
+        .signature-table {
+            margin-top: 8mm;
+        }
+
+        .signature-cell {
+            width: 50%;
+            vertical-align: top;
+            padding-right: 8mm;
+        }
+
+        .signature-line {
+            height: 17mm;
+            border-bottom: 0.7pt solid #193653;
+            margin-bottom: 2mm;
+        }
+
+        .signature-caption {
+            color: #586777;
+            font-size: 7.5pt;
+        }
+
+        .acceptance-statement {
+            margin-top: 3mm;
+            padding: 3mm;
+            border: 0.7pt solid #aeb9c5;
+            background: #f7f9fb;
+        }
+
+        .confidential-note {
+            margin-top: 4mm;
+            color: #6a7787;
+            font-size: 7pt;
+        }
+    </style>
+</head>
+<body>
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td class="brand-mark">{% if logo_data_uri %}<img src="{{ logo_data_uri }}" alt="YGR Global logo">{% endif %}</td>
+                <td class="brand-name-cell">
+                    <div class="brand-name">{{ company_details.legal_name|default:"YGR Global IT Services Pvt. Ltd." }}</div>
+                    <div class="brand-details">{{ company_details.registered_office_address|default:"[HR CONFIGURATION REQUIRED: Registered office address]" }}{% if company_details.cin %} · CIN {{ company_details.cin }}{% endif %}{% if company_details.gstin %} · GSTIN {{ company_details.gstin }}{% endif %}</div>
+                    <div class="brand-details">{{ company_details.official_email|default:"[HR CONFIGURATION REQUIRED: Official email]" }} · {{ company_details.website|default:"[HR CONFIGURATION REQUIRED: Official website]" }}</div>
+                </td>
+                <td class="doc-classification">EMPLOYMENT OFFER<span>{% if offer.status == "Draft" or offer.status == "Pending Approval" %}DRAFT PREVIEW · NOT FOR ISSUE{% else %}CONFIDENTIAL{% endif %} · VERSION {{ offer.document_version }}</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="footer_content">
+        <table class="footer-table">
+            <tr>
+                <td>{{ offer.reference_number }} · {{ policy_name }} {{ policy_version }}</td>
+                <td class="footer-right">Page <pdf:pagenumber> of <pdf:pagecount></td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="meta-table">
+        <tr>
+            <td><strong>Reference:</strong> {{ offer.reference_number }}</td>
+            <td class="meta-right"><strong>Issue date:</strong> {{ offer.created_at|date:"F d, Y" }}</td>
+        </tr>
+    </table>
+
+    <div class="recipient">
+        <div class="recipient-name">{{ offer.candidate_name }}</div>
+        {% if offer.candidate_address %}{{ offer.candidate_address|linebreaksbr }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED: Candidate postal address]</span>{% endif %}
+    </div>
+
+    <div class="subject">Subject: Employment Offer — {{ offer.job_title }}</div>
+
+    <p>Dear {{ offer.candidate_name }},</p>
+    <p class="letter-intro">We are pleased to offer you employment with {{ company_details.legal_name|default:"YGR Global IT Services Pvt. Ltd." }} on the terms set out in this letter and the attached terms and annexures. This offer is specific to the position and employment details below. The applicable company policy version is identified in the footer and is retained with this document.</p>
+
+    <table class="role-table">
+        <tr><td class="role-label">Position / designation</td><td class="role-value">{{ offer.job_title }}</td><td class="role-label">Department</td><td class="role-value">{{ offer.department }}</td></tr>
+        <tr><td class="role-label">Employment type</td><td class="role-value">{{ offer.employment_type }}</td><td class="role-label">Employee category</td><td class="role-value">{{ offer.employment_category }}</td></tr>
+        <tr><td class="role-label">Work location</td><td class="role-value">{{ offer.work_location }}</td><td class="role-label">Reporting manager</td><td class="role-value">{{ offer.reporting_manager_name|default:"As set out in the joining plan" }}</td></tr>
+        <tr><td class="role-label">Proposed joining date</td><td class="role-value">{{ offer.joining_date|date:"F d, Y" }}</td><td class="role-label">Offer valid through</td><td class="role-value">{% if offer.offer_validity_date %}{{ offer.offer_validity_date|date:"F d, Y" }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td></tr>
+        <tr><td class="role-label">Probation period</td><td class="role-value">{% if offer.probation_period_months %}{{ offer.probation_period_months }} months{% else %}As stated in applicable terms{% endif %}</td><td class="role-label">Notice period</td><td class="role-value">{% if offer.notice_period_days %}{{ offer.notice_period_days }} days{% else %}As stated in applicable terms{% endif %}</td></tr>
+    </table>
+
+    <div class="compensation-callout">Annual Cost to Company: {% if salary_configured %}INR {{ offer.offered_ctc|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED: Approved annual CTC]</span>{% endif %}</div>
+    <p>Please indicate acceptance by signing the acceptance section of this offer pack and returning it to the Company on or before the offer validity date above. Any requested change to the joining date or other offer term must be agreed in writing by an authorized Company representative.</p>
+
+    <div class="closing">
+        <p>We look forward to the possibility of welcoming you to the team.</p>
+        <p>Yours sincerely,</p>
+        <div class="signatory-name">{{ company_details.legal_name|default:"YGR Global IT Services Pvt. Ltd." }}</div>
+        <div class="signatory-name">{{ company_details.authorized_signatory_name|default:"[HR CONFIGURATION REQUIRED: Authorized signatory]" }}</div>
+        <div class="signatory-meta">{{ company_details.authorized_signatory_title|default:"[HR CONFIGURATION REQUIRED: Signatory designation]" }}</div>
+    </div>
+
+    <div class="terms-start">
+        <h1 class="document-heading">Terms and Conditions of Employment</h1>
+        <p class="document-subheading">These terms form part of offer {{ offer.reference_number }} and must be read with Annexures A–D.</p>
+        {% for section in policy_sections %}
+            {% if section.number == 25 and offer.terms_and_conditions %}
+                <div class="clause">
+                    <h2 class="clause-title">Offer-specific terms</h2>
+                    <p class="clause-content">{{ offer.terms_and_conditions|linebreaksbr }}</p>
+                </div>
+            {% endif %}
+            <div class="clause">
+                <h2 class="clause-title">{{ section.number }}. {{ section.title }}</h2>
+                {% if section.content %}
+                    <p class="clause-content">{{ section.content|linebreaksbr }}</p>
+                {% else %}
+                    <p class="clause-content draft-placeholder">[HR CONFIGURATION REQUIRED: Add approved wording for {{ section.title }}.]</p>
+                {% endif %}
+                {% if section.subclauses %}
+                    <ol class="clause-subclauses">
+                        {% for subclause in section.subclauses %}<li>{{ subclause }}</li>{% endfor %}
+                    </ol>
+                {% endif %}
+            </div>
+        {% endfor %}
+        {% for clause in optional_clauses %}
+            <div class="clause">
+                <h2 class="clause-title">{{ clause.title }}</h2>
+                <p class="clause-content">{{ clause.content|linebreaksbr }}</p>
+            </div>
+        {% endfor %}
+        <div class="acceptance-statement">
+            <strong>Candidate declaration:</strong> I have read and understood this offer and its annexures, had an opportunity to ask questions, and accept the terms recorded in this document and the identified policy version.
+        </div>
+        <table class="signature-table">
+            <tr>
+                <td class="signature-cell"><div class="signature-line"></div><div><strong>{{ offer.candidate_name }}</strong></div><div class="signature-caption">Candidate signature and date</div></td>
+                <td class="signature-cell"><div class="signature-line"></div><div><strong>{{ company_details.authorized_signatory_name|default:"Authorized signatory" }}</strong></div><div class="signature-caption">For the Company · Signature and date</div></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="annexure-start">
+        <div class="annexure-label">Compensation schedule</div>
+        <h1 class="annexure-heading">Annexure A — Detailed Salary Structure</h1>
+        <p class="annexure-intro">All amounts are in Indian Rupees (INR). Monthly cash components are annualized at twelve months. Variable pay is shown as an annual amount and as a monthly equivalent for comparison. Amounts shown are the values entered and approved for this offer.</p>
+        <table class="salary-table">
+            <thead><tr><th>Salary component</th><th class="amount">Monthly amount (INR)</th><th class="amount">Annual amount (INR)</th></tr></thead>
+            <tbody>
+                {% for row in salary_rows %}
+                    <tr{% if row.total %} class="total-row"{% endif %}><td>{{ row.label }}</td><td class="amount">{% if row.configured == False %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% else %}{{ row.monthly|floatformat:2 }}{% endif %}</td><td class="amount">{% if row.configured == False %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% else %}{{ row.annual|floatformat:2 }}{% endif %}</td></tr>
+                {% endfor %}
+                <tr class="total-row"><td>Total CTC</td><td class="amount">{% if salary_configured %}{{ ctc_monthly|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td><td class="amount">{% if salary_configured %}{{ ctc_annual|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td></tr>
+            </tbody>
+        </table>
+        {% if salary_configured and not ctc_reconciled %}<p class="draft-placeholder">[COMPENSATION RECONCILIATION REQUIRED: Entered components total INR {{ ctc_annual|floatformat:2 }} annually, while the offer states INR {{ offered_ctc|floatformat:2 }}.]</p>{% endif %}
+        <h2 class="clause-title">Employee deductions and indicative net salary</h2>
+        <table class="salary-table">
+            <thead><tr><th>Deduction / net amount</th><th class="amount">Monthly amount (INR)</th><th class="amount">Annual amount (INR)</th></tr></thead>
+            <tbody>
+                {% for row in deduction_rows %}<tr><td>{{ row.label }}</td><td class="amount">{% if row.configured == False %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% else %}{{ row.monthly|floatformat:2 }}{% endif %}</td><td class="amount">{% if row.configured == False %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% else %}{{ row.annual|floatformat:2 }}{% endif %}</td></tr>{% endfor %}
+                <tr class="total-row"><td>Total stated deductions</td><td class="amount">{% if salary_configured %}{{ deductions_monthly|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td><td class="amount">{% if salary_configured %}{{ deductions_annual|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td></tr>
+                <tr class="total-row"><td>Estimated net salary, excluding unentered deductions and tax</td><td class="amount">{% if salary_configured %}{{ estimated_net_monthly|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td><td class="amount">{% if salary_configured %}{{ estimated_net_annual|floatformat:2 }}{% else %}<span class="draft-placeholder">[HR CONFIGURATION REQUIRED]</span>{% endif %}</td></tr>
+            </tbody>
+        </table>
+        {% if salary_configured %}<p class="salary-note">Net salary is an estimate based only on the deduction amounts entered above. It excludes variable pay and any tax or statutory deduction not explicitly entered. It is not a payroll commitment; final payroll is governed by verified payroll data and applicable law.</p>{% else %}<p class="salary-note draft-placeholder">Do not issue until each applicable compensation and deduction value is entered and reconciled with approved payroll data.</p>{% endif %}
+    </div>
+
+    {% for annexure in annexures %}
+        <div class="annexure-start">
+            <div class="annexure-label">Employment terms · {{ offer.reference_number }}</div>
+            <h1 class="annexure-heading">Annexure {{ annexure.code }} — {{ annexure.title }}</h1>
+            {% if annexure.code == 'B' %}
+                <p class="annexure-intro">Only the benefits and conditions written below form part of this offer. Availability and eligibility are subject to the approved plan terms stated here.</p>
+                {% for benefit in annexure.benefit_sections %}
+                    <div class="benefit-section"><div class="benefit-heading">{{ benefit.title }}</div>{% if benefit.content %}<div>{{ benefit.content|linebreaksbr }}</div>{% else %}<div class="draft-placeholder">[HR CONFIGURATION REQUIRED: Enter approved wording or an approved statement that no {{ benefit.title|lower }} benefit applies.]</div>{% endif %}</div>
+                {% endfor %}
+            {% elif annexure.code == 'C' %}
+                <p class="annexure-intro">Confidentiality and intellectual property undertaking associated with the employment offer.</p>
+                {% for undertaking in annexure.undertaking_sections %}
+                    <div class="benefit-section"><div class="benefit-heading">{{ forloop.counter }}. {{ undertaking.title }}</div>{% if undertaking.content %}<div class="undertaking-content">{{ undertaking.content|linebreaksbr }}</div>{% else %}<div class="undertaking-content draft-placeholder">[LEGAL REVIEW REQUIRED: Add approved undertaking wording for this topic.]</div>{% endif %}</div>
+                {% endfor %}
+                <table class="signature-table">
+                    <tr><td class="signature-cell"><div class="signature-line"></div><div><strong>{{ offer.candidate_name }}</strong></div><div class="signature-caption">Employee signature and date</div></td><td class="signature-cell"><div class="signature-line"></div><div><strong>{{ company_details.authorized_signatory_name|default:"Authorized signatory" }}</strong></div><div class="signature-caption">For the Company · Signature and date</div></td></tr>
+                </table>
+            {% elif annexure.code == 'D' %}
+                <p class="annexure-intro">Submit the items below to HR in the form and by the due date communicated for your employment type. Additional requirements, if any, are listed at the end.</p>
+                <table class="checklist-table">
+                    {% for item in annexure.items %}<tr><td class="check-box"></td><td>{{ item }}</td></tr>{% endfor %}
+                    {% if annexure.content %}<tr><td class="check-box"></td><td>{{ annexure.content|linebreaksbr }}</td></tr>{% endif %}
+                </table>
+            {% else %}
+                <div>{{ annexure.content|linebreaksbr }}</div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <p class="confidential-note">Confidential employment document. This document records the policy version shown above. If any term requires completion or legal review, the document must remain in draft and must not be issued.</p>
+</body>
+</html>

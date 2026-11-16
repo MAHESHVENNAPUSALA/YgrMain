@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Salary Slip &ndash; {{ month_name }} {{ payslip.year }}</title>
+    <style>
+        /* ─── PAGE SETUP ─── */
+        @page {
+            size: a4 portrait;
+            margin: 8mm 12mm 8mm 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8pt;
+            color: #1e293b;
+            line-height: 1.35;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        /* ─── HEADER ─── */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid #0f172a;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+
+        .header-logo-cell {
+            width: 80px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .header-logo-cell img {
+            width: 70px;
+            height: auto;
+        }
+
+        .header-center-cell {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .company-name {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            line-height: 1.15;
+            margin: 0;
+        }
+
+        .company-tagline {
+            font-size: 7.5pt;
+            color: #64748b;
+            margin-top: 3px;
+            letter-spacing: 0.3px;
+        }
+
+        .header-right-cell {
+            width: 130px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .payslip-badge {
+            display: inline-block;
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 7.5pt;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            margin-bottom: 2px;
+        }
+
+        .period-label {
+            font-size: 7pt;
+            font-weight: bold;
+            color: #64748b;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .period-value {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #047857;
+            display: block;
+        }
+
+        /* ─── SECTION HEADERS ─── */
+        .section-head {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 7.5pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            margin-top: 8px;
+            margin-bottom: 0;
+        }
+
+        /* ─── DATA TABLES ─── */
+        table.info-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        table.info-tbl td {
+            border: 1px solid #cbd5e1;
+            padding: 3.5px 6px;
+            font-size: 7.5pt;
+            vertical-align: middle;
+        }
+
+        table.info-tbl td.lbl {
+            width: 18%;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: bold;
+            font-size: 7.5pt;
+            white-space: nowrap;
+        }
+
+        table.info-tbl td.val {
+            width: 32%;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* ─── ATTENDANCE TABLE ─── */
+        table.att-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        table.att-tbl th {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 7pt;
+            font-weight: bold;
+            border: 1px solid #cbd5e1;
+            padding: 4px 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        table.att-tbl td {
+            border: 1px solid #cbd5e1;
+            font-size: 7.5pt;
+            padding: 4px 3px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* ─── SALARY BREAKDOWN ─── */
+        .salary-columns {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: avoid;
+        }
+
+        .salary-col-left {
+            width: 50%;
+            vertical-align: top;
+            padding-right: 4px;
+        }
+
+        .salary-col-right {
+            width: 50%;
+            vertical-align: top;
+            padding-left: 4px;
+        }
+
+        table.sal-tbl {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.sal-tbl thead tr th {
+            background: #1e3a8a;
+            color: #ffffff;
+            font-size: 7pt;
+            font-weight: bold;
+            padding: 4px 6px;
+            text-align: left;
+            border: 1px solid #1e3a8a;
+            letter-spacing: 0.3px;
+        }
+
+        table.sal-tbl thead tr th.amt-th {
+            text-align: right;
+            width: 75px;
+        }
+
+        table.sal-tbl tbody tr td {
+            border: 1px solid #cbd5e1;
+            padding: 3px 6px;
+            font-size: 7.5pt;
+            color: #1e293b;
+        }
+
+        table.sal-tbl tbody tr td.amt {
+            text-align: right;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 7.5pt;
+            font-weight: 600;
+            color: #0f172a;
+            width: 75px;
+        }
+
+        table.sal-tbl tbody tr.subtotal-row td {
+            background: #f1f5f9;
+            font-weight: bold;
+            border-top: 1.5px solid #94a3b8;
+            color: #0f172a;
+        }
+
+        table.sal-tbl tbody tr.subtotal-row td.amt {
+            color: #047857;
+        }
+
+        /* ─── NET SALARY BOX ─── */
+        .net-box {
+            border: 1.5px solid #0f172a;
+            background: #f8fafc;
+            padding: 6px 10px;
+            margin-top: 8px;
+            margin-bottom: 6px;
+            page-break-inside: avoid;
+        }
+
+        .net-inner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .net-label {
+            font-size: 8.5pt;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .net-amount {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #047857;
+            text-align: right;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .net-words {
+            font-size: 7pt;
+            color: #475569;
+            font-style: italic;
+            margin-top: 1px;
+        }
+
+        /* ─── FOOTER ─── */
+        .footer-outer {
+            border-top: 1px solid #cbd5e1;
+            margin-top: 8px;
+            padding-top: 6px;
+            page-break-inside: avoid;
+        }
+
+        .footer-inner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .footer-left {
+            vertical-align: bottom;
+            font-size: 7pt;
+            color: #64748b;
+            line-height: 1.3;
+        }
+
+        .footer-right {
+            vertical-align: bottom;
+            text-align: right;
+        }
+
+        .signature-line {
+            display: inline-block;
+            border-top: 1px solid #64748b;
+            width: 140px;
+            padding-top: 3px;
+            text-align: center;
+            font-size: 7pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .signature-sub {
+            font-size: 6.5pt;
+            font-weight: normal;
+            color: #64748b;
+            display: block;
+        }
+
+        .disclaimer {
+            font-size: 6.5pt;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 4px;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ═══════════ HEADER ═══════════ -->
+    <table class="header-table">
+        <tr>
+            <td class="header-logo-cell">
+                {% if logo_data_uri %}
+                <img src="{{ logo_data_uri }}" alt="YGR Logo" />
+                {% else %}
+                <div style="font-size:18pt; font-weight:bold; color:#0f172a; letter-spacing:1px;">YGR</div>
+                {% endif %}
+            </td>
+            <td class="header-center-cell">
+                <div class="company-name">YGR Global IT Services</div>
+                <div class="company-tagline">Human Resources &amp; Payroll Department &nbsp;|&nbsp; Confidential Salary Statement</div>
+            </td>
+            <td class="header-right-cell">
+                <div class="payslip-badge">Payslip</div>
+                <span class="period-label">Pay Period</span>
+                <span class="period-value">{{ month_name }} {{ payslip.year }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ═══════════ EMPLOYEE DETAILS ═══════════ -->
+    <div class="section-head">Employee Information</div>
+    <table class="info-tbl">
+        <tr>
+            <td class="lbl">Full Name</td>
+            <td class="val">{{ employee_display_name }}</td>
+            <td class="lbl">Employee ID</td>
+            <td class="val">{{ employee_emp_id|default:"—" }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Designation</td>
+            <td class="val">{{ designation_display }}</td>
+            <td class="lbl">Department</td>
+            <td class="val">{{ department_display }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Date of Joining</td>
+            <td class="val">{{ joining_date_display }}</td>
+            <td class="lbl">Payment Date</td>
+            <td class="val">{{ payment_date_display }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Bank Name</td>
+            <td class="val">{{ payslip.bank_name|default:"—" }}</td>
+            <td class="lbl">Account No.</td>
+            <td class="val">{{ payslip.account_number|default:"—" }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">IFSC Code</td>
+            <td class="val">{{ payslip.ifsc_code|default:"—" }}</td>
+            <td class="lbl">PAN / UAN</td>
+            <td class="val">{{ payslip.pan|default:"—" }} &nbsp;/&nbsp; {{ payslip.uan|default:"—" }}</td>
+        </tr>
+    </table>
+
+    <!-- ═══════════ ATTENDANCE ═══════════ -->
+    <div class="section-head">Attendance &amp; Leave Record</div>
+    <table class="att-tbl">
+        <thead>
+            <tr>
+                <th>Working Days</th>
+                <th>Days Present</th>
+                <th>Paid Leaves</th>
+                <th>Unpaid / LOP</th>
+                <th>Half Days</th>
+                <th>Week Offs</th>
+                <th>Holidays</th>
+                <th>Sandwich Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ payslip.working_days|default:"—" }}</td>
+                <td>{{ payslip.days_present|default:"—" }}</td>
+                <td>{{ payslip.leaves_taken|default:"0" }}</td>
+                <td>{{ payslip.days_absent|default:"0" }}</td>
+                <td>{{ payslip.half_days|default:"0" }}</td>
+                <td>{{ payslip.week_offs|default:"0" }}</td>
+                <td>{{ payslip.holidays|default:"0" }}</td>
+                <td>{{ payslip.sandwich_leave_days|default:"0" }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ═══════════ EARNINGS & DEDUCTIONS ═══════════ -->
+    <div class="section-head">Salary Breakdown</div>
+    <table class="salary-columns">
+        <tr>
+            <!-- EARNINGS -->
+            <td class="salary-col-left">
+                <table class="sal-tbl">
+                    <thead>
+                        <tr>
+                            <th>Earnings Component</th>
+                            <th class="amt-th">Amount (INR)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td class="amt">{{ payslip.basic_salary|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>House Rent Allowance (HRA)</td>
+                            <td class="amt">{{ payslip.hra|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Transport Allowance</td>
+                            <td class="amt">{{ payslip.transport_allowance|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Medical Allowance</td>
+                            <td class="amt">{{ payslip.medical_allowance|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Special Allowance</td>
+                            <td class="amt">{{ payslip.special_allowance|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Bonus / Incentives</td>
+                            <td class="amt">{{ payslip.bonus|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="subtotal-row">
+                            <td>GROSS EARNINGS</td>
+                            <td class="amt">{{ payslip.gross_salary|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+
+            <!-- DEDUCTIONS -->
+            <td class="salary-col-right">
+                <table class="sal-tbl">
+                    <thead>
+                        <tr>
+                            <th>Deductions Component</th>
+                            <th class="amt-th">Amount (INR)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Provident Fund (PF)</td>
+                            <td class="amt">{{ payslip.pf_deduction|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Employee State Insurance (ESI)</td>
+                            <td class="amt">{{ payslip.esi_deduction|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Professional Tax (PT)</td>
+                            <td class="amt">{{ payslip.professional_tax|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Tax Deducted at Source (TDS)</td>
+                            <td class="amt">{{ payslip.tds|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Loan / Advance Recovery</td>
+                            <td class="amt">{{ payslip.loan_deduction|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Other Deductions / LOP</td>
+                            <td class="amt">{{ payslip.other_deductions|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="subtotal-row">
+                            <td>TOTAL DEDUCTIONS</td>
+                            <td class="amt">{{ payslip.total_deductions|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ═══════════ NET SALARY ═══════════ -->
+    <div class="net-box">
+        <table class="net-inner">
+            <tr>
+                <td>
+                    <span class="net-label">Net Salary Payable</span>
+                    <div class="net-words">In Words: {{ amount_in_words }}</div>
+                </td>
+                <td style="text-align:right;">
+                    <span class="net-amount">INR {{ payslip.net_salary|floatformat:2 }}</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <div class="footer-outer">
+        <table class="footer-inner">
+            <tr>
+                <td class="footer-left">
+                    Generated on: {{ generated_on_display }}<br />
+                    Payment Status: <strong>{{ payslip.status }}</strong> &bull; Mode: Bank Transfer<br />
+                    {% if approved_by_display %}
+                    Approved by: <strong>{{ approved_by_display }}</strong>
+                    {% else %}
+                    Authorized by: <strong>Human Resources Department</strong>
+                    {% endif %}
+                </td>
+                <td class="footer-right">
+                    <div class="signature-line">
+                        Authorized Signatory<br />
+                        <span class="signature-sub">YGR Global IT Services Pvt. Ltd.</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="disclaimer">
+        This is a system-generated salary statement and does not require a physical signature. &nbsp;|&nbsp;
+        Confidential &mdash; For the exclusive use of the named recipient only.
+    </div>
+</body>
+</html>

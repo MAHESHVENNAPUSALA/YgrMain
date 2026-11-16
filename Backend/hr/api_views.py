@@ -1,4 +1,5 @@
 from django.utils import timezone
+from decimal import Decimal
 from django.contrib.auth import login, logout, get_user_model
 from django.db.models import Q
 from django.utils.decorators import method_decorator
@@ -7,9 +8,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserSerializer, AttendanceSerializer, TaskSerializer, PayslipSerializer, AttendanceCorrectionSerializer, LeaveSerializer, HolidaySerializer, SalaryStructureSerializer, ProjectSerializer, DailyReportSerializer, HRSettingsSerializer, ChatMessageSerializer, ChatRoomSerializer, GroupMessageSerializer, CallSessionSerializer, ClientSerializer, ServiceSerializer, InvoiceItemSerializer, InvoiceSerializer, QuestionSerializer, ExamuserSerializer, ExamSessionSerializer, ResultSerializer, TeamSerializer, ProjectDocumentSerializer, ProjectCommentSerializer, ProjectAuditLogSerializer, NotificationSerializer, ProjectDetailSerializer
-from .models import Attendance, Team, Task, Payslip, DailyReport, Holiday, Project, Leave, AttendanceCorrection, SalaryStructure, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, UserAnswer, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, TaskReview, ClientTaskReview
+from .serializers import UserSerializer, AttendanceSerializer, TaskSerializer, PayslipSerializer, AttendanceCorrectionSerializer, LeaveSerializer, HolidaySerializer, SalaryStructureSerializer, SalaryHistorySerializer, ProjectSerializer, DailyReportSerializer, HRSettingsSerializer, ChatMessageSerializer, ChatRoomSerializer, GroupMessageSerializer, CallSessionSerializer, ClientSerializer, ServiceSerializer, InvoiceItemSerializer, InvoiceSerializer, QuestionSerializer, ExamuserSerializer, ExamSessionSerializer, ResultSerializer, TeamSerializer, ProjectDocumentSerializer, ProjectCommentSerializer, ProjectAuditLogSerializer, NotificationSerializer, ProjectDetailSerializer, OfferLetterSerializer, JoiningLetterSerializer, CandidateSummarySerializer
+from .models import Attendance, Team, Task, Payslip, DailyReport, Holiday, Project, Leave, AttendanceCorrection, SalaryStructure, SalaryHistory, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, UserAnswer, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, TaskReview, ClientTaskReview, PayrollAuditLog, PayslipDownloadLog, EmployeeDocument, DocumentEmailLog, OfferLetter, OfferLetterPolicyVersion, OfferLetterAudit, JoiningLetter, JobApplication
 
 User = get_user_model()
 
@@ -86,9 +88,11 @@ class LogoutAPIView(APIView):
 
 
 class CurrentUserAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
+        if not request.user or not request.user.is_authenticated:
+            return JsonResponse(None, safe=False)
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -380,8 +384,8 @@ class EmployeeDashboardAPIView(APIView):
         tasks = Task.objects.filter(assigned_to=user)
         tasks_serializer = TaskSerializer(tasks, many=True)
         
-        # Latest Payslip
-        latest_payslip = Payslip.objects.filter(employee=user, is_published=True).order_by('-year', '-month').first()
+        # Latest Payslip (Approved or Paid only)
+        latest_payslip = Payslip.objects.filter(employee=user, is_published=True, status__in=['Approved', 'Paid']).order_by('-year', '-month').first()
         payslip_data = PayslipSerializer(latest_payslip).data if latest_payslip else None
 
         # Recent DMs
@@ -1484,56 +1488,176 @@ class CorrectionSingleAPIView(APIView):
     def post(self, request):
         user = request.user
         if user.role not in ['HR', 'MD']:
-            return Response({"detail": "Access Denied: HR/MD permissions required."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Access Denied: Only HR or MD can mark or correct attendance."}, status=status.HTTP_403_FORBIDDEN)
             
         attendance_id = request.data.get('attendance_id')
+        user_id = request.data.get('user_id')
+        date_str = request.data.get('date')
         new_status = request.data.get('status')
-        check_in = request.data.get('check_in_time')
-        check_out = request.data.get('check_out_time')
+        check_in_str = request.data.get('check_in_time')
+        check_out_str = request.data.get('check_out_time')
         remarks = request.data.get('remarks', '')
+        reason = (request.data.get('reason') or '').strip()
+        override_leave = request.data.get('override_leave', False)
 
-        # Handle virtual attendance IDs or missing records
+        if not reason:
+            return Response({"detail": "Attendance correction reason is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Resolve employee and date
+        import datetime as dt
+        from django.utils import timezone
+        target_date = None
+        emp = None
+
         if attendance_id and str(attendance_id).startswith('virtual_'):
-            import datetime as dt
-            parts = attendance_id.split('_')
-            # Expected formats: virtual_<emp_id>_<date> or virtual_<emp_id>
+            parts = str(attendance_id).split('_')
             if len(parts) == 3:
                 _, emp_id, target_date_str = parts
             elif len(parts) == 2:
                 _, emp_id = parts
-                target_date_str = request.data.get('date')
-                if not target_date_str:
-                    return Response({"detail": "Date is required for virtual attendance creation."}, status=status.HTTP_400_BAD_REQUEST)
+                target_date_str = date_str
             else:
                 return Response({"detail": "Invalid virtual attendance_id format."}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
                 target_date = dt.date.fromisoformat(str(target_date_str))
-            except ValueError:
+            except Exception:
                 return Response({"detail": f"Invalid date format: {target_date_str}. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
             emp = get_object_or_404(User, id=emp_id)
             record, _ = Attendance.objects.get_or_create(
                 user=emp,
                 date=target_date,
-                defaults={"status": "Absent"},
+                defaults={"status": "Absent"}
             )
-        elif not attendance_id:
-            # No attendance_id provided – cannot proceed
-            return Response({"detail": "attendance_id is required."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
+        elif attendance_id:
             record = get_object_or_404(Attendance, id=attendance_id)
+            emp = record.user
+            target_date = record.date
+        elif user_id and date_str:
+            try:
+                target_date = dt.date.fromisoformat(str(date_str))
+            except Exception:
+                return Response({"detail": f"Invalid date format: {date_str}. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+            emp = get_object_or_404(User, id=user_id)
+            record, _ = Attendance.objects.get_or_create(
+                user=emp,
+                date=target_date,
+                defaults={"status": "Absent"}
+            )
+        else:
+            return Response({"detail": "attendance_id or (user_id and date) is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate conflicting leave/holiday
+        from .models import Leave, Holiday
+        from django.db.models import Q
+        approved_leave = Leave.objects.filter(
+            user=emp,
+            status__in=['Approved', 'Final Approved'],
+            from_date__lte=target_date,
+            to_date__gte=target_date
+        ).first()
+
+        if approved_leave and new_status in ['Present', 'Half Day'] and not override_leave:
+            return Response({
+                "detail": (
+                    f"Conflict: {emp.get_full_name()} has an approved {approved_leave.leave_type} leave from "
+                    f"{approved_leave.from_date} to {approved_leave.to_date}. "
+                    "Marking Present requires overriding the leave record."
+                ),
+                "has_leave_conflict": True,
+                "leave_id": approved_leave.id
+            }, status=status.HTTP_409_CONFLICT)
+
+        # Snapshot original values for audit
+        orig_status = record.status
+        orig_in = record.check_in_time
+        orig_out = record.check_out_time
+        orig_hours = record.total_hours
+
+        # Parse check-in and check-out
+        in_dt = None
+        out_dt = None
+        if check_in_str:
+            if 'T' in str(check_in_str):
+                in_dt = timezone.datetime.fromisoformat(str(check_in_str).replace('Z', '+00:00'))
+            else:
+                time_part = str(check_in_str).strip()
+                if len(time_part.split(':')) == 2:
+                    time_part += ":00"
+                in_dt = timezone.make_aware(dt.datetime.strptime(f"{target_date} {time_part}", "%Y-%m-%d %H:%M:%S"))
+
+        if check_out_str:
+            if 'T' in str(check_out_str):
+                out_dt = timezone.datetime.fromisoformat(str(check_out_str).replace('Z', '+00:00'))
+            else:
+                time_part = str(check_out_str).strip()
+                if len(time_part.split(':')) == 2:
+                    time_part += ":00"
+                out_dt = timezone.make_aware(dt.datetime.strptime(f"{target_date} {time_part}", "%Y-%m-%d %H:%M:%S"))
 
         if new_status:
             record.status = new_status
-        if check_in:
-            record.check_in_time = check_in
-        if check_out:
-            record.check_out_time = check_out
-        record.remarks = remarks
+            record.calculated_status = new_status
+            record.original_status = new_status
+
+        if in_dt is not None:
+            record.check_in_time = in_dt
+        if out_dt is not None:
+            record.check_out_time = out_dt
+
+        # Recalculate working hours if in and out exist
+        if record.check_in_time and record.check_out_time:
+            hours = (record.check_out_time - record.check_in_time).total_seconds() / 3600.0
+            record.total_hours = max(round(hours, 2), 0.0)
+        elif new_status == 'Present' and not record.total_hours:
+            record.total_hours = 9.0
+        elif new_status == 'Half Day' and not record.total_hours:
+            record.total_hours = 4.5
+        elif new_status in ['Absent', 'Unpaid Leave', 'Leave', 'Holiday']:
+            record.total_hours = 0.0
+
+        if remarks:
+            record.remarks = remarks
+
+        record._no_recalc = True
         record.save()
-        
-        return Response(AttendanceSerializer(record).data, status=status.HTTP_200_OK)
+
+        # Create AttendanceCorrection audit record
+        AttendanceCorrection.objects.create(
+            attendance=record,
+            original_check_in=orig_in,
+            original_check_out=orig_out,
+            original_status=orig_status,
+            original_total_hours=orig_hours,
+            original_remarks=record.remarks,
+            new_check_in=record.check_in_time,
+            new_check_out=record.check_out_time,
+            new_status=record.status,
+            new_remarks=remarks or record.remarks,
+            reason=reason,
+            edited_by=user,
+            approved_by=user,
+            status="Approved",
+            approved_at=timezone.now(),
+        )
+
+        # Audit log in PayrollAuditLog
+        PayrollAuditLog.objects.create(
+            performed_by=request.user,
+            action='ATTENDANCE_CORRECTION',
+            details=f"Corrected attendance for {emp.username} on {target_date}: {orig_status} -> {record.status}. Reason: {reason}",
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        # Recalculate attendance metrics for user's month
+        try:
+            from hr.models import recalculate_attendance_for_user_month
+            recalculate_attendance_for_user_month(emp, target_date.year, target_date.month)
+        except Exception as e:
+            logger.warning(f"Recalculate attendance warning: {e}")
+
+        return Response(AttendanceSerializer(record, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
 class CorrectionBulkAPIView(APIView):
@@ -2213,8 +2337,25 @@ class HolidayActionAPIView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-from .views import generate_payslip_pdf_file
+from .views import generate_payslip_pdf_file, calculate_payroll_data
 from decimal import Decimal
+import threading
+from django.core.mail import EmailMessage
+from django.conf import settings
+from django.http import FileResponse
+
+
+def send_payslip_email_async(payslip_id, performed_by_id=None, ip_address=None, force=False):
+    """
+    Dispatches payslip email asynchronously in a background thread
+    using the verified company YGREmailService.
+    Preserves approval status even if email fails.
+    Prevents duplicate concurrent deliveries.
+    """
+    from main.email_service import YGREmailService
+    ok, _ = YGREmailService.send_payslip(payslip_id, sender_id=performed_by_id, force=force)
+    return ok
+
 
 class PayslipAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2230,18 +2371,19 @@ class PayslipAPIView(APIView):
         target_user_id = request.query_params.get('user_id', '')
         
         if role in ['Employee', 'TeamLead']:
-            payslips = Payslip.objects.filter(employee=user, is_published=True)
-        elif role in ['HR', 'MD', 'Manager']:
+            # Employees only see published and approved/paid slips
+            payslips = Payslip.objects.filter(employee=user, is_published=True, status__in=['Approved', 'Paid'])
+        elif role in ['HR', 'MD']:
             payslips = Payslip.objects.all().select_related('employee')
-            if role == 'Manager':
-                managed_teams = Team.objects.filter(projects__assigned_manager=user)
-                managed_user_ids = User.objects.filter(
-                    Q(reporting_manager=user) |
-                    Q(reporting_manager__reporting_manager=user) |
-                    Q(leading_teams__in=managed_teams) |
-                    Q(teams__in=managed_teams)
-                ).values_list('id', flat=True).distinct()
-                payslips = payslips.filter(Q(employee_id__in=managed_user_ids) | Q(employee=user))
+        elif role == 'Manager':
+            managed_teams = Team.objects.filter(projects__assigned_manager=user)
+            managed_user_ids = User.objects.filter(
+                Q(reporting_manager=user) |
+                Q(reporting_manager__reporting_manager=user) |
+                Q(leading_teams__in=managed_teams) |
+                Q(teams__in=managed_teams)
+            ).values_list('id', flat=True).distinct()
+            payslips = Payslip.objects.filter(Q(employee_id__in=managed_user_ids) | Q(employee=user)).select_related('employee')
         else:
             payslips = Payslip.objects.none()
             
@@ -2251,6 +2393,7 @@ class PayslipAPIView(APIView):
             payslips = payslips.filter(
                 Q(employee_name__icontains=search) |
                 Q(employee__first_name__icontains=search) |
+                Q(employee__last_name__icontains=search) |
                 Q(employee__username__icontains=search) |
                 Q(employee__emp_id__icontains=search)
             )
@@ -2278,33 +2421,53 @@ class PayslipAPIView(APIView):
         
         if Payslip.objects.filter(employee=employee, month=month, year=year).exists():
             return Response({"detail": f"Payslip for this employee for {month}/{year} already exists."}, status=status.HTTP_400_BAD_REQUEST)
-            
+        
+        incoming_status = request.data.get('status', 'Pending Approval')
+        if incoming_status not in ['Draft', 'Generated', 'Pending Approval', 'Approved', 'Paid']:
+            incoming_status = 'Pending Approval'
+
+        # Only allow portal publication if status is Approved or Paid
+        requested_publish = request.data.get('is_published') is True or request.data.get('is_published') == 'true'
+        is_published = requested_publish and (incoming_status in ['Approved', 'Paid'])
+
         payslip = Payslip(
             employee=employee,
             month=int(month),
             year=int(year),
-            basic_salary=Decimal(request.data.get('basic_salary') or 0),
-            hra=Decimal(request.data.get('hra') or 0),
-            transport_allowance=Decimal(request.data.get('transport_allowance') or 0),
-            medical_allowance=Decimal(request.data.get('medical_allowance') or 0),
-            special_allowance=Decimal(request.data.get('special_allowance') or 0),
-            bonus=Decimal(request.data.get('bonus') or 0),
-            pf_deduction=Decimal(request.data.get('pf_deduction') or 0),
-            esi_deduction=Decimal(request.data.get('esi_deduction') or 0),
-            professional_tax=Decimal(request.data.get('professional_tax') or 0),
-            tds=Decimal(request.data.get('tds') or 0),
-            loan_deduction=Decimal(request.data.get('loan_deduction') or 0),
-            other_deductions=Decimal(request.data.get('other_deductions') or 0),
+            basic_salary=Decimal(str(request.data.get('basic_salary') or 0)),
+            hra=Decimal(str(request.data.get('hra') or 0)),
+            transport_allowance=Decimal(str(request.data.get('transport_allowance') or 0)),
+            medical_allowance=Decimal(str(request.data.get('medical_allowance') or 0)),
+            special_allowance=Decimal(str(request.data.get('special_allowance') or 0)),
+            bonus=Decimal(str(request.data.get('bonus') or 0)),
+            pf_deduction=Decimal(str(request.data.get('pf_deduction') or 0)),
+            esi_deduction=Decimal(str(request.data.get('esi_deduction') or 0)),
+            professional_tax=Decimal(str(request.data.get('professional_tax') or 0)),
+            tds=Decimal(str(request.data.get('tds') or 0)),
+            loan_deduction=Decimal(str(request.data.get('loan_deduction') or 0)),
+            other_deductions=Decimal(str(request.data.get('other_deductions') or 0)),
+            loss_of_pay=Decimal(str(request.data.get('loss_of_pay') or 0)),
             working_days=int(request.data.get('working_days') or 26),
             days_present=int(request.data.get('days_present') or 26),
             days_absent=int(request.data.get('days_absent') or 0),
             leaves_taken=int(request.data.get('leaves_taken') or 0),
-            status=request.data.get('status', 'Pending'),
+            unpaid_leave_days=int(request.data.get('unpaid_leave_days') or 0),
+            half_days=int(request.data.get('half_days') or 0),
+            holidays=int(request.data.get('holidays') or 0),
+            week_offs=int(request.data.get('week_offs') or 0),
+            sandwich_leave_days=int(request.data.get('sandwich_leave_days') or 0),
+            status=incoming_status,
             payment_date=request.data.get('payment_date') or None,
-            is_published=request.data.get('is_published') == True,
+            is_published=is_published,
             notes=request.data.get('notes', ''),
             created_by=user,
+            generated_by=user,
+            generated_at=timezone.now(),
         )
+
+        if incoming_status == 'Approved':
+            payslip.approved_by = user
+            payslip.approved_at = timezone.now()
         
         payslip.employee_name = employee.get_full_name() or employee.username
         payslip.designation = employee.role
@@ -2312,18 +2475,33 @@ class PayslipAPIView(APIView):
         
         try:
             struct = employee.salary_structure
-            payslip.bank_name = struct.bank_name
-            payslip.account_number = struct.account_number
-            payslip.ifsc_code = struct.ifsc_code
-            payslip.pan = struct.pan
-            payslip.uan = struct.uan
-            payslip.aadhaar = struct.aadhaar
+            payslip.bank_name = struct.bank_name or getattr(employee, 'bank_name', '')
+            payslip.account_number = struct.account_number or getattr(employee, 'account_number', '')
+            payslip.ifsc_code = struct.ifsc_code or getattr(employee, 'ifsc_code', '')
+            payslip.pan = struct.pan or getattr(employee, 'pan', '')
+            payslip.uan = struct.uan or getattr(employee, 'uan', '')
+            payslip.aadhaar = struct.aadhaar or getattr(employee, 'aadhaar', '')
         except SalaryStructure.DoesNotExist:
-            pass
+            payslip.bank_name = getattr(employee, 'bank_name', '')
+            payslip.account_number = getattr(employee, 'account_number', '')
+            payslip.ifsc_code = getattr(employee, 'ifsc_code', '')
+            payslip.pan = getattr(employee, 'pan', '')
+            payslip.uan = getattr(employee, 'uan', '')
+            payslip.aadhaar = getattr(employee, 'aadhaar', '')
             
         payslip.save()
         generate_payslip_pdf_file(payslip)
         payslip.save()
+
+        # Audit log
+        ip = request.META.get('REMOTE_ADDR')
+        PayrollAuditLog.objects.create(
+            payslip=payslip,
+            performed_by=user,
+            action='GENERATE',
+            ip_address=ip,
+            details=f"Created payslip for {employee.username} ({payslip.month_name} {payslip.year})"
+        )
         
         serializer = PayslipSerializer(payslip)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -2334,9 +2512,106 @@ class PayslipDetailAPIView(APIView):
 
     def get(self, request, pk):
         payslip = get_object_or_404(Payslip, pk=pk)
-        if request.user.role not in ('HR', 'MD') and payslip.employee != request.user:
+        user = request.user
+        role = user.role
+
+        if role in ('HR', 'MD'):
+            pass
+        elif role == 'Manager':
+            managed_teams = Team.objects.filter(projects__assigned_manager=user)
+            managed_user_ids = User.objects.filter(
+                Q(reporting_manager=user) |
+                Q(reporting_manager__reporting_manager=user) |
+                Q(leading_teams__in=managed_teams) |
+                Q(teams__in=managed_teams)
+            ).values_list('id', flat=True).distinct()
+            if payslip.employee != user and payslip.employee_id not in managed_user_ids:
+                return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+        elif payslip.employee == user:
+            if not payslip.is_published or payslip.status not in ('Approved', 'Paid'):
+                return Response({"detail": "This payslip is not published yet."}, status=status.HTTP_403_FORBIDDEN)
+        else:
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
             
+        serializer = PayslipSerializer(payslip)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        if request.user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can edit payslips."}, status=status.HTTP_403_FORBIDDEN)
+
+        payslip = get_object_or_404(Payslip, pk=pk)
+        if payslip.is_locked:
+            return Response({"detail": "Locked payslips cannot be edited."}, status=status.HTTP_400_BAD_REQUEST)
+        if payslip.status == 'Paid':
+            return Response({"detail": "Paid payslips cannot be edited."}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data
+        # Update earnings & deductions
+        payslip.basic_salary = Decimal(str(data.get('basic_salary', payslip.basic_salary) or 0))
+        payslip.hra = Decimal(str(data.get('hra', payslip.hra) or 0))
+        payslip.transport_allowance = Decimal(str(data.get('transport_allowance', payslip.transport_allowance) or 0))
+        payslip.medical_allowance = Decimal(str(data.get('medical_allowance', payslip.medical_allowance) or 0))
+        payslip.special_allowance = Decimal(str(data.get('special_allowance', payslip.special_allowance) or 0))
+        payslip.bonus = Decimal(str(data.get('bonus', payslip.bonus) or 0))
+
+        payslip.pf_deduction = Decimal(str(data.get('pf_deduction', payslip.pf_deduction) or 0))
+        payslip.esi_deduction = Decimal(str(data.get('esi_deduction', payslip.esi_deduction) or 0))
+        payslip.professional_tax = Decimal(str(data.get('professional_tax', payslip.professional_tax) or 0))
+        payslip.tds = Decimal(str(data.get('tds', payslip.tds) or 0))
+        payslip.loan_deduction = Decimal(str(data.get('loan_deduction', payslip.loan_deduction) or 0))
+        payslip.other_deductions = Decimal(str(data.get('other_deductions', payslip.other_deductions) or 0))
+        payslip.loss_of_pay = Decimal(str(data.get('loss_of_pay', payslip.loss_of_pay) or 0))
+
+        # Attendance
+        payslip.working_days = int(data.get('working_days', payslip.working_days) or 26)
+        payslip.days_present = int(data.get('days_present', payslip.days_present) or 26)
+        payslip.days_absent = int(data.get('days_absent', payslip.days_absent) or 0)
+        payslip.leaves_taken = int(data.get('leaves_taken', payslip.leaves_taken) or 0)
+        payslip.unpaid_leave_days = int(data.get('unpaid_leave_days', payslip.unpaid_leave_days) or 0)
+        payslip.half_days = int(data.get('half_days', payslip.half_days) or 0)
+        payslip.holidays = int(data.get('holidays', payslip.holidays) or 0)
+        payslip.week_offs = int(data.get('week_offs', payslip.week_offs) or 0)
+        payslip.sandwich_leave_days = int(data.get('sandwich_leave_days', payslip.sandwich_leave_days) or 0)
+
+        # Status & Notes
+        new_status = data.get('status')
+        if new_status in ['Draft', 'Generated', 'Pending Approval', 'Approved', 'Rejected', 'Paid']:
+            payslip.status = new_status
+        elif payslip.status == 'Rejected':
+            # Reset to Pending Approval when correcting a rejected slip
+            payslip.status = 'Pending Approval'
+
+        if 'is_published' in data:
+            if payslip.status in ['Approved', 'Paid']:
+                payslip.is_published = data.get('is_published') is True or data.get('is_published') == 'true'
+            else:
+                payslip.is_published = False
+
+        if 'payment_date' in data:
+            payslip.payment_date = data.get('payment_date') or None
+        if 'notes' in data:
+            payslip.notes = data.get('notes', payslip.notes)
+
+        payslip.recalculated_by = request.user
+        payslip.recalculated_at = timezone.now()
+        payslip.needs_recalculation = False
+        payslip.save()
+
+        # Regenerate PDF with updated values
+        generate_payslip_pdf_file(payslip)
+        payslip.save()
+
+        # Audit log for revision
+        ip = request.META.get('REMOTE_ADDR')
+        PayrollAuditLog.objects.create(
+            payslip=payslip,
+            performed_by=request.user,
+            action='REGENERATE',
+            ip_address=ip,
+            details=f"Updated/corrected payslip for {payslip.employee.username} ({payslip.month_name} {payslip.year}). Net Salary: ₹{payslip.net_salary:,.2f}"
+        )
+
         serializer = PayslipSerializer(payslip)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -2345,8 +2620,193 @@ class PayslipDetailAPIView(APIView):
             return Response({"detail": "Access Denied: Only HR or MD can delete payslips."}, status=status.HTTP_403_FORBIDDEN)
             
         payslip = get_object_or_404(Payslip, pk=pk)
+        if payslip.is_locked:
+            return Response({"detail": "Locked payslips cannot be deleted."}, status=status.HTTP_400_BAD_REQUEST)
         payslip.delete()
         return Response({"detail": "Payslip deleted successfully."}, status=status.HTTP_200_OK)
+
+
+class PayslipDownloadAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        payslip = get_object_or_404(Payslip, pk=pk)
+        user = request.user
+        role = user.role
+
+        # Check authorization
+        if role in ('HR', 'MD'):
+            pass
+        elif role == 'Manager':
+            managed_teams = Team.objects.filter(projects__assigned_manager=user)
+            managed_user_ids = User.objects.filter(
+                Q(reporting_manager=user) |
+                Q(reporting_manager__reporting_manager=user) |
+                Q(leading_teams__in=managed_teams) |
+                Q(teams__in=managed_teams)
+            ).values_list('id', flat=True).distinct()
+            if payslip.employee != user and payslip.employee_id not in managed_user_ids:
+                return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+        elif payslip.employee == user:
+            if not payslip.is_published or payslip.status not in ('Approved', 'Paid'):
+                return Response({"detail": "This payslip is not published yet."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Dynamic PDF generation if missing
+        if not payslip.payslip_pdf or not payslip.payslip_pdf.storage.exists(payslip.payslip_pdf.name):
+            generate_payslip_pdf_file(payslip)
+            payslip.save()
+
+        # Log audit
+        ip = request.META.get('REMOTE_ADDR')
+        PayslipDownloadLog.objects.create(payslip=payslip, downloaded_by=user, ip_address=ip)
+        PayrollAuditLog.objects.create(
+            payslip=payslip,
+            performed_by=user,
+            action='DOWNLOAD',
+            ip_address=ip,
+            details=f"Downloaded payslip of {payslip.employee.username} for {payslip.month_name} {payslip.year}"
+        )
+
+        if payslip.payslip_pdf and payslip.payslip_pdf.storage.exists(payslip.payslip_pdf.name):
+            response = FileResponse(payslip.payslip_pdf.open('rb'), content_type='application/pdf')
+            from .payslip_utils import clean_employee_name
+            emp_name = clean_employee_name(payslip.employee, payslip.employee_name).replace(' ', '_')
+            fname = f"Payslip_{emp_name}_{payslip.month_name}_{payslip.year}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{fname}"'
+            return response
+        else:
+            return Response({"detail": "Failed to generate payslip PDF."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PayslipActionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        user = request.user
+        if user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can review and approve payslips."}, status=status.HTTP_403_FORBIDDEN)
+
+        payslip = get_object_or_404(Payslip, pk=pk)
+        action = request.data.get('action')
+        ip = request.META.get('REMOTE_ADDR')
+
+        if action == 'approve':
+            if payslip.status in ['Approved', 'Paid'] and payslip.email_status == 'Sent':
+                return Response({
+                    "detail": f"Payslip for {payslip.employee_name or payslip.employee.username} is already approved and emailed.",
+                    "status": payslip.status,
+                    "is_published": payslip.is_published,
+                    "email_status": payslip.email_status,
+                }, status=status.HTTP_200_OK)
+
+            payslip.status = 'Approved'
+            payslip.is_published = True
+            payslip.approved_by = user
+            payslip.approved_at = timezone.now()
+            payslip.rejection_reason = None
+            payslip.save()
+
+            # Ensure PDF is generated
+            if not payslip.payslip_pdf or not payslip.payslip_pdf.storage.exists(payslip.payslip_pdf.name):
+                generate_payslip_pdf_file(payslip)
+                payslip.save()
+
+            # Audit log
+            PayrollAuditLog.objects.create(
+                payslip=payslip,
+                performed_by=user,
+                action='APPROVE',
+                ip_address=ip,
+                details=f"Approved payslip of {payslip.employee.username} for {payslip.month_name} {payslip.year}"
+            )
+
+            # Asynchronously send email to employee if not already sent
+            if payslip.email_status != 'Sent':
+                send_payslip_email_async(payslip.id, user.id, ip)
+
+            return Response({
+                "detail": f"Payslip for {payslip.employee_name or payslip.employee.username} approved successfully. PDF queued for email delivery.",
+                "status": payslip.status,
+                "is_published": payslip.is_published,
+                "email_status": payslip.email_status,
+            }, status=status.HTTP_200_OK)
+
+        elif action == 'reject':
+            reason = request.data.get('reason', 'Rejected by HR during review.')
+            payslip.status = 'Rejected'
+            payslip.is_published = False
+            payslip.rejected_by = user
+            payslip.rejected_at = timezone.now()
+            payslip.rejection_reason = reason
+            payslip.save()
+
+            PayrollAuditLog.objects.create(
+                payslip=payslip,
+                performed_by=user,
+                action='REJECT',
+                ip_address=ip,
+                details=f"Rejected payslip of {payslip.employee.username} for {payslip.month_name} {payslip.year}: {reason}"
+            )
+
+            return Response({
+                "detail": f"Payslip rejected: {reason}",
+                "status": payslip.status,
+                "is_published": payslip.is_published,
+            }, status=status.HTTP_200_OK)
+
+        return Response({"detail": "Invalid action. Choose 'approve' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PayslipEmailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        user = request.user
+        if user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can email payslips."}, status=status.HTTP_403_FORBIDDEN)
+
+        payslip = get_object_or_404(Payslip, pk=pk)
+        ip = request.META.get('REMOTE_ADDR')
+
+        if payslip.email_status == 'Sending':
+            return Response({"detail": "Email delivery is already in progress for this payslip."}, status=status.HTTP_400_BAD_REQUEST)
+
+        force = bool(request.data.get('force', False))
+        if payslip.email_status == 'Sent' and not force:
+            return Response({"detail": "Payslip has already been successfully delivered to employee email."}, status=status.HTTP_400_BAD_REQUEST)
+
+        sent = send_payslip_email_async(payslip.id, user.id, ip, force=force)
+        if not sent:
+            return Response({"detail": "Email delivery could not be queued."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "detail": f"Email delivery initiated to {payslip.employee.email}.",
+            "email_status": "Sending"
+        }, status=status.HTTP_200_OK)
+
+
+class PayslipCalculateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can calculate payroll."}, status=status.HTTP_403_FORBIDDEN)
+
+        emp_id = request.query_params.get('employee_id')
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+
+        if not all([emp_id, month, year]):
+            return Response({"detail": "Missing employee_id, month, or year parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+        employee = get_object_or_404(User, id=emp_id)
+        try:
+            data = calculate_payroll_data(employee, year, month)
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": f"Calculation error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SalaryStructureAPIView(APIView):
@@ -2361,6 +2821,10 @@ class SalaryStructureAPIView(APIView):
         else:
             structures = SalaryStructure.objects.filter(employee=user)
             
+        emp_id = request.query_params.get('employee_id') or request.query_params.get('employee')
+        if emp_id:
+            structures = structures.filter(employee_id=emp_id)
+            
         serializer = SalaryStructureSerializer(structures, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -2371,8 +2835,37 @@ class SalaryStructureAPIView(APIView):
             
         emp_id = request.data.get('employee')
         employee = get_object_or_404(User, id=emp_id)
-        
+        effective_date_str = request.data.get('effective_date')
+        reason = (request.data.get('reason') or 'Salary Revision').strip()
+        force_revision = request.data.get('force_revision', False)
+
+        import datetime
+        from django.utils import timezone
+        try:
+            effective_date = datetime.date.fromisoformat(str(effective_date_str)) if effective_date_str else timezone.localdate()
+        except Exception:
+            effective_date = timezone.localdate()
+
+        # Check if payslips for the month/year of effective_date are already Approved or Paid
+        approved_payslips = Payslip.objects.filter(
+            employee=employee,
+            year=effective_date.year,
+            month=effective_date.month,
+            status__in=['Approved', 'Paid']
+        )
+        if approved_payslips.exists() and not force_revision:
+            status_names = ", ".join([p.status for p in approved_payslips])
+            return Response({
+                "detail": (
+                    f"Notice: A payslip for {effective_date.strftime('%B %Y')} is already marked as {status_names}. "
+                    "Updating this salary structure preserves historical payslips without silently modifying approved records. "
+                    "Confirm revision to record this as an authorized adjustment."
+                ),
+                "requires_confirmation": True
+            }, status=status.HTTP_409_CONFLICT)
+
         structure, created = SalaryStructure.objects.get_or_create(employee=employee)
+        structure.effective_date = effective_date
         
         for field in ['monthly_gross', 'basic_salary', 'hra', 'transport_allowance', 'medical_allowance', 
                       'special_allowance', 'bonus', 'pf_enabled', 'pf_rate', 'pf_amount', 'esi_enabled', 
@@ -2381,11 +2874,74 @@ class SalaryStructureAPIView(APIView):
             if field in request.data:
                 val = request.data[field]
                 if field in ['pf_enabled', 'esi_enabled', 'pt_enabled']:
-                    val = val == True
+                    val = (val is True or val == 'true' or val == 1 or val == '1')
                 setattr(structure, field, val)
                 
         structure.save()
+
+        # Sync user.salary field
+        from decimal import Decimal
+        try:
+            gross_val = Decimal(str(structure.monthly_gross or 0))
+            if gross_val > 0:
+                employee.salary = gross_val
+                employee.save(update_fields=['salary'])
+        except Exception:
+            pass
+
+        # Create historical snapshot
+        gross = structure.gross_salary
+        deductions = structure.total_deductions
+        net = structure.net_salary
+
+        SalaryHistory.objects.create(
+            employee=employee,
+            effective_date=effective_date,
+            revised_by=request.user,
+            reason=reason,
+            monthly_gross=structure.monthly_gross,
+            basic_salary=structure.basic_salary,
+            hra=structure.hra,
+            transport_allowance=structure.transport_allowance,
+            medical_allowance=structure.medical_allowance,
+            special_allowance=structure.special_allowance,
+            bonus=structure.bonus,
+            pf_deduction=structure.pf_amount,
+            esi_deduction=structure.esi_amount,
+            professional_tax=structure.pt_amount,
+            tds=structure.tds_amount,
+            other_deductions=structure.other_deductions,
+            gross_salary=gross,
+            total_deductions=deductions,
+            net_salary=net,
+        )
+
+        # Audit log
+        PayrollAuditLog.objects.create(
+            performed_by=request.user,
+            action='SALARY_REVISION',
+            details=f"Salary revised for {employee.username} ({employee.emp_id}): Gross ₹{gross}, Net ₹{net}. Effective: {effective_date}. Reason: {reason}",
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
         serializer = SalaryStructureSerializer(structure)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SalaryHistoryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can view salary revision history."}, status=status.HTTP_403_FORBIDDEN)
+            
+        emp_id = request.query_params.get('employee_id') or request.query_params.get('employee')
+        if not emp_id:
+            history = SalaryHistory.objects.all().select_related('employee', 'revised_by').order_by('-effective_date', '-created_at')[:50]
+        else:
+            history = SalaryHistory.objects.filter(employee_id=emp_id).select_related('employee', 'revised_by').order_by('-effective_date', '-created_at')
+            
+        serializer = SalaryHistorySerializer(history, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -3381,7 +3937,35 @@ class ExamAPIView(APIView):
     def get(self, request):
         results = Result.objects.all().select_related('exam__user').order_by('-id')
         serializer = ResultSerializer(results, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = list(serializer.data)
+
+        try:
+            from main.models import InternshipExamSession
+            internship_sessions = InternshipExamSession.objects.filter(
+                score__isnull=False
+            ).select_related('registration').order_by('-submitted_at')
+
+            for s in internship_sessions:
+                cand = s.registration
+                total_q = s.answers.count()
+                if total_q == 0:
+                    total_q = 30
+                pct = round((s.score / total_q) * 100, 1) if total_q > 0 else s.score
+                data.append({
+                    'id': f"internship_{s.id}",
+                    'exam_user_name': f"{cand.name} ({cand.registration_id})",
+                    'exam_language': cand.course or 'Technical',
+                    'score': pct,
+                    'score_percentage': pct,
+                    'correct_answers': s.score,
+                    'total_questions': total_q,
+                    'status': 'Passed' if (s.is_qualified or pct >= 50) else 'Failed',
+                    'created_at': s.submitted_at or s.started_at
+                })
+        except Exception:
+            pass
+
+        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request):
         candidate_email = request.data.get('email')
@@ -4267,8 +4851,9 @@ class AllChatRoomsAPIView(APIView):
 
 
 class AllUsersAPIView(APIView):
-    """GET /api/users/ — returns all users (excluding self) with presence, unread DM count, avatar.
-    Optional ?scope=team filters to only team members (for TeamLead/Manager task assignment).
+    """GET /api/users/ — returns all users with presence, unread DM count, avatar.
+    Optional ?scope=directory allows HR/MD/Managers to view employees with ?status=all|active|inactive.
+    POST /api/users/ — allows HR/MD to onboard new employees with duplicate validation.
     """
     permission_classes = [IsAuthenticated]
 
@@ -4284,7 +4869,17 @@ class AllUsersAPIView(APIView):
         if scope in ['directory', 'all']:
             if request.user.role not in ['HR', 'MD', 'Manager', 'TeamLead', 'Employee']:
                 return Response({"detail": "Access Denied: Unauthorized to view user directory."}, status=status.HTTP_403_FORBIDDEN)
-            users = User.objects.filter(is_active=True).order_by('emp_id')
+            
+            status_filter = request.query_params.get('status', 'active')
+            if request.user.role in ['HR', 'MD']:
+                if status_filter == 'all':
+                    users = User.objects.all().order_by('emp_id')
+                elif status_filter == 'inactive':
+                    users = User.objects.filter(is_active=False).order_by('emp_id')
+                else:
+                    users = User.objects.filter(is_active=True).order_by('emp_id')
+            else:
+                users = User.objects.filter(is_active=True).order_by('emp_id')
             
             if request.user.role == 'TeamLead' and scope != 'all':
                 from .models import Team
@@ -4332,7 +4927,6 @@ class AllUsersAPIView(APIView):
 
         result = []
         for u in users_qs:
-            # Build avatar URL
             avatar = None
             if u.profile_pic and u.profile_pic.name:
                 try:
@@ -4340,7 +4934,6 @@ class AllUsersAPIView(APIView):
                 except Exception:
                     pass
 
-            # DM unread count (only meaningful when scope is not 'team')
             unread = 0
             last_msg_text = ''
             last_msg_time = None
@@ -4376,15 +4969,132 @@ class AllUsersAPIView(APIView):
                 'last_msg_time': last_msg_time,
             })
 
-        # Sort by last message time descending when fetching for chat
         if scope != 'team':
             result.sort(key=lambda x: (x['last_msg_time'] or '0000'), reverse=True)
 
         return Response(result, status=status.HTTP_200_OK)
 
+    def post(self, request):
+        """HR/MD onboarding endpoint for new employees with validation against duplicate records."""
+        if request.user.role not in ['HR', 'MD']:
+            return Response({"detail": "Access Denied: Only HR or MD can add employees."}, status=status.HTTP_403_FORBIDDEN)
+
+        fullname = (request.data.get('fullname') or '').strip()
+        email = (request.data.get('email') or '').strip().lower()
+        emp_id = (request.data.get('emp_id') or '').strip()
+        phone = (request.data.get('phone') or '').strip()
+        role = request.data.get('role', 'Employee')
+        department = request.data.get('department', '')
+        designation = (request.data.get('designation') or '').strip()
+        date_of_joining = request.data.get('date_of_joining') or None
+        date_of_birth = request.data.get('date_of_birth') or None
+        gender = request.data.get('gender', 'Male')
+        emp_status = request.data.get('status', 'Fresher')
+        salary = request.data.get('salary') or 0
+        address = (request.data.get('address') or '').strip()
+        reporting_manager_id = request.data.get('reporting_manager') or None
+        password = request.data.get('password') or 'Welcome@123'
+
+        if not email:
+            return Response({"detail": "Email address is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not fullname:
+            return Response({"detail": "Full name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Duplicate email check
+        if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
+            return Response({"detail": f"An employee with email '{email}' already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Duplicate emp_id check if provided
+        if emp_id and User.objects.filter(emp_id=emp_id).exists():
+            return Response({"detail": f"Employee ID '{emp_id}' is already assigned to another employee."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Duplicate phone check if provided
+        if phone and User.objects.filter(phone=phone).exists():
+            return Response({"detail": f"Phone number '{phone}' is already registered with another account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Reporting manager validation
+        reporting_manager = None
+        if reporting_manager_id:
+            try:
+                reporting_manager = User.objects.get(id=reporting_manager_id)
+            except User.DoesNotExist:
+                pass
+
+        name_parts = fullname.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        new_user = User(
+            username=email,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            department=department,
+            designation=designation,
+            date_of_joining=date_of_joining,
+            date_of_birth=date_of_birth,
+            gender=gender,
+            status=emp_status,
+            salary=salary,
+            address=address,
+            phone=phone,
+            reporting_manager=reporting_manager,
+            is_active=True,
+        )
+        if emp_id:
+            new_user.emp_id = emp_id
+        new_user.set_password(password)
+        new_user.save()
+
+        # Initialize salary structure
+        try:
+            from decimal import Decimal
+            num_salary = Decimal(str(salary or 0))
+            if num_salary > 0:
+                basic = round(num_salary * Decimal('0.50'), 2)
+                hra = round(num_salary * Decimal('0.30'), 2)
+                special = max(num_salary - basic - hra, Decimal('0.00'))
+                SalaryStructure.objects.create(
+                    employee=new_user,
+                    monthly_gross=num_salary,
+                    basic_salary=basic,
+                    hra=hra,
+                    special_allowance=special,
+                    pf_enabled=True,
+                    pf_rate=Decimal('12.00'),
+                    pf_amount=round(basic * Decimal('0.12'), 2),
+                    esi_enabled=True,
+                    esi_rate=Decimal('0.75'),
+                    esi_amount=round(num_salary * Decimal('0.0075'), 2),
+                    pt_enabled=True,
+                    pt_amount=Decimal('200.00'),
+                )
+        except Exception as e:
+            logger.warning(f"Failed to auto-create salary structure for {new_user.username}: {e}")
+
+        # Audit log
+        PayrollAuditLog.objects.create(
+            performed_by=request.user,
+            action='EMPLOYEE_UPDATE',
+            details=f"Onboarded new employee {new_user.get_full_name()} ({new_user.emp_id}, {new_user.email}) as {new_user.role}",
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+        serializer = UserSerializer(new_user, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class UserDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        """GET /api/users/<pk>/ — returns employee profile details."""
+        user_obj = get_object_or_404(User, pk=pk)
+        if request.user.role not in ['HR', 'MD', 'Manager', 'TeamLead'] and request.user.id != user_obj.id:
+            return Response({"detail": "Access Denied: Unauthorized to view employee profile."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = UserSerializer(user_obj, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, pk):
         if request.user.role not in ['HR', 'MD']:
@@ -4394,26 +5104,37 @@ class UserDetailAPIView(APIView):
         
         fullname = request.data.get('fullname')
         email = request.data.get('email')
-        phone = request.data.get('phone', '')
-        gender = request.data.get('gender', 'Male')
+        phone = request.data.get('phone')
+        gender = request.data.get('gender')
         date_of_birth = request.data.get('date_of_birth') or None
         date_of_joining = request.data.get('date_of_joining') or None
-        emp_status = request.data.get('status', 'Fresher')
-        address = request.data.get('address', '')
+        emp_status = request.data.get('status')
+        address = request.data.get('address')
         salary = request.data.get('salary')
-        department = request.data.get('department', '')
-        team_name = request.data.get('team_name', '')
+        department = request.data.get('department')
+        team_name = request.data.get('team_name')
         experience_years = request.data.get('experience_years') or None
         role = request.data.get('role')
-        designation = request.data.get('designation', '')
+        designation = request.data.get('designation')
+        emp_id = request.data.get('emp_id')
+        reporting_manager_id = request.data.get('reporting_manager')
+        is_active = request.data.get('is_active')
         
         if fullname:
-            user_to_edit.first_name = fullname
+            parts = fullname.strip().split(' ', 1)
+            user_to_edit.first_name = parts[0]
+            user_to_edit.last_name = parts[1] if len(parts) > 1 else ''
         if email:
-            if User.objects.filter(email=email).exclude(id=pk).exists():
-                return Response({"detail": "Email already in use."}, status=status.HTTP_400_BAD_REQUEST)
-            user_to_edit.username = email
-            user_to_edit.email = email
+            email_clean = email.strip().lower()
+            if User.objects.filter(email=email_clean).exclude(id=pk).exists():
+                return Response({"detail": "Email already in use by another user."}, status=status.HTTP_400_BAD_REQUEST)
+            user_to_edit.username = email_clean
+            user_to_edit.email = email_clean
+        if emp_id:
+            emp_id_clean = emp_id.strip()
+            if User.objects.filter(emp_id=emp_id_clean).exclude(id=pk).exists():
+                return Response({"detail": f"Employee ID '{emp_id_clean}' already assigned to another employee."}, status=status.HTTP_400_BAD_REQUEST)
+            user_to_edit.emp_id = emp_id_clean
         if phone is not None:
             user_to_edit.phone = phone
         if gender:
@@ -4428,7 +5149,7 @@ class UserDetailAPIView(APIView):
             user_to_edit.address = address
         if salary is not None:
             user_to_edit.salary = salary
-        if department:
+        if department is not None:
             user_to_edit.department = department
         if team_name is not None:
             user_to_edit.team_name = team_name
@@ -4438,8 +5159,27 @@ class UserDetailAPIView(APIView):
             user_to_edit.role = role
         if designation is not None:
             user_to_edit.designation = designation
+        if is_active is not None:
+            user_to_edit.is_active = (is_active is True or is_active == 'true' or is_active == 1 or is_active == '1')
+        if reporting_manager_id is not None:
+            if reporting_manager_id == '' or reporting_manager_id == 0 or reporting_manager_id == '0':
+                user_to_edit.reporting_manager = None
+            else:
+                try:
+                    user_to_edit.reporting_manager = User.objects.get(id=reporting_manager_id)
+                except User.DoesNotExist:
+                    pass
             
         user_to_edit.save()
+
+        # Audit log
+        PayrollAuditLog.objects.create(
+            performed_by=request.user,
+            action='EMPLOYEE_UPDATE',
+            details=f"Updated employee record: {user_to_edit.get_full_name()} ({user_to_edit.emp_id}), Active: {user_to_edit.is_active}",
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
         serializer = UserSerializer(user_to_edit, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -4451,7 +5191,16 @@ class UserDetailAPIView(APIView):
         if user_to_delete.id == request.user.id:
             return Response({"detail": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
             
+        username = user_to_delete.username
+        emp_id = user_to_delete.emp_id
         user_to_delete.delete()
+
+        PayrollAuditLog.objects.create(
+            performed_by=request.user,
+            action='EMPLOYEE_UPDATE',
+            details=f"Deleted employee account: {username} ({emp_id})",
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
         return Response({"detail": "Employee deleted successfully."}, status=status.HTTP_200_OK)
 
 
@@ -4802,3 +5551,1401 @@ class EmployeeClientReviewAPIView(APIView):
             })
         except ClientTaskReview.DoesNotExist:
             return Response({'status': None, 'feedback': None, 'client_document_url': None})
+
+
+# -----------------------------------------------------------------------
+# Employee Documents (Offer / Joining / Relieving / Other)
+# -----------------------------------------------------------------------
+class EmployeeDocumentAPIView(APIView):
+    """
+    GET  /api/employee-documents/?employee=<id>   — list documents (HR/MD see all; employee sees own)
+    POST /api/employee-documents/                 — create a new document record (HR/MD only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        employee_id = request.query_params.get('employee')
+
+        if user.role in ('HR', 'MD'):
+            qs = EmployeeDocument.objects.select_related('employee', 'approved_by').all()
+            if employee_id:
+                qs = qs.filter(employee_id=employee_id)
+        else:
+            # Employees can only see their own approved/issued docs
+            qs = EmployeeDocument.objects.filter(
+                employee=user,
+                status__in=('Approved', 'Issued')
+            ).select_related('employee', 'approved_by')
+
+        data = []
+        for doc in qs:
+            data.append({
+                'id': doc.id,
+                'document_type': doc.document_type,
+                'document_type_display': doc.get_document_type_display(),
+                'title': doc.title,
+                'reference_number': doc.reference_number,
+                'status': doc.status,
+                'issue_date': str(doc.issue_date) if doc.issue_date else None,
+                'email_status': doc.email_status,
+                'email_sent_at': doc.email_sent_at.isoformat() if doc.email_sent_at else None,
+                'email_error': doc.email_error,
+                'file_url': request.build_absolute_uri(doc.file.url) if doc.file and doc.file.name else None,
+                'employee_id': doc.employee_id,
+                'employee_name': doc.employee.get_full_name() or doc.employee.username,
+                'employee_email': doc.employee.email,
+                'employee_emp_id': doc.employee.emp_id,
+                'approved_by_name': doc.approved_by.get_full_name() if doc.approved_by else None,
+                'approved_at': doc.approved_at.isoformat() if doc.approved_at else None,
+                'created_at': doc.created_at.isoformat(),
+            })
+        return Response(data)
+
+    def post(self, request):
+        user = request.user
+        if user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can create employee documents.'}, status=status.HTTP_403_FORBIDDEN)
+
+        employee_id = request.data.get('employee')
+        if not employee_id:
+            return Response({'detail': 'employee field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            employee = User.objects.get(id=employee_id)
+        except User.DoesNotExist:
+            return Response({'detail': 'Employee not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        doc_type = request.data.get('document_type', 'other')
+        title = request.data.get('title', '')
+        if not title:
+            type_labels = dict(EmployeeDocument.DOCUMENT_TYPES)
+            title = f"{type_labels.get(doc_type, 'Document')} — {employee.get_full_name() or employee.username}"
+
+        doc = EmployeeDocument(
+            employee=employee,
+            document_type=doc_type,
+            title=title,
+            reference_number=request.data.get('reference_number', ''),
+            status=request.data.get('status', 'Approved'),
+            issue_date=request.data.get('issue_date') or timezone.now().date(),
+            approved_by=user,
+            approved_at=timezone.now(),
+        )
+
+        # Handle file upload
+        if 'file' in request.FILES:
+            doc.file = request.FILES['file']
+
+        doc.save()
+
+        return Response({
+            'id': doc.id,
+            'title': doc.title,
+            'document_type': doc.document_type,
+            'detail': 'Document record created successfully.'
+        }, status=status.HTTP_201_CREATED)
+
+
+class EmployeeDocumentDetailAPIView(APIView):
+    """
+    GET    /api/employee-documents/<pk>/  — get a single document
+    PUT    /api/employee-documents/<pk>/  — update title/status/file (HR/MD only)
+    DELETE /api/employee-documents/<pk>/  — delete (HR/MD only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _get_document(self, pk, user):
+        doc = get_object_or_404(EmployeeDocument, pk=pk)
+        if user.role in ('HR', 'MD'):
+            return doc
+        # Employees can only see their own approved/issued docs
+        if doc.employee == user and doc.status in ('Approved', 'Issued'):
+            return doc
+        return None
+
+    def get(self, request, pk):
+        doc = self._get_document(pk, request.user)
+        if doc is None:
+            return Response({'detail': 'Not found or access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({
+            'id': doc.id,
+            'document_type': doc.document_type,
+            'document_type_display': doc.get_document_type_display(),
+            'title': doc.title,
+            'reference_number': doc.reference_number,
+            'status': doc.status,
+            'issue_date': str(doc.issue_date) if doc.issue_date else None,
+            'email_status': doc.email_status,
+            'email_sent_at': doc.email_sent_at.isoformat() if doc.email_sent_at else None,
+            'email_error': doc.email_error,
+            'file_url': request.build_absolute_uri(doc.file.url) if doc.file and doc.file.name else None,
+            'employee_id': doc.employee_id,
+            'employee_name': doc.employee.get_full_name() or doc.employee.username,
+            'employee_email': doc.employee.email,
+            'employee_emp_id': doc.employee.emp_id,
+        })
+
+    def put(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can edit documents.'}, status=status.HTTP_403_FORBIDDEN)
+        doc = get_object_or_404(EmployeeDocument, pk=pk)
+        updatable = ['title', 'reference_number', 'status', 'issue_date', 'document_type']
+        for field in updatable:
+            if field in request.data:
+                setattr(doc, field, request.data[field])
+        if 'file' in request.FILES:
+            doc.file = request.FILES['file']
+            # Reset email status when file is replaced
+            doc.email_status = 'Not Sent'
+            doc.email_error = None
+        doc.save()
+        return Response({'detail': 'Document updated successfully.'})
+
+    def delete(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can delete documents.'}, status=status.HTTP_403_FORBIDDEN)
+        doc = get_object_or_404(EmployeeDocument, pk=pk)
+        doc.delete()
+        return Response({'detail': 'Document deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class EmployeeDocumentEmailAPIView(APIView):
+    """
+    POST /api/employee-documents/<pk>/send-email/
+    Body: { "force": true }  — optional; forces resend even if already Sent
+    Validates ownership, email existence, approval status, and duplicate guards.
+    Records result in DocumentEmailLog.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can send employee documents.'}, status=status.HTTP_403_FORBIDDEN)
+
+        doc = get_object_or_404(EmployeeDocument, pk=pk)
+        force = str(request.data.get('force', 'false')).lower() in ('true', '1', 'yes')
+
+        # Duplicate-send guard
+        if not force and doc.email_status in ('Sending', 'Sent'):
+            return Response({
+                'detail': f"Document email already {doc.email_status}. Pass force=true to resend.",
+                'email_status': doc.email_status,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if doc.status not in ('Approved', 'Issued'):
+            return Response({
+                'detail': 'Document must be in Approved or Issued status before sending.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        emp = doc.employee
+        if not emp.email:
+            return Response({'detail': 'Employee has no registered email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from main.email_service import YGREmailService
+        ok, reason = YGREmailService.send_employee_document(
+            document_id=doc.id,
+            sender_id=request.user.id,
+            force=force,
+        )
+
+        if ok:
+            return Response({
+                'detail': f"Email queued for delivery to {emp.email}.",
+                'recipient': emp.email,
+                'document': doc.title,
+                'email_status': 'Sending',
+            })
+        else:
+            return Response({'detail': reason}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DocumentEmailHistoryAPIView(APIView):
+    """
+    GET /api/email-history/?document_type=payslip&document_id=<id>
+    GET /api/email-history/?employee=<id>
+    Returns DocumentEmailLog entries for HR auditing.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        qs = DocumentEmailLog.objects.select_related('employee', 'sender').all()
+        doc_type = request.query_params.get('document_type')
+        doc_id = request.query_params.get('document_id')
+        employee_id = request.query_params.get('employee')
+
+        if doc_type:
+            qs = qs.filter(document_type=doc_type)
+        if doc_id:
+            qs = qs.filter(document_id=str(doc_id))
+        if employee_id:
+            qs = qs.filter(employee_id=employee_id)
+
+        data = [{
+            'id': log.id,
+            'document_type': log.document_type,
+            'document_id': log.document_id,
+            'recipient_email': log.recipient_email,
+            'employee_name': log.employee.get_full_name() if log.employee else '',
+            'sender_name': log.sender.get_full_name() if log.sender else 'System',
+            'subject': log.subject,
+            'status': log.status,
+            'error_details': log.error_details,
+            'timestamp': log.timestamp.isoformat(),
+        } for log in qs[:100]]
+        return Response(data)
+
+
+# -----------------------------------------------------------------------
+# Recruitment Candidates (for selection in Offer Letters)
+# -----------------------------------------------------------------------
+class RecruitmentCandidatesAPIView(APIView):
+    """
+    GET /api/candidates/
+    Returns list of job applications for HR selection.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        candidates = JobApplication.objects.all().order_by('-submitted_at')
+        serializer = CandidateSummarySerializer(candidates, many=True)
+        return Response(serializer.data)
+
+
+# -----------------------------------------------------------------------
+# Offer Letters Management
+# -----------------------------------------------------------------------
+OFFER_POLICY_SECTION_KEYS = (
+    'appointment', 'position_responsibilities', 'joining_workplace', 'compensation',
+    'probation', 'confirmation', 'working_hours', 'attendance_leave',
+    'holidays_weekly_off', 'transfer_relocation', 'business_travel',
+    'performance_evaluation', 'conduct', 'confidentiality', 'intellectual_property',
+    'information_security', 'company_assets', 'conflict_outside_employment',
+    'background_verification', 'employee_representations', 'notice_termination',
+    'return_property', 'company_policies', 'general_terms', 'acceptance',
+)
+
+OFFER_POLICY_SECTION_TITLES = (
+    ('appointment', 'Appointment and nature of employment'),
+    ('position_responsibilities', 'Position, responsibilities and reporting structure'),
+    ('joining_workplace', 'Date of joining and place of work'),
+    ('compensation', 'Compensation and salary payment'),
+    ('probation', 'Probation period'),
+    ('confirmation', 'Confirmation of employment'),
+    ('working_hours', 'Working days and working hours'),
+    ('attendance_leave', 'Attendance and leave policies'),
+    ('holidays_weekly_off', 'Holidays and weekly offs'),
+    ('transfer_relocation', 'Transfers and relocation'),
+    ('business_travel', 'Business travel and expenses'),
+    ('performance_evaluation', 'Performance evaluation'),
+    ('conduct', 'Code of conduct and professional behaviour'),
+    ('confidentiality', 'Confidentiality and non-disclosure'),
+    ('intellectual_property', 'Intellectual property and ownership of work'),
+    ('information_security', 'Information security and data protection'),
+    ('company_assets', 'Use of company assets and IT systems'),
+    ('conflict_outside_employment', 'Conflict of interest and outside employment'),
+    ('background_verification', 'Background and document verification'),
+    ('employee_representations', 'Employee representations and declarations'),
+    ('notice_termination', 'Notice period and termination'),
+    ('return_property', 'Return of company property'),
+    ('company_policies', 'Applicable company policies'),
+    ('general_terms', 'General terms and governing law'),
+    ('acceptance', 'Acceptance and execution'),
+)
+
+REQUIRED_OFFER_ANNEXURES = {'B', 'C', 'D'}
+
+
+def _offer_policy_content(value):
+    if isinstance(value, dict):
+        if not value.get('enabled', True):
+            return ''
+        parts = [str(value.get('content', '') or '')]
+        parts.extend(str(item) for item in value.get('subclauses', []) if str(item).strip())
+        return '\n'.join(parts)
+    return value if isinstance(value, str) else ''
+
+
+def _has_unresolved_placeholder(value):
+    if isinstance(value, dict):
+        return any(_has_unresolved_placeholder(item) for item in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_has_unresolved_placeholder(item) for item in value)
+    text = str(value or '')
+    return any(token in text for token in ('{{', '}}', '[[', ']]', '[HR CONFIGURATION REQUIRED', '[LEGAL REVIEW REQUIRED'))
+
+
+def _offer_policy_data(policy):
+    return {
+        'id': policy.id,
+        'name': policy.name,
+        'version': policy.version,
+        'employment_category': policy.employment_category,
+        'employment_type': policy.employment_type,
+        'effective_date': policy.effective_date,
+        'company_details': policy.company_details,
+        'sections': policy.sections,
+        'annexures': policy.annexures,
+        'requires_md_approval': policy.requires_md_approval,
+        'status': policy.status,
+        'legal_approved': policy.legal_approved,
+        'legal_reviewer_name': policy.legal_reviewer_name,
+        'legal_approval_note': policy.legal_approval_note,
+        'created_at': policy.created_at,
+        'updated_at': policy.updated_at,
+    }
+
+
+def _snapshot_offer_policy(offer, policy):
+    if policy.status != 'Published':
+        return 'Select a published policy version before approving this offer.'
+    if policy.employment_category not in ('All', offer.employment_category):
+        return 'The selected policy version does not match this employment category.'
+    if policy.employment_type not in ('All', offer.employment_type):
+        return 'The selected policy version does not match this employment type.'
+    if not policy.effective_date or policy.effective_date > timezone.localdate():
+        return 'The selected policy version is not yet effective.'
+    if not offer.candidate_address.strip():
+        return 'Enter the candidate postal address before approval.'
+    if not offer.reporting_manager_name.strip():
+        return 'Set the reporting manager before approval.'
+    if not offer.offer_validity_date:
+        return 'Set the offer acceptance deadline before approval.'
+    if offer.joining_date < timezone.localdate():
+        return 'The proposed joining date cannot be in the past.'
+    if offer.offer_validity_date < timezone.localdate() or offer.offer_validity_date > offer.joining_date:
+        return 'The acceptance deadline must be current and no later than the joining date.'
+    if not policy.legal_approved or not policy.legal_reviewer_name or not policy.legal_approval_note:
+        return 'The selected policy version does not contain a complete legal-review record.'
+    company_details = policy.company_details if isinstance(policy.company_details, dict) else {}
+    required_company_fields = (
+        'legal_name', 'registered_office_address', 'cin', 'authorized_signatory_name',
+        'authorized_signatory_title', 'official_email', 'website',
+    )
+    if any(not str(company_details.get(key, '')).strip() for key in required_company_fields):
+        return 'Complete registered company and authorized signatory details before approval.'
+    for key in OFFER_POLICY_SECTION_KEYS:
+        content = _offer_policy_content(policy.sections.get(key, ''))
+        if len(content.strip()) < 120 or _has_unresolved_placeholder(content):
+            return f'Policy section "{key}" is incomplete or contains unresolved placeholders.'
+
+    monthly_gross = sum((
+        offer.basic_salary,
+        offer.hra,
+        offer.special_allowance,
+        offer.transport_allowance,
+        offer.medical_allowance,
+        offer.other_allowances,
+    ), Decimal('0.00'))
+    salary_values = (
+        offer.offered_ctc,
+        offer.monthly_gross,
+        offer.basic_salary,
+        offer.hra,
+        offer.special_allowance,
+        offer.transport_allowance,
+        offer.medical_allowance,
+        offer.other_allowances,
+        offer.provident_fund,
+        offer.employer_esi,
+        offer.gratuity,
+        offer.variable_pay,
+        offer.employee_pf_deduction,
+        offer.employee_esi,
+        offer.professional_tax,
+        offer.other_deductions,
+    )
+    if any(value < 0 for value in salary_values):
+        return 'Compensation and deduction values cannot be negative.'
+    if offer.offered_ctc <= 0 or monthly_gross <= 0:
+        return 'Complete the approved gross salary and annual CTC before approval.'
+    monthly_ctc = monthly_gross + offer.provident_fund + offer.employer_esi + offer.gratuity + (offer.variable_pay / 12)
+    if abs(monthly_gross - offer.monthly_gross) > Decimal('0.01'):
+        return 'Monthly gross must equal basic salary and all monthly cash allowances.'
+    if abs(monthly_ctc * 12 - offer.offered_ctc) > Decimal('0.01'):
+        return 'Annual CTC must equal annual gross salary plus employer contributions and variable pay.'
+    total_deductions = offer.employee_pf_deduction + offer.employee_esi + offer.professional_tax + offer.other_deductions
+    if total_deductions > monthly_gross:
+        return 'Stated monthly deductions cannot exceed monthly gross salary.'
+
+    enabled_annexures = [item for item in policy.annexures if isinstance(item, dict) and item.get('enabled', True)]
+    selected_codes = offer.annexures
+    if not isinstance(selected_codes, list):
+        return 'Selected annexures must be provided as a list.'
+    annexure_map = {item.get('code'): item for item in enabled_annexures}
+    if any(code not in annexure_map for code in selected_codes):
+        return 'One or more selected annexures are not enabled in the policy version.'
+    if not REQUIRED_OFFER_ANNEXURES.issubset(selected_codes):
+        return 'Annexures B, C, and D must be included in an issued offer pack.'
+    benefits = annexure_map.get('B', {})
+    benefit_sections = benefits.get('benefit_sections', {})
+    benefit_keys = (
+        'medical_insurance', 'leave_entitlements', 'paid_holidays',
+        'training_development', 'performance_incentives', 'other_benefits',
+    )
+    if not isinstance(benefit_sections, dict) or any(
+        len(str(benefit_sections.get(key, '')).strip()) < 40 or _has_unresolved_placeholder(benefit_sections.get(key, ''))
+        for key in benefit_keys
+    ):
+        return 'Annexure B must contain approved wording for each benefit category or state that it does not apply.'
+    undertaking = annexure_map.get('C', {}).get('sections', {})
+    undertaking_keys = (
+        'confidential_information', 'data_handling', 'confidentiality_obligations',
+        'intellectual_property', 'return_deletion', 'employee_acknowledgement',
+    )
+    if not isinstance(undertaking, dict) or any(
+        len(str(undertaking.get(key, '')).strip()) < 80 or _has_unresolved_placeholder(undertaking.get(key, ''))
+        for key in undertaking_keys
+    ):
+        return 'Annexure C must contain complete approved confidentiality and IP undertaking clauses.'
+    checklist = annexure_map.get('D', {}).get('items', [])
+    if not isinstance(checklist, list) or len([item for item in checklist if str(item).strip()]) < 5:
+        return 'Annexure D must contain the employment-specific joining checklist.'
+
+    offer.policy_snapshot = {
+        'name': policy.name,
+        'version': policy.version,
+        'effective_date': policy.effective_date.isoformat(),
+        'employment_category': policy.employment_category,
+        'employment_type': policy.employment_type,
+        'company_details': policy.company_details,
+        'requires_md_approval': policy.requires_md_approval,
+        'sections': policy.sections,
+        'annexures': [annexure_map[code] for code in selected_codes],
+        'legal_reviewer_name': policy.legal_reviewer_name,
+    }
+    offer.annexures = selected_codes
+    return None
+
+
+class OfferLetterPolicyAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        policies = OfferLetterPolicyVersion.objects.all()
+        if request.query_params.get('published') == 'true':
+            policies = policies.filter(status='Published')
+        return Response([_offer_policy_data(policy) for policy in policies])
+
+    def post(self, request):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        data = request.data
+        if not isinstance(data.get('sections', {}), dict) or not isinstance(data.get('annexures', []), list):
+            return Response({'detail': 'Sections must be an object and annexures must be a list.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(data.get('company_details', {}), dict):
+            return Response({'detail': 'Company details must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+        name = str(data.get('name') or '').strip()
+        version = str(data.get('version') or '').strip()
+        if not name or not version:
+            return Response({'detail': 'Policy name and version are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if OfferLetterPolicyVersion.objects.filter(name=name, version=version).exists():
+            return Response({'detail': 'This policy version already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        legal_approved = bool(data.get('legal_approved', False))
+        requires_md_approval = bool(data.get('requires_md_approval', True))
+        if legal_approved and request.user.role != 'MD':
+            return Response({'detail': 'Only an MD can record legal review approval.'}, status=status.HTTP_403_FORBIDDEN)
+        if not requires_md_approval and request.user.role != 'MD':
+            return Response({'detail': 'Only an MD can configure a template without MD approval.'}, status=status.HTTP_403_FORBIDDEN)
+        policy = OfferLetterPolicyVersion.objects.create(
+            name=name,
+            version=version,
+            employment_category=data.get('employment_category', 'All'),
+            employment_type=data.get('employment_type', 'All'),
+            effective_date=data.get('effective_date') or None,
+            company_details=data.get('company_details', {}),
+            sections=data.get('sections', {}),
+            annexures=data.get('annexures', []),
+            requires_md_approval=requires_md_approval,
+            legal_approved=legal_approved,
+            legal_reviewer_name=data.get('legal_reviewer_name', '').strip() if legal_approved else '',
+            legal_approval_note=data.get('legal_approval_note', '').strip() if legal_approved else '',
+            created_by=request.user,
+        )
+        return Response(_offer_policy_data(policy), status=status.HTTP_201_CREATED)
+
+
+class OfferLetterPolicyDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        policy = get_object_or_404(OfferLetterPolicyVersion, pk=pk)
+        return Response(_offer_policy_data(policy))
+
+    def put(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        policy = get_object_or_404(OfferLetterPolicyVersion, pk=pk)
+        if request.data.get('action') == 'retire':
+            if policy.status != 'Published':
+                return Response({'detail': 'Only published policy versions can be retired.'}, status=status.HTTP_400_BAD_REQUEST)
+            policy.status = 'Retired'
+            policy.save(update_fields=['status', 'updated_at'])
+            return Response(_offer_policy_data(policy))
+        if policy.status != 'Draft':
+            return Response({'detail': 'Published or retired policy versions are immutable. Create a new version.'}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        legal_approved = bool(data.get('legal_approved', policy.legal_approved))
+        requires_md_approval = bool(data.get('requires_md_approval', policy.requires_md_approval))
+        company_details = data.get('company_details', policy.company_details)
+        if not isinstance(company_details, dict):
+            return Response({'detail': 'Company details must be an object.'}, status=status.HTTP_400_BAD_REQUEST)
+        if legal_approved and request.user.role != 'MD':
+            return Response({'detail': 'Only an MD can record legal review approval.'}, status=status.HTTP_403_FORBIDDEN)
+        if not requires_md_approval and request.user.role != 'MD':
+            return Response({'detail': 'Only an MD can configure a template without MD approval.'}, status=status.HTTP_403_FORBIDDEN)
+        policy.name = data.get('name', policy.name).strip()
+        policy.version = data.get('version', policy.version).strip()
+        if OfferLetterPolicyVersion.objects.filter(name=policy.name, version=policy.version).exclude(pk=policy.pk).exists():
+            return Response({'detail': 'This policy version already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        policy.employment_category = data.get('employment_category', policy.employment_category)
+        policy.employment_type = data.get('employment_type', policy.employment_type)
+        policy.effective_date = data.get('effective_date') or None
+        policy.company_details = company_details
+        policy.sections = data.get('sections', policy.sections)
+        policy.annexures = data.get('annexures', policy.annexures)
+        policy.requires_md_approval = requires_md_approval
+        policy.legal_approved = legal_approved
+        policy.legal_reviewer_name = data.get('legal_reviewer_name', policy.legal_reviewer_name).strip() if legal_approved else ''
+        policy.legal_approval_note = data.get('legal_approval_note', policy.legal_approval_note).strip() if legal_approved else ''
+        if not isinstance(policy.sections, dict) or not isinstance(policy.annexures, list):
+            return Response({'detail': 'Sections must be an object and annexures must be a list.'}, status=status.HTTP_400_BAD_REQUEST)
+        policy.save()
+        return Response(_offer_policy_data(policy))
+
+
+class OfferLetterPolicyPublishAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        policy = get_object_or_404(OfferLetterPolicyVersion, pk=pk)
+        if request.data.get('action') == 'retire':
+            if policy.status != 'Published':
+                return Response({'detail': 'Only published policy versions can be retired.'}, status=status.HTTP_400_BAD_REQUEST)
+            policy.status = 'Retired'
+            policy.save(update_fields=['status', 'updated_at'])
+            return Response(_offer_policy_data(policy))
+        if policy.status != 'Draft':
+            return Response({'detail': 'Only draft policy versions can be published.'}, status=status.HTTP_400_BAD_REQUEST)
+        missing = [
+            key for key in OFFER_POLICY_SECTION_KEYS
+            if not isinstance(_offer_policy_content(policy.sections.get(key, '')), str)
+            or not _offer_policy_content(policy.sections.get(key, '')).strip()
+        ]
+        if missing:
+            return Response({'detail': 'Complete all required policy sections before publication.', 'missing_sections': missing}, status=status.HTTP_400_BAD_REQUEST)
+        short_sections = [
+            key for key in OFFER_POLICY_SECTION_KEYS
+            if len(_offer_policy_content(policy.sections.get(key, '')).strip()) < 120
+        ]
+        if short_sections:
+            return Response({'detail': 'Each employment clause must contain complete approved wording (at least 120 characters).', 'sections': short_sections}, status=status.HTTP_400_BAD_REQUEST)
+        placeholder_sections = [key for key, value in policy.sections.items() if _has_unresolved_placeholder(value)]
+        if placeholder_sections:
+            return Response({'detail': 'Replace unresolved placeholders before publication.', 'sections': placeholder_sections}, status=status.HTTP_400_BAD_REQUEST)
+        company_details = policy.company_details if isinstance(policy.company_details, dict) else {}
+        required_company_fields = (
+            'legal_name', 'registered_office_address', 'cin', 'authorized_signatory_name',
+            'authorized_signatory_title', 'official_email', 'website',
+        )
+        missing_company_details = [key for key in required_company_fields if not str(company_details.get(key, '')).strip()]
+        if missing_company_details:
+            return Response({'detail': 'Complete registered company and authorized signatory details before publication.', 'missing_company_details': missing_company_details}, status=status.HTTP_400_BAD_REQUEST)
+        if _has_unresolved_placeholder(company_details):
+            return Response({'detail': 'Replace unresolved company detail placeholders before publication.'}, status=status.HTTP_400_BAD_REQUEST)
+        missing_annexures = []
+        for item in policy.annexures:
+            if not isinstance(item, dict) or not item.get('enabled', True):
+                continue
+            code = item.get('code') or 'unnamed'
+            has_content = bool(str(item.get('content', '')).strip())
+            has_checklist = code == 'D' and isinstance(item.get('items'), list) and bool(item['items'])
+            undertaking_sections = item.get('sections', {}) if isinstance(item.get('sections'), dict) else {}
+            benefit_sections = item.get('benefit_sections', {}) if isinstance(item.get('benefit_sections'), dict) else {}
+            required_undertaking_keys = (
+                'confidential_information', 'data_handling', 'confidentiality_obligations',
+                'intellectual_property', 'return_deletion', 'employee_acknowledgement',
+            )
+            has_undertaking = code == 'C' and all(
+                len(str(undertaking_sections.get(key, '')).strip()) >= 80
+                for key in required_undertaking_keys
+            )
+            benefit_keys = (
+                'medical_insurance', 'leave_entitlements', 'paid_holidays',
+                'training_development', 'performance_incentives', 'other_benefits',
+            )
+            has_benefits = code == 'B' and all(
+                len(str(benefit_sections.get(key, '')).strip()) >= 40 for key in benefit_keys
+            )
+            if not str(item.get('title', '')).strip() or not (has_content or has_checklist or has_undertaking or has_benefits):
+                missing_annexures.append(code)
+            if code == 'B' and (not has_benefits or _has_unresolved_placeholder(benefit_sections)):
+                missing_annexures.append(code)
+            if code == 'C' and (not has_undertaking or _has_unresolved_placeholder(undertaking_sections)):
+                missing_annexures.append(code)
+        if missing_annexures:
+            return Response({'detail': 'Complete or disable selected annexures before publication.', 'missing_annexures': missing_annexures}, status=status.HTTP_400_BAD_REQUEST)
+        enabled_annexure_codes = {item.get('code') for item in policy.annexures if isinstance(item, dict) and item.get('enabled', True)}
+        if not REQUIRED_OFFER_ANNEXURES.issubset(enabled_annexure_codes):
+            return Response({'detail': 'Annexures B, C, and D must be enabled in the offer template.'}, status=status.HTTP_400_BAD_REQUEST)
+        if any(_has_unresolved_placeholder(item) for item in policy.annexures if isinstance(item, dict) and item.get('enabled', True)):
+            return Response({'detail': 'Replace unresolved annexure placeholders before publication.'}, status=status.HTTP_400_BAD_REQUEST)
+        checklist = next((item.get('items', []) for item in policy.annexures if isinstance(item, dict) and item.get('code') == 'D' and item.get('enabled', True)), [])
+        if len([item for item in checklist if str(item).strip()]) < 5:
+            return Response({'detail': 'The employment-specific joining checklist must contain at least five required documents.'}, status=status.HTTP_400_BAD_REQUEST)
+        invalid_optional_clauses = [
+            index for index, clause in enumerate(policy.sections.get('optional_clauses', []))
+            if isinstance(clause, dict) and clause.get('enabled', True)
+            and (not str(clause.get('title', '')).strip() or not str(clause.get('content', '')).strip())
+        ]
+        if invalid_optional_clauses:
+            return Response({'detail': 'Complete or disable optional clauses before publication.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not policy.effective_date:
+            return Response({'detail': 'Set an effective date before publication.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not policy.legal_approved or not policy.legal_reviewer_name or not policy.legal_approval_note:
+            return Response({'detail': 'A named legal reviewer and review note are required before publication.'}, status=status.HTTP_400_BAD_REQUEST)
+        policy.status = 'Published'
+        policy.save(update_fields=['status', 'updated_at'])
+        return Response(_offer_policy_data(policy))
+
+
+class OfferLetterAPIView(APIView):
+    """
+    GET  /api/offer-letters/   - list offer letters (HR/MD: all; Employee: own)
+    POST /api/offer-letters/   - create new offer letter (HR/MD only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role in ('HR', 'MD'):
+            qs = OfferLetter.objects.select_related('candidate', 'employee', 'approved_by', 'reporting_manager').all()
+            status_param = request.query_params.get('status')
+            if status_param and status_param != 'all':
+                qs = qs.filter(status=status_param)
+            search = request.query_params.get('search')
+            if search:
+                qs = qs.filter(
+                    Q(candidate_name__icontains=search) |
+                    Q(candidate_email__icontains=search) |
+                    Q(job_title__icontains=search) |
+                    Q(reference_number__icontains=search)
+                )
+        else:
+            qs = OfferLetter.objects.filter(
+                employee=user,
+                status__in=('Approved', 'Issued', 'Sent', 'Accepted')
+            ).select_related('candidate', 'employee', 'approved_by', 'reporting_manager')
+
+        serializer = OfferLetterSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        user = request.user
+        if user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can create offer letters.'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+        requested_status = data.get('status', 'Draft')
+        if requested_status not in ('Draft', 'Pending Approval', 'Approved'):
+            return Response({'detail': 'New offer letters must be saved as Draft, Pending Approval, or Approved.'}, status=status.HTTP_400_BAD_REQUEST)
+        policy = None
+        if requested_status == 'Approved':
+            policy = OfferLetterPolicyVersion.objects.filter(pk=data.get('policy_version'), status='Published').first()
+            if not policy:
+                return Response({'detail': 'Select a published, legally reviewed policy version before approval.'}, status=status.HTTP_400_BAD_REQUEST)
+            if policy.requires_md_approval and user.role != 'MD':
+                return Response({'detail': 'This template requires MD approval. Save the draft and submit it for approval.'}, status=status.HTTP_403_FORBIDDEN)
+        for field in ('approved_by', 'approved_at', 'created_by', 'policy_snapshot', 'pdf_file', 'email_status', 'email_sent_at', 'candidate_response', 'response_date'):
+            data.pop(field, None)
+
+        # Auto-generate reference number if missing
+        if not data.get('reference_number'):
+            import random
+            year = timezone.now().year
+            rand_code = random.randint(1000, 9999)
+            ref_num = f"YGR/HR/OL/{year}/{rand_code}"
+            while OfferLetter.objects.filter(reference_number=ref_num).exists():
+                rand_code = random.randint(1000, 9999)
+                ref_num = f"YGR/HR/OL/{year}/{rand_code}"
+            data['reference_number'] = ref_num
+
+        data['status'] = 'Draft'
+
+        # Check candidate linking
+        candidate_id = data.get('candidate')
+        if candidate_id:
+            cand = JobApplication.objects.filter(id=candidate_id).first()
+            if cand:
+                if not data.get('candidate_name'):
+                    data['candidate_name'] = f"{cand.first_name} {cand.last_name}".strip()
+                if not data.get('candidate_email'):
+                    data['candidate_email'] = cand.email
+                if not data.get('candidate_phone'):
+                    data['candidate_phone'] = cand.phone
+                if not data.get('candidate_address'):
+                    data['candidate_address'] = cand.current_address or cand.permanent_address or cand.current_city or ''
+
+        employee_id = data.get('employee')
+        if employee_id:
+            emp = User.objects.filter(id=employee_id).first()
+            if emp:
+                if not data.get('candidate_name'):
+                    data['candidate_name'] = emp.get_full_name() or emp.username
+                if not data.get('candidate_email'):
+                    data['candidate_email'] = emp.email
+                if not data.get('candidate_address'):
+                    data['candidate_address'] = emp.address or ''
+
+        serializer = OfferLetterSerializer(data=data)
+        if serializer.is_valid():
+            offer = serializer.save(created_by=user)
+            if requested_status == 'Approved':
+                policy_error = _snapshot_offer_policy(offer, policy)
+                if policy_error:
+                    offer.delete()
+                    return Response({'detail': policy_error}, status=status.HTTP_400_BAD_REQUEST)
+                offer.status = requested_status
+                if requested_status == 'Approved':
+                    offer.approved_by = user
+                    offer.approved_at = timezone.now()
+                offer.save(update_fields=['policy_snapshot', 'annexures', 'status', 'approved_by', 'approved_at', 'updated_at'])
+            elif requested_status != 'Draft':
+                offer.status = requested_status
+                offer.save(update_fields=['status', 'updated_at'])
+            if offer.status == 'Approved':
+                from hr.letter_service import generate_offer_letter_pdf
+                ok, result = generate_offer_letter_pdf(offer)
+                if not ok:
+                    offer.status = 'Draft'
+                    offer.approved_by = None
+                    offer.approved_at = None
+                    offer.policy_snapshot = {}
+                    offer.save(update_fields=['status', 'approved_by', 'approved_at', 'policy_snapshot', 'updated_at'])
+                    return Response({'detail': f'PDF generation failed: {result}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            OfferLetterAudit.objects.create(
+                offer=offer,
+                actor=user,
+                action='created' if requested_status == 'Draft' else requested_status.lower(),
+                details={'status': offer.status, 'policy_version': offer.policy_snapshot.get('version')},
+            )
+            return Response(OfferLetterSerializer(offer).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OfferLetterDetailAPIView(APIView):
+    """
+    GET    /api/offer-letters/<pk>/  - retrieve offer details
+    PUT    /api/offer-letters/<pk>/  - update offer letter (HR/MD only)
+    DELETE /api/offer-letters/<pk>/  - delete offer letter (HR/MD only)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if user.role in ('HR', 'MD'):
+            return offer
+        if offer.employee == user and offer.status in ('Approved', 'Issued', 'Sent', 'Accepted'):
+            return offer
+        return None
+
+    def get(self, request, pk):
+        offer = self.get_object(pk, request.user)
+        if not offer:
+            return Response({'detail': 'Not found or permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response(OfferLetterSerializer(offer).data)
+
+    def put(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if offer.status != 'Draft':
+            return Response({'detail': 'Approved or issued offers are immutable. Create a new offer revision instead.'}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()
+        if data.get('status') not in (None, 'Draft'):
+            return Response({'detail': 'Use the approval action to change offer status.'}, status=status.HTTP_400_BAD_REQUEST)
+        for field in ('approved_by', 'approved_at', 'created_by', 'policy_snapshot', 'pdf_file', 'email_status', 'email_sent_at', 'candidate_response', 'response_date', 'reference_number'):
+            data.pop(field, None)
+        selected_policy_id = data.get('policy_version')
+        if selected_policy_id and not OfferLetterPolicyVersion.objects.filter(pk=selected_policy_id, status='Published').exists():
+            return Response({'detail': 'Select a published policy version.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = OfferLetterSerializer(offer, data=data, partial=True)
+        if serializer.is_valid():
+            changed_fields = sorted(serializer.validated_data.keys())
+            updated_offer = serializer.save()
+            OfferLetterAudit.objects.create(offer=updated_offer, actor=request.user, action='updated', details={'fields': changed_fields})
+            return Response(OfferLetterSerializer(updated_offer).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if offer.status != 'Draft':
+            return Response({'detail': 'Only draft offer letters can be deleted. Approved and issued documents are retained for audit.'}, status=status.HTTP_400_BAD_REQUEST)
+        offer.delete()
+        return Response({'detail': 'Offer letter deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class OfferLetterActionAPIView(APIView):
+    """
+    POST /api/offer-letters/<pk>/action/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        action = request.data.get('action')
+
+        from hr.letter_service import generate_offer_letter_pdf
+
+        if action == 'submit_for_approval':
+            if offer.status != 'Draft':
+                return Response({'detail': 'Only draft offers can be submitted for approval.'}, status=status.HTTP_400_BAD_REQUEST)
+            offer.status = 'Pending Approval'
+            offer.save(update_fields=['status', 'updated_at'])
+            OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='submitted_for_approval')
+            return Response({'detail': 'Offer submitted for approval.', 'offer': OfferLetterSerializer(offer).data})
+
+        if action == 'approve':
+            if offer.status not in ('Draft', 'Pending Approval'):
+                return Response({'detail': 'Only draft or pending offers can be approved.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not offer.policy_version:
+                return Response({'detail': 'Select a published policy version before approving this offer.'}, status=status.HTTP_400_BAD_REQUEST)
+            if offer.policy_version.requires_md_approval and request.user.role != 'MD':
+                return Response({'detail': 'This template requires MD approval.'}, status=status.HTTP_403_FORBIDDEN)
+            policy_error = _snapshot_offer_policy(offer, offer.policy_version)
+            if policy_error:
+                return Response({'detail': policy_error}, status=status.HTTP_400_BAD_REQUEST)
+            offer.status = 'Approved'
+            offer.approved_by = request.user
+            offer.approved_at = timezone.now()
+            offer.save(update_fields=['policy_snapshot', 'annexures', 'status', 'approved_by', 'approved_at', 'updated_at'])
+            ok, result = generate_offer_letter_pdf(offer)
+            if not ok:
+                offer.status = 'Draft'
+                offer.approved_by = None
+                offer.approved_at = None
+                offer.policy_snapshot = {}
+                offer.save(update_fields=['status', 'approved_by', 'approved_at', 'policy_snapshot', 'updated_at'])
+                return Response({'detail': f'PDF generation failed: {result}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='approved', details={'policy_version': offer.policy_snapshot.get('version')})
+            return Response({
+                'detail': 'Offer letter approved and PDF generated successfully.',
+                'offer': OfferLetterSerializer(offer).data
+            })
+
+        elif action == 'issue':
+            if offer.status != 'Approved' or not offer.policy_snapshot:
+                return Response({'detail': 'Only an approved offer with a policy snapshot can be issued.'}, status=status.HTTP_400_BAD_REQUEST)
+            if offer.policy_snapshot.get('requires_md_approval') and request.user.role != 'MD':
+                return Response({'detail': 'Only the configured MD signatory may issue this offer.'}, status=status.HTTP_403_FORBIDDEN)
+            offer.status = 'Issued'
+            offer.save(update_fields=['status', 'updated_at'])
+            ok, result = generate_offer_letter_pdf(offer)
+            if not ok:
+                offer.status = 'Approved'
+                offer.save(update_fields=['status', 'updated_at'])
+                return Response({'detail': f'PDF generation failed: {result}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='issued')
+            return Response({
+                'detail': 'Offer letter issued successfully.',
+                'offer': OfferLetterSerializer(offer).data
+            })
+
+        elif action == 'generate_pdf':
+            ok, res = generate_offer_letter_pdf(offer)
+            if ok:
+                OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='pdf_generated')
+                return Response({
+                    'detail': 'PDF generated successfully.',
+                    'pdf_url': offer.pdf_file.url,
+                    'offer': OfferLetterSerializer(offer).data
+                })
+            return Response({'detail': f'PDF generation failed: {res}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        elif action == 'record_response':
+            if offer.status not in ('Issued', 'Sent'):
+                return Response({'detail': 'Candidate responses can only be recorded for issued or sent offers.'}, status=status.HTTP_400_BAD_REQUEST)
+            resp = request.data.get('response')
+            if resp not in ('Accepted', 'Rejected'):
+                return Response({'detail': "Response must be 'Accepted' or 'Rejected'."}, status=status.HTTP_400_BAD_REQUEST)
+            notes = request.data.get('notes', '')
+            offer.status = resp
+            offer.candidate_response = resp
+            offer.candidate_response_notes = notes
+            offer.response_date = timezone.now()
+            offer.save(update_fields=['status', 'candidate_response', 'candidate_response_notes', 'response_date', 'updated_at'])
+            OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='candidate_response', details={'response': resp, 'notes': notes})
+
+            if offer.candidate:
+                if resp == 'Accepted':
+                    offer.candidate.status = 'onboarding'
+                    offer.candidate.save(update_fields=['status'])
+                elif resp == 'Rejected':
+                    offer.candidate.status = 'not_selected'
+                    offer.candidate.save(update_fields=['status'])
+
+            return Response({
+                'detail': f'Candidate response recorded as {resp}.',
+                'offer': OfferLetterSerializer(offer).data
+            })
+
+        return Response({'detail': f'Unknown action: {action}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OfferLetterAuditAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if request.user.role not in ('HR', 'MD') and offer.employee != request.user:
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        events = offer.audit_events.select_related('actor').all()
+        return Response([
+            {
+                'action': event.action,
+                'details': event.details,
+                'actor': (event.actor.get_full_name() or event.actor.username) if event.actor else None,
+                'created_at': event.created_at,
+            }
+            for event in events
+        ])
+
+
+class OfferLetterPreviewAPIView(APIView):
+    """
+    GET  /api/offer-letters/<pk>/preview/
+    POST /api/offer-letters/preview-draft/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if request.user.role not in ('HR', 'MD') and (offer.employee != request.user or offer.status not in ('Approved', 'Issued', 'Sent', 'Accepted')):
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        if offer.pdf_file and offer.status != 'Draft':
+            try:
+                offer.pdf_file.open('rb')
+                pdf_bytes = offer.pdf_file.read()
+            finally:
+                offer.pdf_file.close()
+        else:
+            from hr.letter_service import render_offer_letter_pdf_bytes
+            try:
+                pdf_bytes = render_offer_letter_pdf_bytes(offer)
+            except Exception as exc:
+                return Response({'detail': f'PDF preview generation failed: {exc}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        from django.http import HttpResponse
+        return HttpResponse(pdf_bytes, content_type='application/pdf')
+
+    def post(self, request):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        data = request.data
+        offer = OfferLetter(
+            candidate_name=data.get('candidate_name', 'Candidate Name'),
+            candidate_email=data.get('candidate_email', 'candidate@example.com'),
+            candidate_phone=data.get('candidate_phone', ''),
+            candidate_address=data.get('candidate_address', ''),
+            job_title=data.get('job_title', 'Software Engineer'),
+            department=data.get('department', 'Information Technology'),
+            employment_type=data.get('employment_type', 'Full-time'),
+            employment_category=data.get('employment_category', 'General'),
+            policy_version=OfferLetterPolicyVersion.objects.filter(pk=data.get('policy_version'), status='Published').first() if data.get('policy_version') else None,
+            annexures=data.get('annexures', []),
+            work_location=data.get('work_location', 'Hyderabad, Telangana'),
+            reporting_manager_name=data.get('reporting_manager_name', 'HR Manager'),
+            offered_ctc=data.get('offered_ctc') or 0.00,
+            monthly_gross=data.get('monthly_gross') or 0.00,
+            basic_salary=data.get('basic_salary') or 0.00,
+            hra=data.get('hra') or 0.00,
+            special_allowance=data.get('special_allowance') or 0.00,
+            provident_fund=data.get('provident_fund') or 0.00,
+            transport_allowance=data.get('transport_allowance') or 0.00,
+            medical_allowance=data.get('medical_allowance') or 0.00,
+            other_allowances=data.get('other_allowances') or 0.00,
+            gratuity=data.get('gratuity') or 0.00,
+            variable_pay=data.get('variable_pay') or 0.00,
+            employee_pf_deduction=data.get('employee_pf_deduction') or 0.00,
+            employer_esi=data.get('employer_esi') or 0.00,
+            employee_esi=data.get('employee_esi') or 0.00,
+            professional_tax=data.get('professional_tax') or 0.00,
+            other_deductions=data.get('other_deductions') or 0.00,
+            joining_date=data.get('joining_date') or timezone.now().date(),
+            offer_validity_date=data.get('offer_validity_date') or None,
+            probation_period_months=data.get('probation_period_months') or 0,
+            notice_period_days=data.get('notice_period_days') or 0,
+            reference_number=data.get('reference_number', 'YGR/HR/OL/2026/DRAFT'),
+            terms_and_conditions=data.get('terms_and_conditions', ''),
+            created_at=timezone.now(),
+        )
+        from hr.letter_service import render_offer_letter_pdf_bytes
+        try:
+            pdf_bytes = render_offer_letter_pdf_bytes(offer)
+        except Exception as exc:
+            return Response({'detail': f'PDF preview generation failed: {exc}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        from django.http import HttpResponse
+        return HttpResponse(pdf_bytes, content_type='application/pdf')
+
+
+class OfferLetterDownloadAPIView(APIView):
+    """
+    GET /api/offer-letters/<pk>/download/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        if request.user.role not in ('HR', 'MD'):
+            if offer.employee != request.user or offer.status not in ('Approved', 'Issued', 'Sent', 'Accepted'):
+                return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not offer.pdf_file:
+            from hr.letter_service import generate_offer_letter_pdf
+            ok, _ = generate_offer_letter_pdf(offer)
+            if not ok:
+                return Response({'detail': 'Could not generate PDF for download.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        from django.http import FileResponse
+        try:
+            return FileResponse(
+                offer.pdf_file.open('rb'),
+                as_attachment=True,
+                filename=f"Offer_Letter_{offer.candidate_name.replace(' ', '_')}.pdf"
+            )
+        except Exception as e:
+            return Response({'detail': f'File read error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class OfferLetterSendEmailAPIView(APIView):
+    """
+    POST /api/offer-letters/<pk>/send-email/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can send offer letters.'}, status=status.HTTP_403_FORBIDDEN)
+
+        offer = get_object_or_404(OfferLetter, pk=pk)
+        force = str(request.data.get('force', 'false')).lower() in ('true', '1', 'yes')
+
+        if not force and offer.email_status in ('Sending', 'Sent'):
+            return Response({
+                'detail': f"Offer letter email is already {offer.email_status}. Pass force=true to resend.",
+                'email_status': offer.email_status
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if offer.status not in ('Approved', 'Issued', 'Sent', 'Accepted'):
+            return Response({
+                'detail': f"Offer letter status is '{offer.status}'. It must be Approved or Issued before emailing."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from main.email_service import HREmailService
+        ok, reason = HREmailService.send_offer_letter_document(
+            offer_letter_id=offer.id,
+            sender_id=request.user.id,
+            force=force
+        )
+
+        if ok:
+            OfferLetterAudit.objects.create(offer=offer, actor=request.user, action='email_queued', details={'recipient': offer.candidate_email})
+            return Response({
+                'detail': f"Offer letter email queued successfully for {offer.candidate_email}.",
+                'email_status': 'Sending'
+            }, status=status.HTTP_200_OK)
+        return Response({'detail': reason}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -----------------------------------------------------------------------
+# Joining Letters Management
+# -----------------------------------------------------------------------
+class JoiningLetterAPIView(APIView):
+    """
+    GET  /api/joining-letters/
+    POST /api/joining-letters/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.role in ('HR', 'MD'):
+            qs = JoiningLetter.objects.select_related('offer_letter', 'candidate', 'employee', 'approved_by', 'reporting_manager').all()
+            status_param = request.query_params.get('status')
+            if status_param and status_param != 'all':
+                qs = qs.filter(status=status_param)
+            search = request.query_params.get('search')
+            if search:
+                qs = qs.filter(
+                    Q(employee_name__icontains=search) |
+                    Q(employee_email__icontains=search) |
+                    Q(designation__icontains=search) |
+                    Q(reference_number__icontains=search)
+                )
+        else:
+            qs = JoiningLetter.objects.filter(
+                employee=user,
+                status__in=('Approved', 'Issued', 'Sent')
+            ).select_related('offer_letter', 'candidate', 'employee', 'approved_by', 'reporting_manager')
+
+        serializer = JoiningLetterSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        user = request.user
+        if user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can create joining letters.'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data.copy()
+
+        # Auto-generate reference number if missing
+        if not data.get('reference_number'):
+            import random
+            year = timezone.now().year
+            rand_code = random.randint(1000, 9999)
+            ref_num = f"YGR/HR/JL/{year}/{rand_code}"
+            while JoiningLetter.objects.filter(reference_number=ref_num).exists():
+                rand_code = random.randint(1000, 9999)
+                ref_num = f"YGR/HR/JL/{year}/{rand_code}"
+            data['reference_number'] = ref_num
+
+        # Auto-fill from offer_letter if provided
+        offer_id = data.get('offer_letter')
+        if offer_id:
+            offer = OfferLetter.objects.filter(id=offer_id).first()
+            if offer:
+                if not data.get('employee_name'):
+                    data['employee_name'] = offer.candidate_name
+                if not data.get('employee_email'):
+                    data['employee_email'] = offer.candidate_email
+                if not data.get('employee_phone'):
+                    data['employee_phone'] = offer.candidate_phone
+                if not data.get('employee_address'):
+                    data['employee_address'] = offer.candidate_address
+                if not data.get('designation'):
+                    data['designation'] = offer.job_title
+                if not data.get('department'):
+                    data['department'] = offer.department
+                if not data.get('employment_type'):
+                    data['employment_type'] = offer.employment_type
+                if not data.get('work_location'):
+                    data['work_location'] = offer.work_location
+                if not data.get('reporting_manager') and offer.reporting_manager:
+                    data['reporting_manager'] = offer.reporting_manager.id
+                if not data.get('reporting_manager_name'):
+                    data['reporting_manager_name'] = offer.reporting_manager_name
+                if not data.get('actual_joining_date'):
+                    data['actual_joining_date'] = str(offer.joining_date)
+                if not data.get('candidate') and offer.candidate:
+                    data['candidate'] = offer.candidate.id
+                if not data.get('employee') and offer.employee:
+                    data['employee'] = offer.employee.id
+
+        employee_id = data.get('employee')
+        if employee_id:
+            emp = User.objects.filter(id=employee_id).first()
+            if emp:
+                if not data.get('employee_name'):
+                    data['employee_name'] = emp.get_full_name() or emp.username
+                if not data.get('employee_email'):
+                    data['employee_email'] = emp.email
+                if not data.get('employee_id_number'):
+                    data['employee_id_number'] = emp.emp_id
+
+        serializer = JoiningLetterSerializer(data=data)
+        if serializer.is_valid():
+            letter = serializer.save(created_by=user)
+            if letter.status in ('Approved', 'Issued'):
+                from hr.letter_service import generate_joining_letter_pdf
+                generate_joining_letter_pdf(letter)
+            return Response(JoiningLetterSerializer(letter).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class JoiningLetterDetailAPIView(APIView):
+    """
+    GET    /api/joining-letters/<pk>/
+    PUT    /api/joining-letters/<pk>/
+    DELETE /api/joining-letters/<pk>/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk, user):
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        if user.role in ('HR', 'MD'):
+            return letter
+        if letter.employee == user and letter.status in ('Approved', 'Issued', 'Sent'):
+            return letter
+        return None
+
+    def get(self, request, pk):
+        letter = self.get_object(pk, request.user)
+        if not letter:
+            return Response({'detail': 'Not found or permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response(JoiningLetterSerializer(letter).data)
+
+    def put(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        serializer = JoiningLetterSerializer(letter, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_letter = serializer.save()
+            if updated_letter.status in ('Approved', 'Issued', 'Sent'):
+                from hr.letter_service import generate_joining_letter_pdf
+                generate_joining_letter_pdf(updated_letter)
+            return Response(JoiningLetterSerializer(updated_letter).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        letter.delete()
+        return Response({'detail': 'Joining letter deleted.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class JoiningLetterActionAPIView(APIView):
+    """
+    POST /api/joining-letters/<pk>/action/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Access denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        action = request.data.get('action')
+
+        from hr.letter_service import generate_joining_letter_pdf
+
+        if action == 'approve':
+            letter.status = 'Approved'
+            letter.approved_by = request.user
+            letter.approved_at = timezone.now()
+            letter.save(update_fields=['status', 'approved_by', 'approved_at', 'updated_at'])
+            generate_joining_letter_pdf(letter)
+            return Response({
+                'detail': 'Joining letter approved and PDF generated successfully.',
+                'letter': JoiningLetterSerializer(letter).data
+            })
+
+        elif action == 'issue':
+            letter.status = 'Issued'
+            letter.save(update_fields=['status', 'updated_at'])
+            generate_joining_letter_pdf(letter)
+            return Response({
+                'detail': 'Joining letter issued successfully.',
+                'letter': JoiningLetterSerializer(letter).data
+            })
+
+        elif action == 'generate_pdf':
+            ok, res = generate_joining_letter_pdf(letter)
+            if ok:
+                return Response({
+                    'detail': 'PDF generated successfully.',
+                    'pdf_url': letter.pdf_file.url,
+                    'letter': JoiningLetterSerializer(letter).data
+                })
+            return Response({'detail': f'PDF generation failed: {res}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({'detail': f'Unknown action: {action}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class JoiningLetterPreviewAPIView(APIView):
+    """
+    GET /api/joining-letters/<pk>/preview/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        from hr.letter_service import render_joining_letter_html
+        html = render_joining_letter_html(letter)
+        from django.http import HttpResponse
+        return HttpResponse(html, content_type='text/html')
+
+
+class JoiningLetterDownloadAPIView(APIView):
+    """
+    GET /api/joining-letters/<pk>/download/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        if request.user.role not in ('HR', 'MD'):
+            if letter.employee != request.user or letter.status not in ('Approved', 'Issued', 'Sent'):
+                return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not letter.pdf_file:
+            from hr.letter_service import generate_joining_letter_pdf
+            ok, _ = generate_joining_letter_pdf(letter)
+            if not ok:
+                return Response({'detail': 'Could not generate PDF for download.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        from django.http import FileResponse
+        try:
+            return FileResponse(
+                letter.pdf_file.open('rb'),
+                as_attachment=True,
+                filename=f"Joining_Letter_{letter.employee_name.replace(' ', '_')}.pdf"
+            )
+        except Exception as e:
+            return Response({'detail': f'File read error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class JoiningLetterSendEmailAPIView(APIView):
+    """
+    POST /api/joining-letters/<pk>/send-email/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ('HR', 'MD'):
+            return Response({'detail': 'Only HR or MD can send joining letters.'}, status=status.HTTP_403_FORBIDDEN)
+
+        letter = get_object_or_404(JoiningLetter, pk=pk)
+        force = str(request.data.get('force', 'false')).lower() in ('true', '1', 'yes')
+
+        if not force and letter.email_status in ('Sending', 'Sent'):
+            return Response({
+                'detail': f"Joining letter email is already {letter.email_status}. Pass force=true to resend.",
+                'email_status': letter.email_status
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if letter.status not in ('Approved', 'Issued', 'Sent'):
+            return Response({
+                'detail': f"Joining letter status is '{letter.status}'. It must be Approved or Issued before emailing."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from main.email_service import HREmailService
+        ok, reason = HREmailService.send_joining_letter_document(
+            joining_letter_id=letter.id,
+            sender_id=request.user.id,
+            force=force
+        )
+
+        if ok:
+            return Response({
+                'detail': f"Joining letter email queued successfully for {letter.employee_email}.",
+                'email_status': 'Sending'
+            }, status=status.HTTP_200_OK)
+        return Response({'detail': reason}, status=status.HTTP_400_BAD_REQUEST)
+

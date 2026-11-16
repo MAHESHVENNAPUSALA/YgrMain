@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../shared/context/AuthContext';
 import api from '../../services/api';
+import payrollApi from '../../services/api/payroll';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
@@ -19,6 +20,29 @@ const EmployeeDashboard = () => {
   const [taskDetailModal, setTaskDetailModal] = useState(null);
   const [clientReview, setClientReview] = useState(null);
   const [clientReviewLoading, setClientReviewLoading] = useState(false);
+  const [downloadingPayslip, setDownloadingPayslip] = useState(false);
+
+  const handleDownloadLatestPayslip = async (slip) => {
+    if (!slip?.id) return;
+    setDownloadingPayslip(true);
+    try {
+      const res = await payrollApi.downloadPayslipPdf(slip.id);
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const empName = (slip.employee_name || user?.username || 'Employee').replace(/\s+/g, '_');
+      a.download = `Payslip_${empName}_${slip.month_name}_${slip.year}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download payslip PDF:', err);
+    } finally {
+      setDownloadingPayslip(false);
+    }
+  };
 
   // Fetch data safely
   useEffect(() => {
@@ -1039,15 +1063,15 @@ const EmployeeDashboard = () => {
                 <Link to={`/payslips/${dashboardData.latest_payslip.id}`} className="btn-primary">
                   <i className="fa-solid fa-eye"></i> View Slip
                 </Link>
-                {dashboardData.latest_payslip.payslip_pdf && (
-                  <a
-                    href={dashboardData.latest_payslip.payslip_pdf.startsWith('http') ? dashboardData.latest_payslip.payslip_pdf : `${(import.meta.env.VITE_API_URL || api.defaults.baseURL || 'http://127.0.0.1:8000').replace(/\/$/, '')}${dashboardData.latest_payslip.payslip_pdf}`}
-                    download
-                    className="btn-secondary"
-                  >
-                    <i className="fa-solid fa-download"></i> Download PDF
-                  </a>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleDownloadLatestPayslip(dashboardData.latest_payslip)}
+                  disabled={downloadingPayslip}
+                  className="btn-secondary"
+                  style={{ cursor: 'pointer', border: 'none' }}
+                >
+                  <i className={`fa-solid ${downloadingPayslip ? 'fa-spinner fa-spin' : 'fa-download'}`}></i> {downloadingPayslip ? 'Downloading...' : 'Download PDF'}
+                </button>
               </div>
             </div>
           ) : (

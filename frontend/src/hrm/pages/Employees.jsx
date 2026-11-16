@@ -1,740 +1,914 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../shared/context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { useToast } from '../../shared/context/ToastContext';
+import './Employees.css';
+
+const DEPARTMENT_CHOICES = [
+  { value: 'python_dev', label: 'Python Developer' },
+  { value: 'java_dev', label: 'Java Developer' },
+  { value: 'frontend_dev', label: 'Front-End Developer' },
+  { value: 'backend_dev', label: 'Back-End Developer' },
+  { value: 'fullstack_dev', label: 'Full Stack Developer' },
+  { value: 'testing', label: 'Testing / QA' },
+  { value: 'devops', label: 'DevOps Engineer' },
+  { value: 'data_analyst', label: 'Data Analyst' },
+  { value: 'data_scientist', label: 'Data Scientist' },
+  { value: 'ai_ml', label: 'AI / ML Engineer' },
+  { value: 'cyber_security', label: 'Cyber Security' },
+  { value: 'cloud_engineer', label: 'Cloud Engineer' },
+  { value: 'digital_marketing', label: 'Digital Marketing' },
+  { value: 'ui_ux', label: 'UI / UX Designer' },
+  { value: 'mobile_dev', label: 'Mobile App Developer' },
+];
+
+const ROLE_CHOICES = [
+  { value: 'Employee', label: 'Employee' },
+  { value: 'TeamLead', label: 'Team Lead' },
+  { value: 'Manager', label: 'Manager' },
+  { value: 'HR', label: 'HR' },
+];
 
 const Employees = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const role = user?.role;
+  const userRole = user?.role;
+  const isHrOrMd = ['HR', 'MD'].includes(userRole);
 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Search, Filters & Pagination
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Determine default role filter from the pathname or state
-  const getInitialRoleFilter = () => {
-    const path = location.pathname;
-    if (path.includes('hr-list')) return 'HR';
-    if (path.includes('manager-list')) return 'Manager';
-    if (path.includes('tl-list')) return 'TeamLead';
-    if (path.includes('employee-list')) return 'Employee';
-    return 'All';
-  };
-
-  const [roleFilter, setRoleFilter] = useState(getInitialRoleFilter());
+  const [roleFilter, setRoleFilter] = useState('All');
   const [deptFilter, setDeptFilter] = useState('All');
-  
-  // State-driven filters from dashboard cards (e.g. 'NewJoiners', 'DocsPending')
-  const [specialFilter, setSpecialFilter] = useState(location.state?.filter || 'All');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  // Detail & Edit modal states
+  // Modals state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedEmp, setSelectedEmp] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form state
+  const initialForm = {
     fullname: '',
     email: '',
     phone: '',
-    designation: '',
+    emp_id: '',
+    role: 'Employee',
     department: '',
-    team_name: '',
-    role: '',
+    designation: '',
+    reporting_manager: '',
+    date_of_joining: new Date().toISOString().split('T')[0],
+    date_of_birth: '',
+    gender: 'Male',
+    status: 'Fresher',
     salary: '',
-    date_of_joining: '',
-    status: '',
-    experience_years: '',
-    address: ''
-  });
-
-  // Sync state filters if the location changes
-  useEffect(() => {
-    setRoleFilter(getInitialRoleFilter());
-    setSpecialFilter(location.state?.filter || 'All');
-  }, [location.pathname, location.state]);
+    address: '',
+    is_active: true,
+  };
+  const [formData, setFormData] = useState(initialForm);
 
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/users/', { params: { scope: 'directory' } });
-      setEmployees(res.data);
+      // HR/MD can request status=all to include inactive records
+      const params = { scope: 'directory' };
+      if (isHrOrMd) {
+        params.status = 'all';
+      }
+      const res = await api.get('/api/users/', { params });
+      setEmployees(res.data || []);
     } catch (err) {
       console.error('Error fetching employee directory:', err);
-      showToast('Failed to load employee directory.', 'error');
+      showToast('Failed to load employee records.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (['HR', 'MD', 'Manager', 'TeamLead'].includes(role)) {
+    if (['HR', 'MD', 'Manager', 'TeamLead'].includes(userRole)) {
       fetchEmployees();
     }
-  }, [role]);
+  }, [userRole]);
 
-  if (!['HR', 'MD', 'Manager', 'TeamLead'].includes(role)) {
-    return (
-      <div style={{ color: 'var(--danger)', fontWeight: 700, padding: '30px', textAlign: 'center' }}>
-        Access Denied: Only administrators, managers, and team leads can access the directory.
-      </div>
-    );
-  }
+  // List of potential managers for dropdown
+  const managerOptions = useMemo(() => {
+    return employees.filter(e => ['Manager', 'TeamLead', 'MD', 'HR'].includes(e.role) && e.is_active);
+  }, [employees]);
 
-  // Get departments present in directory for filter dropdown
-  const departments = ['All', ...new Set(employees.map(e => e.department_display || e.department).filter(Boolean))];
+  // Filter and search computation
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      const term = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        !term ||
+        (emp.first_name || '').toLowerCase().includes(term) ||
+        (emp.last_name || '').toLowerCase().includes(term) ||
+        (emp.username || '').toLowerCase().includes(term) ||
+        (emp.email || '').toLowerCase().includes(term) ||
+        (emp.emp_id || '').toLowerCase().includes(term) ||
+        (emp.designation || '').toLowerCase().includes(term);
 
-  // Filtering Logic
-  const filteredEmployees = employees.filter(emp => {
-    const term = searchTerm.toLowerCase();
-    const matchesSearch = 
-      (emp.name || '').toLowerCase().includes(term) ||
-      (emp.username || '').toLowerCase().includes(term) ||
-      (emp.emp_id || '').toLowerCase().includes(term) ||
-      (emp.designation || '').toLowerCase().includes(term);
+      const matchesRole = roleFilter === 'All' || emp.role === roleFilter;
+      const matchesDept = deptFilter === 'All' || emp.department === deptFilter || emp.department_display === deptFilter;
+      
+      let matchesStatus = true;
+      if (statusFilter === 'active') matchesStatus = emp.is_active === true;
+      if (statusFilter === 'inactive') matchesStatus = emp.is_active === false;
 
-    const matchesRole = roleFilter === 'All' || emp.role === roleFilter;
-    const matchesDept = deptFilter === 'All' || (emp.department_display || emp.department) === deptFilter;
-
-    let matchesSpecial = true;
-    if (specialFilter === 'NewJoiners') {
-      if (!emp.date_of_joining) {
-        matchesSpecial = false;
-      } else {
-        const joinDate = new Date(emp.date_of_joining);
-        const limitDate = new Date();
-        limitDate.setDate(limitDate.getDate() - 30);
-        matchesSpecial = joinDate >= limitDate;
-      }
-    } else if (specialFilter === 'DocsPending') {
-      matchesSpecial = !!emp.document;
-    }
-
-    return matchesSearch && matchesRole && matchesDept && matchesSpecial;
-  });
-
-  const getAvatar = (name, bg, color) => (
-    <div style={{
-      width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
-      background: bg || 'var(--accent-blue)', color: color || '#fff',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontWeight: 800, fontSize: '1.05rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-    }}>
-      {name ? name.charAt(0).toUpperCase() : '?'}
-    </div>
-  );
-
-  // Edit Handlers
-  const handleStartEdit = () => {
-    setEditForm({
-      fullname: selectedEmp.name || '',
-      email: selectedEmp.email || selectedEmp.username || '',
-      phone: selectedEmp.phone || '',
-      designation: selectedEmp.designation || '',
-      department: selectedEmp.department || '',
-      team_name: selectedEmp.team_name || '',
-      role: selectedEmp.role || '',
-      salary: selectedEmp.salary || '',
-      date_of_joining: selectedEmp.date_of_joining || '',
-      status: selectedEmp.status || 'Fresher',
-      experience_years: selectedEmp.experience_years || '',
-      address: selectedEmp.address || ''
+      return matchesSearch && matchesRole && matchesDept && matchesStatus;
     });
-    setIsEditing(true);
+  }, [employees, searchTerm, roleFilter, deptFilter, statusFilter]);
+
+  // Metrics computation
+  const stats = useMemo(() => {
+    const total = employees.length;
+    const active = employees.filter(e => e.is_active).length;
+    const inactive = total - active;
+    const depts = new Set(employees.map(e => e.department).filter(Boolean)).size;
+    return { total, active, inactive, depts };
+  }, [employees]);
+
+  // Pagination slice
+  const totalPages = Math.ceil(filteredEmployees.length / pageSize) || 1;
+  const paginatedEmployees = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredEmployees.slice(start, start + pageSize);
+  }, [filteredEmployees, currentPage, pageSize]);
+
+  // Add Employee Form Handler
+  const handleOpenAdd = () => {
+    setFormData(initialForm);
+    setShowAddModal(true);
+  };
+
+  const handleSaveAdd = async (e) => {
+    e.preventDefault();
+    if (!formData.email || !formData.fullname) {
+      showToast('Name and email are required.', 'warning');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post('/api/users/', formData);
+      showToast('Employee successfully onboarded!', 'success');
+      setShowAddModal(false);
+      fetchEmployees();
+    } catch (err) {
+      const msg = err.response?.data?.detail || 'Failed to create employee record.';
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Edit Employee Form Handler
+  const handleOpenEdit = (emp) => {
+    setSelectedEmp(emp);
+    const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.username;
+    setFormData({
+      fullname: fullName,
+      email: emp.email || emp.username || '',
+      phone: emp.phone || '',
+      emp_id: emp.emp_id || '',
+      role: emp.role || 'Employee',
+      department: emp.department || '',
+      designation: emp.designation || '',
+      reporting_manager: emp.reporting_manager || '',
+      date_of_joining: emp.date_of_joining || '',
+      date_of_birth: emp.date_of_birth || '',
+      gender: emp.gender || 'Male',
+      status: emp.status || 'Fresher',
+      salary: emp.salary || '',
+      address: emp.address || '',
+      is_active: emp.is_active ?? true,
+    });
+    setShowEditModal(true);
   };
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
+    if (!selectedEmp) return;
+    setSubmitting(true);
     try {
-      const res = await api.put(`/api/users/${selectedEmp.id}/`, editForm);
+      await api.put(`/api/users/${selectedEmp.id}/`, formData);
       showToast('Employee details updated successfully.', 'success');
-      setSelectedEmp(res.data);
-      setIsEditing(false);
+      setShowEditModal(false);
       fetchEmployees();
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Failed to update employee details.', 'error');
+      const msg = err.response?.data?.detail || 'Failed to update employee details.';
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const handleDeleteEmp = async (empId) => {
-    if (window.confirm("Are you sure you want to permanently delete this employee? This action cannot be undone.")) {
-      try {
-        await api.delete(`/api/users/${empId}/`);
-        showToast('Employee deleted successfully.', 'success');
-        setSelectedEmp(null);
-        setIsEditing(false);
-        fetchEmployees();
-      } catch (err) {
-        showToast(err.response?.data?.detail || 'Failed to delete employee.', 'error');
-      }
+  // Toggle Activation
+  const handleToggleActive = async (emp) => {
+    const nextState = !emp.is_active;
+    const actionText = nextState ? 'activate' : 'deactivate';
+    if (!window.confirm(`Are you sure you want to ${actionText} employee ${emp.first_name || emp.username} (${emp.emp_id || 'ID N/A'})?`)) {
+      return;
+    }
+    try {
+      await api.put(`/api/users/${emp.id}/`, { is_active: nextState });
+      showToast(`Employee ${actionText}d successfully.`, 'success');
+      fetchEmployees();
+    } catch (err) {
+      showToast(err.response?.data?.detail || `Failed to ${actionText} employee.`, 'error');
     }
   };
+
+  // View Profile Handler
+  const handleOpenProfile = (emp) => {
+    setSelectedEmp(emp);
+    setShowProfileModal(true);
+  };
+
+  if (!['HR', 'MD', 'Manager', 'TeamLead'].includes(userRole)) {
+    return (
+      <div className="emp-mgmt-container">
+        <div className="emp-empty-state">
+          <i className="fa-solid fa-lock"></i>
+          <h3>Access Restricted</h3>
+          <p>Only HR, MD, Managers, and Team Leads can view the employee directory.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="directory-container">
-      <style>{`
-        .directory-container {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          text-align: left;
-        }
-        .dir-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 15px;
-        }
-        .dir-filters {
-          background: #ffffff;
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          padding: 16px 20px;
-          display: flex;
-          gap: 16px;
-          align-items: center;
-          flex-wrap: wrap;
-          box-shadow: var(--card-shadow);
-        }
-        .filter-group {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          align-items: flex-start;
-        }
-        .filter-group label {
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #64748b;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .filter-group select, .filter-group input {
-          padding: 8px 14px;
-          border: 1.5px solid #e2e8f0;
-          border-radius: 8px;
-          font-size: 0.85rem;
-          color: #0f172a;
-          outline: none;
-          background: #f8fafc;
-          min-width: 160px;
-          transition: border-color 0.15s;
-        }
-        .filter-group select:focus, .filter-group input:focus {
-          border-color: #3b82f6;
-          background: #ffffff;
-        }
-        .role-pill {
-          padding: 3px 10px;
-          border-radius: 20px;
-          font-size: 0.72rem;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
-        .role-pill.MD { background: #fee2e2; color: #991b1b; }
-        .role-pill.HR { background: #fce7f3; color: #9d174d; }
-        .role-pill.Manager { background: #e0f2fe; color: #0369a1; }
-        .role-pill.TeamLead { background: #fef3c7; color: #92400e; }
-        .role-pill.Employee { background: #d1fae5; color: #065f46; }
-
-        .dir-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 20px;
-        }
-        .dir-card {
-          background: #ffffff;
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          padding: 20px;
-          box-shadow: var(--card-shadow);
-          display: flex;
-          gap: 16px;
-          align-items: flex-start;
-          transition: all 0.2s ease-in-out;
-          cursor: pointer;
-        }
-        .dir-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-          border-color: #cbd5e1;
-        }
-        .dir-card-info {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          min-width: 0;
-        }
-        .dir-card-name {
-          font-weight: 800;
-          color: #0f172a;
-          font-size: 0.95rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .dir-card-role {
-          align-self: flex-start;
-          margin-bottom: 4px;
-        }
-        .dir-card-sub {
-          font-size: 0.78rem;
-          color: #64748b;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .dir-card-sub i {
-          color: #94a3b8;
-          width: 14px;
-        }
-        .dir-modal-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-        @media (max-width: 600px) {
-          .dir-modal-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-        .dir-modal-label {
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #94a3b8;
-          text-transform: uppercase;
-          margin-bottom: 2px;
-        }
-        .dir-modal-value {
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: #1e293b;
-        }
-
-        .dir-edit-input {
-          width: 100%;
-          padding: 8px 12px;
-          border-radius: 8px;
-          border: 1.5px solid #e2e8f0;
-          background: #f8fafc;
-          font-size: 0.85rem;
-          color: #0f172a;
-          outline: none;
-          transition: all 0.2s;
-        }
-        .dir-edit-input:focus {
-          border-color: #3b82f6;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-      `}</style>
-
+    <div className="emp-mgmt-container">
       {/* Header */}
-      <div className="dir-header">
-        <h2 style={{ color: 'var(--primary-color)', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 800 }}>
-          Staff & Member Directory
-        </h2>
-        {['HR', 'MD'].includes(role) && (
-          <button className="btn" style={{ margin: 0 }} onClick={() => navigate('/register')}>
-            <i className="fa-solid fa-user-plus"></i> Add New Staff Member
-          </button>
+      <div className="emp-mgmt-header">
+        <div className="emp-mgmt-title-group">
+          <h1>Employee Management</h1>
+          <p className="emp-mgmt-subtitle">
+            Manage company personnel records, designations, departments, reporting structures, and employment status.
+          </p>
+        </div>
+        {isHrOrMd && (
+          <div className="emp-mgmt-actions">
+            <button type="button" className="btn-primary-corp" onClick={handleOpenAdd}>
+              <i className="fa-solid fa-user-plus"></i> Add New Employee
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Filters Bar */}
-      <div className="dir-filters">
-        <div className="filter-group" style={{ flex: 1, minWidth: '220px' }}>
-          <label>Search Directory</label>
-          <input 
-            type="text" 
-            placeholder="🔍 Search name, email, designation..." 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-            style={{ width: '100%' }}
+      {/* Overview Metric Cards */}
+      <div className="emp-stats-grid">
+        <div className="emp-stat-card">
+          <div className="emp-stat-info">
+            <span>Total Staff</span>
+            <h3>{stats.total}</h3>
+          </div>
+          <div className="emp-stat-icon icon-blue">
+            <i className="fa-solid fa-users"></i>
+          </div>
+        </div>
+        <div className="emp-stat-card">
+          <div className="emp-stat-info">
+            <span>Active Members</span>
+            <h3>{stats.active}</h3>
+          </div>
+          <div className="emp-stat-icon icon-emerald">
+            <i className="fa-solid fa-user-check"></i>
+          </div>
+        </div>
+        <div className="emp-stat-card">
+          <div className="emp-stat-info">
+            <span>Deactivated</span>
+            <h3>{stats.inactive}</h3>
+          </div>
+          <div className="emp-stat-icon icon-rose">
+            <i className="fa-solid fa-user-xmark"></i>
+          </div>
+        </div>
+        <div className="emp-stat-card">
+          <div className="emp-stat-info">
+            <span>Departments</span>
+            <h3>{stats.depts}</h3>
+          </div>
+          <div className="emp-stat-icon icon-amber">
+            <i className="fa-solid fa-sitemap"></i>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="emp-filters-card">
+        <div className="search-box-wrapper">
+          <i className="fa-solid fa-magnifying-glass search-icon"></i>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by name, emp ID, email, designation..."
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           />
         </div>
-        <div className="filter-group">
-          <label>Filter by Role</label>
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-            <option value="All">All Roles</option>
-            <option value="Employee">Employees / Devs</option>
-            <option value="TeamLead">Team Leads</option>
-            <option value="Manager">Managers</option>
-            <option value="HR">HR Specialist</option>
-            <option value="MD">Managing Director</option>
+
+        <select
+          className="filter-select"
+          value={roleFilter}
+          onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+        >
+          <option value="All">All Roles</option>
+          {ROLE_CHOICES.map(r => (
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
+          value={deptFilter}
+          onChange={(e) => { setDeptFilter(e.target.value); setCurrentPage(1); }}
+        >
+          <option value="All">All Departments</option>
+          {DEPARTMENT_CHOICES.map(d => (
+            <option key={d.value} value={d.value}>{d.label}</option>
+          ))}
+        </select>
+
+        {isHrOrMd && (
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
           </select>
+        )}
+      </div>
+
+      {/* Employee Data Table */}
+      <div className="emp-table-card">
+        <div className="emp-table-wrapper">
+          <table className="emp-corporate-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Employee ID</th>
+                <th>Role & Department</th>
+                <th>Designation</th>
+                <th>Manager</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="emp-loading-state">
+                    <div className="emp-spinner"></div>
+                    <div>Loading employee directory...</div>
+                  </td>
+                </tr>
+              ) : paginatedEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="emp-empty-state">
+                    <i className="fa-solid fa-folder-open"></i>
+                    <div>No employee records match the selected criteria.</div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedEmployees.map((emp) => {
+                  const displayName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.username;
+                  const initial = (displayName.charAt(0) || 'E').toUpperCase();
+                  return (
+                    <tr key={emp.id}>
+                      <td>
+                        <div className="emp-cell-user">
+                          <div className="emp-avatar-circle">{initial}</div>
+                          <div className="emp-user-meta">
+                            <span className="emp-name-text">{displayName}</span>
+                            <span className="emp-email-text">{emp.email || emp.username}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="emp-id-badge">{emp.emp_id || '—'}</span>
+                      </td>
+                      <td>
+                        <div>
+                          <span className="role-pill">{emp.role}</span>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>
+                          {emp.department_display || emp.department || 'General'}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontWeight: 600 }}>{emp.designation || 'Not Assigned'}</span>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.82rem', color: emp.reporting_manager_name ? '#1e293b' : '#94a3b8' }}>
+                          {emp.reporting_manager_name || 'None'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${emp.is_active ? 'status-active' : 'status-inactive'}`}>
+                          <i className={`fa-solid ${emp.is_active ? 'fa-circle-check' : 'fa-circle-xmark'}`}></i>
+                          {emp.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons-group">
+                          <button
+                            type="button"
+                            className="btn-icon-action"
+                            title="View Employee Profile"
+                            onClick={() => handleOpenProfile(emp)}
+                          >
+                            <i className="fa-solid fa-eye"></i>
+                          </button>
+                          {isHrOrMd && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-icon-action btn-edit"
+                                title="Edit Employee Details"
+                                onClick={() => handleOpenEdit(emp)}
+                              >
+                                <i className="fa-solid fa-pen-to-square"></i>
+                              </button>
+                              <button
+                                type="button"
+                                className={`btn-icon-action ${emp.is_active ? 'btn-toggle-deactive' : 'btn-toggle-activate'}`}
+                                title={emp.is_active ? 'Deactivate Employee' : 'Activate Employee'}
+                                onClick={() => handleToggleActive(emp)}
+                              >
+                                <i className={`fa-solid ${emp.is_active ? 'fa-user-slash' : 'fa-user-check'}`}></i>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-        <div className="filter-group">
-          <label>Filter by Department</label>
-          <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}>
-            {departments.map((dept, i) => (
-              <option key={i} value={dept}>{dept === 'All' ? 'All Departments' : dept}</option>
-            ))}
-          </select>
-        </div>
-        {specialFilter !== 'All' && (
-          <div className="filter-group">
-            <label>Dashboard Filter</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '38px' }}>
-              <span className="badge-capsule info" style={{ padding: '8px 12px', fontWeight: 700 }}>
-                {specialFilter === 'NewJoiners' ? '🆕 New Joiners' : '📑 Pending Docs'}
-              </span>
-              <button 
-                className="view-btn" 
-                style={{ padding: '4px 8px', fontSize: '11px' }}
-                onClick={() => {
-                  setSpecialFilter('All');
-                  navigate(location.pathname, { replace: true, state: {} });
-                }}
+
+        {/* Pagination Bar */}
+        {!loading && filteredEmployees.length > 0 && (
+          <div className="emp-pagination-bar">
+            <span className="pagination-info">
+              Showing {(currentPage - 1) * pageSize + 1} to{' '}
+              {Math.min(currentPage * pageSize, filteredEmployees.length)} of {filteredEmployees.length} records
+            </span>
+            <div className="pagination-controls">
+              <button
+                type="button"
+                className="pagination-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               >
-                Clear
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  type="button"
+                  className={`pagination-btn ${currentPage === page ? 'pagination-page-active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="pagination-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                Next
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Directory Grid */}
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '50px', color: 'var(--muted)' }}>
-          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginRight: '10px' }}></i> Loading Staff Directory...
-        </div>
-      ) : filteredEmployees.length > 0 ? (
-        <div className="dir-grid">
-          {filteredEmployees.map(emp => (
-            <div key={emp.id} className="dir-card" onClick={() => { setSelectedEmp(emp); setIsEditing(false); }}>
-              {emp.profile_pic ? (
-                <img 
-                  src={emp.profile_pic} 
-                  alt={emp.name} 
-                  style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }} 
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-              ) : (
-                getAvatar(emp.name, emp.role === 'MD' ? '#fecaca' : emp.role === 'HR' ? '#fce7f3' : emp.role === 'Manager' ? '#e0f2fe' : '#d1fae5', emp.role === 'MD' ? '#991b1b' : emp.role === 'HR' ? '#9d174d' : emp.role === 'Manager' ? '#0369a1' : '#065f46')
-              )}
+      {/* Add Employee Modal */}
+      {showAddModal && (
+        <div className="corp-modal-overlay" onClick={() => !submitting && setShowAddModal(false)}>
+          <div className="corp-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="corp-modal-header">
+              <h2><i className="fa-solid fa-user-plus"></i> Onboard New Employee</h2>
+              <button type="button" className="corp-modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleSaveAdd}>
+              <div className="corp-modal-body">
+                <div className="corp-form-grid">
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. John Doe"
+                      className="corp-form-input"
+                      value={formData.fullname}
+                      onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
+                    />
+                  </div>
 
-              <div className="dir-card-info">
-                <span className={`role-pill ${emp.role} dir-card-role`}>
-                  {emp.role === 'TeamLead' ? 'Team Lead' : emp.role}
-                </span>
-                <div className="dir-card-name">{emp.name}</div>
-                <div className="dir-card-sub">
-                  <i className="fa-solid fa-id-badge"></i>
-                  <span>{emp.emp_id || 'No ID'}</span>
-                </div>
-                <div className="dir-card-sub">
-                  <i className="fa-solid fa-briefcase"></i>
-                  <span>{emp.designation || emp.department_display || 'Staff member'}</span>
-                </div>
-                <div className="dir-card-sub">
-                  <i className="fa-solid fa-envelope"></i>
-                  <span>{emp.email}</span>
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Corporate Email *</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="john.doe@ygr.com"
+                      className="corp-form-input"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Employee ID (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="Auto-generated if left blank"
+                      className="corp-form-input"
+                      value={formData.emp_id}
+                      onChange={(e) => setFormData({ ...formData, emp_id: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Contact Phone</label>
+                    <input
+                      type="tel"
+                      placeholder="+91 9876543210"
+                      className="corp-form-input"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Role *</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    >
+                      {ROLE_CHOICES.map(r => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Department *</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENT_CHOICES.map(d => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Designation</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Senior Software Engineer"
+                      className="corp-form-input"
+                      value={formData.designation}
+                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Reporting Manager</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.reporting_manager}
+                      onChange={(e) => setFormData({ ...formData, reporting_manager: e.target.value })}
+                    >
+                      <option value="">None / Direct to MD</option>
+                      {managerOptions.map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.first_name || m.username} ({m.emp_id || 'ID N/A'}) — {m.role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Date of Joining</label>
+                    <input
+                      type="date"
+                      className="corp-form-input"
+                      value={formData.date_of_joining}
+                      onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Initial Monthly Gross Salary (₹)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 50000"
+                      className="corp-form-input"
+                      value={formData.salary}
+                      onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group full-width">
+                    <label className="corp-form-label">Permanent / Residential Address</label>
+                    <textarea
+                      className="corp-form-textarea"
+                      placeholder="Full street address..."
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    ></textarea>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', padding: '50px 20px', textAlign: 'center', color: '#94a3b8' }}>
-          <i className="fa-solid fa-users-slash" style={{ fontSize: '2.5rem', marginBottom: '12px', display: 'block', color: '#cbd5e1' }}></i>
-          No staff members match the selected filters.
+              <div className="corp-modal-footer">
+                <button type="button" className="btn-secondary-corp" onClick={() => setShowAddModal(false)} disabled={submitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary-corp" disabled={submitting}>
+                  {submitting ? 'Creating...' : 'Onboard Employee'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* DETAIL & EDIT MODAL */}
-      {selectedEmp && (
-        <div className="modal-overlay" onClick={() => { setSelectedEmp(null); setIsEditing(false); }}>
-          <div className="modal-container" style={{ maxWidth: '650px' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{isEditing ? 'Edit Staff Profile' : 'Staff Member Details'}</h3>
-              <button className="modal-close" onClick={() => { setSelectedEmp(null); setIsEditing(false); }}>×</button>
+      {/* Edit Employee Modal */}
+      {showEditModal && selectedEmp && (
+        <div className="corp-modal-overlay" onClick={() => !submitting && setShowEditModal(false)}>
+          <div className="corp-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="corp-modal-header">
+              <h2><i className="fa-solid fa-user-pen"></i> Edit Employee Details</h2>
+              <button type="button" className="corp-modal-close" onClick={() => setShowEditModal(false)}>✕</button>
             </div>
-            
             <form onSubmit={handleSaveEdit}>
-              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                
-                {/* Header Meta */}
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
-                  {selectedEmp.profile_pic ? (
-                    <img 
-                      src={selectedEmp.profile_pic} 
-                      alt={selectedEmp.name} 
-                      style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }}
+              <div className="corp-modal-body">
+                <div className="corp-form-grid">
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      className="corp-form-input"
+                      value={formData.fullname}
+                      onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
                     />
-                  ) : (
-                    getAvatar(selectedEmp.name, null, null)
-                  )}
-                  <div style={{ textAlign: 'left', flex: 1 }}>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b' }}>FULL NAME</label>
-                        <input 
-                          type="text" 
-                          className="dir-edit-input" 
-                          value={editForm.fullname} 
-                          onChange={e => setEditForm({...editForm, fullname: e.target.value})} 
-                          required
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: 800 }}>{selectedEmp.name}</h4>
-                        <span className={`role-pill ${selectedEmp.role}`}>
-                          {selectedEmp.role === 'TeamLead' ? 'Team Lead' : selectedEmp.role}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Form fields / view fields */}
-                <div className="dir-modal-grid">
-                  
-                  {/* ID */}
-                  <div>
-                    <div className="dir-modal-label">Employee ID</div>
-                    <div className="dir-modal-value">{selectedEmp.emp_id || 'N/A'}</div>
                   </div>
 
-                  {/* Email */}
-                  <div>
-                    <div className="dir-modal-label">Email Address</div>
-                    {isEditing ? (
-                      <input 
-                        type="email" 
-                        className="dir-edit-input" 
-                        value={editForm.email} 
-                        onChange={e => setEditForm({...editForm, email: e.target.value})} 
-                        required
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.email || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <div className="dir-modal-label">Phone Number</div>
-                    {isEditing ? (
-                      <input 
-                        type="text" 
-                        className="dir-edit-input" 
-                        value={editForm.phone} 
-                        onChange={e => setEditForm({...editForm, phone: e.target.value})} 
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.phone || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Designation */}
-                  <div>
-                    <div className="dir-modal-label">Designation</div>
-                    {isEditing ? (
-                      <input 
-                        type="text" 
-                        className="dir-edit-input" 
-                        value={editForm.designation} 
-                        onChange={e => setEditForm({...editForm, designation: e.target.value})} 
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.designation || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Department */}
-                  <div>
-                    <div className="dir-modal-label">Department Code</div>
-                    {isEditing ? (
-                      <select 
-                        className="dir-edit-input" 
-                        value={editForm.department} 
-                        onChange={e => setEditForm({...editForm, department: e.target.value})}
-                      >
-                        <option value="">No Department</option>
-                        <option value="technology">Technology Development</option>
-                        <option value="ui_ux">UI/UX Creative Design</option>
-                        <option value="digital_marketing">Digital Marketing</option>
-                        <option value="sales">Sales & Accounts Strategy</option>
-                        <option value="hr">HR Administration</option>
-                      </select>
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.department_display || selectedEmp.department || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Team Scope */}
-                  <div>
-                    <div className="dir-modal-label">Team Scope</div>
-                    {isEditing ? (
-                      <input 
-                        type="text" 
-                        className="dir-edit-input" 
-                        value={editForm.team_name} 
-                        onChange={e => setEditForm({...editForm, team_name: e.target.value})} 
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.team_name || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Role */}
-                  <div>
-                    <div className="dir-modal-label">Account Role</div>
-                    {isEditing ? (
-                      <select 
-                        className="dir-edit-input" 
-                        value={editForm.role} 
-                        onChange={e => setEditForm({...editForm, role: e.target.value})}
-                      >
-                        <option value="Employee">Employee / Developer</option>
-                        <option value="TeamLead">Team Lead</option>
-                        <option value="Manager">Manager</option>
-                        <option value="HR">HR Specialist</option>
-                        <option value="MD">Managing Director</option>
-                      </select>
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.role || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Date of Joining */}
-                  <div>
-                    <div className="dir-modal-label">Date of Joining</div>
-                    {isEditing ? (
-                      <input 
-                        type="date" 
-                        className="dir-edit-input" 
-                        value={editForm.date_of_joining} 
-                        onChange={e => setEditForm({...editForm, date_of_joining: e.target.value})} 
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.date_of_joining || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Employment Status */}
-                  <div>
-                    <div className="dir-modal-label">Employment Status</div>
-                    {isEditing ? (
-                      <select 
-                        className="dir-edit-input" 
-                        value={editForm.status} 
-                        onChange={e => setEditForm({...editForm, status: e.target.value})}
-                      >
-                        <option value="Fresher">Fresher</option>
-                        <option value="Experienced">Experienced</option>
-                        <option value="Intern">Intern</option>
-                      </select>
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.status || 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Experience */}
-                  <div>
-                    <div className="dir-modal-label">Experience (Years)</div>
-                    {isEditing ? (
-                      <input 
-                        type="number" 
-                        className="dir-edit-input" 
-                        value={editForm.experience_years} 
-                        onChange={e => setEditForm({...editForm, experience_years: e.target.value})} 
-                      />
-                    ) : (
-                      <div className="dir-modal-value">{selectedEmp.experience_years ? `${selectedEmp.experience_years} Years` : 'N/A'}</div>
-                    )}
-                  </div>
-
-                  {/* Salary */}
-                  {['HR', 'MD'].includes(role) && (
-                    <div>
-                      <div className="dir-modal-label">Salary (Monthly Gross)</div>
-                      {isEditing ? (
-                        <input 
-                          type="number" 
-                          className="dir-edit-input" 
-                          value={editForm.salary} 
-                          onChange={e => setEditForm({...editForm, salary: e.target.value})} 
-                        />
-                      ) : (
-                        <div className="dir-modal-value">₹{selectedEmp.salary || 'N/A'}</div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Reporting Manager */}
-                  <div>
-                    <div className="dir-modal-label">Reporting Manager</div>
-                    <div className="dir-modal-value">{selectedEmp.reporting_manager_name || 'N/A'}</div>
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div style={{ textAlign: 'left' }}>
-                  <div className="dir-modal-label">Home Address</div>
-                  {isEditing ? (
-                    <textarea 
-                      rows="2" 
-                      className="dir-edit-input" 
-                      value={editForm.address} 
-                      onChange={e => setEditForm({...editForm, address: e.target.value})} 
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Corporate Email *</label>
+                    <input
+                      type="email"
+                      required
+                      className="corp-form-input"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
-                  ) : (
-                    <div className="dir-modal-value" style={{ fontWeight: 400 }}>{selectedEmp.address || 'N/A'}</div>
-                  )}
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Employee ID</label>
+                    <input
+                      type="text"
+                      className="corp-form-input"
+                      value={formData.emp_id}
+                      onChange={(e) => setFormData({ ...formData, emp_id: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Contact Phone</label>
+                    <input
+                      type="tel"
+                      className="corp-form-input"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Role</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    >
+                      {ROLE_CHOICES.map(r => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Department</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENT_CHOICES.map(d => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Designation</label>
+                    <input
+                      type="text"
+                      className="corp-form-input"
+                      value={formData.designation}
+                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Reporting Manager</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.reporting_manager}
+                      onChange={(e) => setFormData({ ...formData, reporting_manager: e.target.value })}
+                    >
+                      <option value="">None / Direct to MD</option>
+                      {managerOptions.filter(m => m.id !== selectedEmp.id).map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.first_name || m.username} ({m.emp_id || 'ID N/A'}) — {m.role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Employment Status</label>
+                    <select
+                      className="corp-form-select"
+                      value={formData.is_active ? 'Active' : 'Inactive'}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'Active' })}
+                    >
+                      <option value="Active">Active Employee</option>
+                      <option value="Inactive">Deactivated</option>
+                    </select>
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Date of Joining</label>
+                    <input
+                      type="date"
+                      className="corp-form-input"
+                      value={formData.date_of_joining}
+                      onChange={(e) => setFormData({ ...formData, date_of_joining: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group">
+                    <label className="corp-form-label">Monthly Gross Salary (₹)</label>
+                    <input
+                      type="number"
+                      className="corp-form-input"
+                      value={formData.salary}
+                      onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="corp-form-group full-width">
+                    <label className="corp-form-label">Residential Address</label>
+                    <textarea
+                      className="corp-form-textarea"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    ></textarea>
+                  </div>
                 </div>
-
-                {/* Document verification button */}
-                {!isEditing && ['HR', 'MD'].includes(role) && selectedEmp.role === 'Employee' && (
-                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Verification Document Status:</span>
-                    <button type="button" className="btn approve" onClick={() => handleVerifyDoc(selectedEmp.id)} style={{ margin: 0, padding: '8px 16px' }}>
-                      <i className="fa-solid fa-file-circle-check"></i> Verify Documents
-                    </button>
-                  </div>
-                )}
-
-                {/* Edit & Delete Action Row */}
-                {['HR', 'MD'].includes(role) && (
-                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    {isEditing ? (
-                      <>
-                        <button type="button" className="btn" style={{ background: '#64748b', marginTop: 0 }} onClick={() => setIsEditing(false)}>
-                          Cancel
-                        </button>
-                        <button type="submit" className="btn" style={{ marginTop: 0 }}>
-                          Save Changes
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {selectedEmp.id !== user.id && (
-                          <button 
-                            type="button" 
-                            className="btn" 
-                            style={{ background: '#ef4444', marginTop: 0 }} 
-                            onClick={() => handleDeleteEmp(selectedEmp.id)}
-                          >
-                            <i className="fa-solid fa-trash-can"></i> Delete Member
-                          </button>
-                        )}
-                        <button type="button" className="btn" style={{ marginTop: 0 }} onClick={handleStartEdit}>
-                          <i className="fa-solid fa-user-pen"></i> Edit Profile
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
+              </div>
+              <div className="corp-modal-footer">
+                <button type="button" className="btn-secondary-corp" onClick={() => setShowEditModal(false)} disabled={submitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary-corp" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Profile View Modal */}
+      {showProfileModal && selectedEmp && (
+        <div className="corp-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="corp-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="corp-modal-header">
+              <h2><i className="fa-solid fa-id-card"></i> Employee Profile</h2>
+              <button type="button" className="corp-modal-close" onClick={() => setShowProfileModal(false)}>✕</button>
+            </div>
+            <div className="corp-modal-body">
+              <div className="profile-overview-header">
+                <div className="profile-avatar-large">
+                  {(selectedEmp.first_name?.charAt(0) || selectedEmp.username?.charAt(0) || 'E').toUpperCase()}
+                </div>
+                <div className="profile-title-text">
+                  <h3>{selectedEmp.first_name ? `${selectedEmp.first_name} ${selectedEmp.last_name || ''}` : selectedEmp.username}</h3>
+                  <p>{selectedEmp.designation || 'Staff Member'} • {selectedEmp.department_display || selectedEmp.department || 'General'}</p>
+                  <div style={{ marginTop: '6px' }}>
+                    <span className={`status-pill ${selectedEmp.is_active ? 'status-active' : 'status-inactive'}`}>
+                      {selectedEmp.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="profile-details-grid">
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Employee ID</span>
+                  <span className="profile-field-value">{selectedEmp.emp_id || 'Not Assigned'}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">System Role</span>
+                  <span className="profile-field-value">{selectedEmp.role}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Email Address</span>
+                  <span className="profile-field-value">{selectedEmp.email || selectedEmp.username}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Contact Phone</span>
+                  <span className="profile-field-value">{selectedEmp.phone || 'Not Provided'}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Reporting Manager</span>
+                  <span className="profile-field-value">{selectedEmp.reporting_manager_name || 'Direct / None'}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Date of Joining</span>
+                  <span className="profile-field-value">{selectedEmp.date_of_joining || 'Not Recorded'}</span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Monthly Gross Salary</span>
+                  <span className="profile-field-value">
+                    {selectedEmp.salary ? `₹${Number(selectedEmp.salary).toLocaleString('en-IN')}` : 'Not Specified'}
+                  </span>
+                </div>
+
+                <div className="profile-field-item">
+                  <span className="profile-field-label">Gender / DOB</span>
+                  <span className="profile-field-value">{selectedEmp.gender || '—'} {selectedEmp.date_of_birth ? `(${selectedEmp.date_of_birth})` : ''}</span>
+                </div>
+
+                <div className="profile-field-item" style={{ gridColumn: '1 / -1' }}>
+                  <span className="profile-field-label">Residential Address</span>
+                  <span className="profile-field-value">{selectedEmp.address || 'No residential address on file.'}</span>
+                </div>
+              </div>
+            </div>
+            <div className="corp-modal-footer">
+              <button type="button" className="btn-secondary-corp" onClick={() => setShowProfileModal(false)}>
+                Close
+              </button>
+              {isHrOrMd && (
+                <button
+                  type="button"
+                  className="btn-primary-corp"
+                  onClick={() => {
+                    setShowProfileModal(false);
+                    handleOpenEdit(selectedEmp);
+                  }}
+                >
+                  <i className="fa-solid fa-pen-to-square"></i> Edit Profile
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

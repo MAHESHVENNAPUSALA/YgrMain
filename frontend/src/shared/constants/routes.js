@@ -20,6 +20,11 @@ export const ROUTES = {
   VACANCIES: '/vacancies',
   REGISTER_INTERNSHIP: '/register-internship',
   CANDIDATE_EXAM: '/candidate-exam',
+  CANDIDATE_LOGIN: '/internships/candidate-login',
+  CANDIDATE_DASHBOARD: '/internships/candidate-dashboard/:registrationId',
+  PRIVACY: '/privacy',
+  TERMS: '/terms',
+  COOKIES: '/cookies',
 
   // ── WEBSITE CMS ADMIN (CMS Management) ────────────────────────────
   ADMIN_CMS_DASHBOARD: '/admin/website/dashboard',

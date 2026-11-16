@@ -1,193 +1,319 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '../../shared/constants/routes';
 import './Terms.css';
 
-
 const Terms = () => {
-    return (
-        <>
-            {/* Converted from Django Template */}
-            
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.title = "Terms of Service | YGR Gobal IT Services";
+  }, []);
 
+  const handlePrint = (e) => {
+    e.preventDefault();
+    window.print();
+  };
 
- 
-<style dangerouslySetInnerHTML={{ __html: `
-/* ===== GOBAL ===== */
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #ffffff;
-    color: #333333;
-}
-body {
-  max-width: 100%;
-  overflow-x: hidden;
-}
-/* ===== TERMS SECTION ===== */
-.terms {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-}
+  return (
+    <div className="terms-page-wrapper">
+      {/* ── HERO BANNER ── */}
+      <section className="terms-hero">
+        <div className="terms-hero-bg-glow"></div>
+        <div className="terms-hero-content">
+          <nav className="terms-breadcrumbs" aria-label="Breadcrumb">
+            <Link to={ROUTES.HOME || "/"}>Home</Link>
+            <span>/</span>
+            <span>Legal</span>
+            <span>/</span>
+            <span>Terms of Service</span>
+          </nav>
 
-.terms img {
-    display: block;
-    margin: 0 auto 20px auto;
-    max-width: 500px;
-}
+          <div className="terms-hero-badge">
+            <i className="fas fa-file-contract"></i> User & Service Agreement
+          </div>
 
-.terms h2 {
-    font-weight: bold;
-    color: #092a49;
-    font-size: 28px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-.terms p a :hover{
-    text-decoration: none;
-}
-.terms h4 {
-    margin-top: 20px;
-    color: #092a49;
-    font-size: 18px;
-}
+          <h1 className="terms-hero-title">Terms & Services</h1>
+          <p className="terms-hero-subtitle">
+            These terms define the agreement governing your access to YGR Gobal IT Services platforms, training academies, software products, and candidate internship portals.
+          </p>
 
-.terms p {
-    font-size: 16px;
-    color: #797979;
-    line-height: 1.7;
-    margin-bottom: 10px;
-}
+          <div className="terms-hero-meta">
+            <span><i className="far fa-calendar-check"></i> Last Updated: October 2026</span>
+            <span><i className="far fa-clock"></i> Reading Time: ~7 mins</span>
+            <span><i className="fas fa-balance-scale"></i> Jurisdiction: Hyderabad, India</span>
+          </div>
+        </div>
+      </section>
 
-/* ===== ADDRESS SECTION (FAQ STYLE) ===== */
-.Address {
-    background-color: #f9fafb;
-    padding: 20px 30px;
-    border-radius: 8px;
-    max-width: 600px;
-    margin: 30px auto;
-    border: 1px solid #e0e0e0;
-}
+      {/* ── MAIN CONTENT CONTAINER ── */}
+      <div className="terms-container">
+        <div className="terms-layout-grid">
+          {/* Left Column: Sticky Table of Contents */}
+          <aside className="terms-sidebar">
+            <div className="terms-toc-card">
+              <div className="terms-toc-title">
+                <i className="fas fa-list-ul"></i> Table of Contents
+              </div>
+              <ul className="terms-toc-list">
+                <li><a href="#acceptance"><i className="fas fa-chevron-right"></i> 1. Acceptance of Terms</a></li>
+                <li><a href="#services"><i className="fas fa-chevron-right"></i> 2. Services & Solutions</a></li>
+                <li><a href="#user-obligations"><i className="fas fa-chevron-right"></i> 3. User & Candidate Conduct</a></li>
+                <li><a href="#payments-refunds"><i className="fas fa-chevron-right"></i> 4. Payments & Refunds</a></li>
+                <li><a href="#intellectual-property"><i className="fas fa-chevron-right"></i> 5. Intellectual Property</a></li>
+                <li><a href="#disclaimers"><i className="fas fa-chevron-right"></i> 6. Disclaimers & Warranties</a></li>
+                <li><a href="#liability"><i className="fas fa-chevron-right"></i> 7. Limitation of Liability</a></li>
+                <li><a href="#termination"><i className="fas fa-chevron-right"></i> 8. Account Termination</a></li>
+                <li><a href="#governing-law"><i className="fas fa-chevron-right"></i> 9. Governing Law</a></li>
+                <li><a href="#contact"><i className="fas fa-chevron-right"></i> 10. Contact & Address</a></li>
+              </ul>
+            </div>
 
-.Address h2 {
-    color: #092a49;
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 25px;
-}
+            <div className="terms-help-card">
+              <div className="terms-help-icon">
+                <i className="fas fa-gavel"></i>
+              </div>
+              <h4>Legal Inquiries?</h4>
+              <p>Contact our contracts and legal advisory team for assistance.</p>
+              <a href="mailto:info@ygrgobalitservices.com" className="terms-btn-contact">
+                <i className="fas fa-envelope"></i> Contact Legal
+              </a>
+            </div>
 
-.Address h4 {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    color: #092a49;
-    font-size: 18px;
-    border-bottom: 2px solid #1a73e8;
-    display: inline-block;
-    padding-bottom: 5px;
-}
+            <div style={{ textAlign: 'center', marginTop: '4px' }}>
+              <button 
+                onClick={handlePrint}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '0.8125rem',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <i className="fas fa-print"></i> Print Document
+              </button>
+            </div>
+          </aside>
 
-.Address p {
-    font-size: 16px;
-    color: #797979;
-    line-height: 1.6;
-}
+          {/* Right Column: Structured Legal Clauses */}
+          <main className="terms-main-content">
+            {/* 1. Acceptance of Terms */}
+            <article id="acceptance" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-check-circle"></i>
+                </div>
+                <h2>1. Acceptance of Terms</h2>
+              </div>
+              <p className="terms-lead-text">
+                Welcome to <strong>YGR Gobal IT Services Pvt. Ltd.</strong> (“YGR”, “we”, “our”, or “us”). By visiting our website (<code>ygrgobalitservices.com</code>), using our client dashboards, registering for training programs, or submitting applications via our candidate examination portal, you agree to comply with and be legally bound by these Terms of Service.
+              </p>
+              <p>
+                If you do not agree to these terms in their entirety, you must discontinue your use of our websites, platforms, and services immediately.
+              </p>
+              <div className="terms-callout-box">
+                <p>
+                  <strong>Amendments:</strong> We reserve the right to revise or update these terms at our sole discretion. Any modifications take effect upon publication on this page with an updated timestamp.
+                </p>
+              </div>
+            </article>
 
-.Address i {
-    color: #092a49;
-    margin-right: 6px;
-}
+            {/* 2. Services & Solutions */}
+            <article id="services" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-laptop-code"></i>
+                </div>
+                <h2>2. Scope of Services & IT Solutions</h2>
+              </div>
+              <p>YGR Gobal IT Services provides a comprehensive suite of enterprise and educational services:</p>
+              <ul>
+                <li>Custom enterprise software development, web & mobile application engineering, and Cloud/DevOps infrastructure.</li>
+                <li>Digital marketing solutions, SEO campaigns, and UI/UX design architecture.</li>
+                <li>Professional IT training, full-stack certification courses, and live project workshops.</li>
+                <li>Global Internship programs, candidate assessments, skill evaluations, and industry recruitment pipelines.</li>
+              </ul>
+              <p>
+                We strive to maintain maximum platform reliability, but reserve the right to modify, suspend, or enhance any service feature without prior liability.
+              </p>
+            </article>
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .terms {
-        padding: 20px;
-    }
+            {/* 3. User & Candidate Conduct */}
+            <article id="user-obligations" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-user-check"></i>
+                </div>
+                <h2>3. User Responsibilities & Candidate Conduct</h2>
+              </div>
+              <p>By engaging with our platform and services, you agree and covenant that you shall:</p>
+              <ul>
+                <li>Provide accurate, genuine, and verified personal, educational, and contact details during registration.</li>
+                <li>Maintain the strict confidentiality of your candidate registration IDs, login tokens, and dashboard passwords.</li>
+                <li>Refrain from attempting unauthorized access, penetration testing, DDoS attacks, or scraping of our platform infrastructure.</li>
+                <li>Abide strictly by examination rules: candidates may only attempt an assessment once per invitation link. Impersonation, unauthorized tab-switching, copying question items, or distributing exam materials constitutes immediate grounds for disqualification.</li>
+              </ul>
+            </article>
 
-    .terms h2 {
-        font-size: 24px;
-    }
+            {/* 4. Payments & Refunds */}
+            <article id="payments-refunds" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-credit-card"></i>
+                </div>
+                <h2>4. Payment, Fees & Refund Policy</h2>
+              </div>
+              <p>
+                Payments for training modules, project registrations, or internship examination processing fees are collected via authorized payment gateways (e.g., Razorpay) in Indian Rupees (INR) or designated foreign currencies:
+              </p>
+              <ul>
+                <li><strong>Full Payment:</strong> Fees must be received in full before portal access, exam slots, or program onboarding can be granted.</li>
+                <li><strong>Non-Refundable Policy:</strong> Internship examination evaluation and registration fees are non-refundable once an assessment link is dispatched or an exam attempt is initiated.</li>
+                <li><strong>Billing Discrepancies:</strong> In the rare event of duplicate payment debits, candidates may email <a href="mailto:info@ygrgobalitservices.com">info@ygrgobalitservices.com</a> with transaction references within 7 business days for prompt reconciliation.</li>
+              </ul>
+              <div className="terms-callout-box warning">
+                <p>
+                  <strong>Notice:</strong> YGR Gobal IT Services reserves the right to modify fee structures and discount schedules at any time prior to an individual enrollment confirmation.
+                </p>
+              </div>
+            </article>
 
-    .terms h4 {
-        font-size: 16px;
-    }
+            {/* 5. Intellectual Property */}
+            <article id="intellectual-property" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-copyright"></i>
+                </div>
+                <h2>5. Intellectual Property Rights</h2>
+              </div>
+              <p>
+                All materials contained within our websites and portals—including software code, examination question banks, design assets, course syllabi, logos, and proprietary frameworks—are the exclusive intellectual property of <strong>YGR Gobal IT Services Pvt. Ltd.</strong> and protected by Indian and international copyright and trademark laws.
+              </p>
+              <p>
+                You are granted a revocable, non-exclusive, non-transferable license to access course materials solely for individual personal learning. No part of our platform may be copied, reproduced, repackaged, or commercialized without prior written consent.
+              </p>
+            </article>
 
-    .terms p {
-        font-size: 14px;
-    }
+            {/* 6. Disclaimers & Warranties */}
+            <article id="disclaimers" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2>6. Disclaimer of Warranties</h2>
+              </div>
+              <p>
+                Our services, assessments, and platforms are provided strictly on an <strong>“AS IS”</strong> and <strong>“AS AVAILABLE”</strong> basis without representations or warranties of any kind, whether express or implied.
+              </p>
+              <ul>
+                <li>We do not warrant uninterrupted, error-free operation or that defects will be corrected instantaneously.</li>
+                <li>While our internship and corporate training programs provide industry skills, enrollment does not guarantee employment or placement offers.</li>
+              </ul>
+            </article>
 
-    .Address {
-        padding: 15px 20px;
-    }
+            {/* 7. Limitation of Liability */}
+            <article id="liability" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-shield-alt"></i>
+                </div>
+                <h2>7. Limitation of Liability</h2>
+              </div>
+              <p>
+                To the fullest extent permissible by applicable law, in no event shall YGR Gobal IT Services Pvt. Ltd., its directors, officers, or staff be liable for any indirect, punitive, special, incidental, or consequential damages resulting from your access to or inability to use our platform.
+              </p>
+            </article>
 
-    .Address h2 {
-        font-size: 20px;
-        margin-bottom: 20px;
-    }
+            {/* 8. Account Termination */}
+            <article id="termination" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-ban"></i>
+                </div>
+                <h2>8. Termination & Suspension</h2>
+              </div>
+              <p>
+                We reserve the right to suspend or terminate your portal access, candidate registration, or course enrollment without notice if you violate any provision of these Terms of Service or engage in academic misconduct.
+              </p>
+            </article>
 
-    .Address h4 {
-        font-size: 16px;
-        margin-top: 15px;
-        margin-bottom: 8px;
-    }
+            {/* 9. Governing Law */}
+            <article id="governing-law" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-balance-scale"></i>
+                </div>
+                <h2>9. Governing Law & Dispute Resolution</h2>
+              </div>
+              <p>
+                These Terms of Service are governed by and construed in accordance with the laws of <strong>India</strong>. Any disputes, claims, or controversies arising out of or relating to these terms shall be subject to the exclusive jurisdiction of the competent courts in <strong>Hyderabad, Telangana, India</strong>.
+              </p>
+            </article>
 
-    .Address p {
-        font-size: 14px;
-    }
-}
-` }} />
+            {/* 10. Contact & Address */}
+            <article id="contact" className="terms-card-section">
+              <div className="terms-section-header">
+                <div className="terms-section-badge">
+                  <i className="fas fa-address-card"></i>
+                </div>
+                <h2>10. Contact Information & Legal Headquarters</h2>
+              </div>
+              <p>
+                For official correspondence, contractual clarifications, or formal notices, please reach out through our designated communications channels:
+              </p>
 
-<div className="terms">
-    <br />
-    <img src="" alt="Terms Image" /><br />
+              <div className="terms-contacts-grid">
+                <div className="terms-info-block">
+                  <div className="terms-info-icon"><i className="fas fa-envelope"></i></div>
+                  <div className="terms-info-content">
+                    <h4>Official Email</h4>
+                    <p><a href="mailto:info@ygrgobalitservices.com">info@ygrgobalitservices.com</a></p>
+                    <p><a href="mailto:hr@ygrgobalitservices.com">hr@ygrgobalitservices.com</a></p>
+                  </div>
+                </div>
 
-    <h2>Terms of Use </h2>
-      <h4>1.Acceptance of Terms :</h4>
-    <p>-By using our website and services, you agree to comply with and be bound by these Terms of Use and our Privacy Policy.<br /> 
-         We reserve the right to modify these terms at any time without prior notice.</p>
-      <h4>2.Services Provided :</h4> 
-      <p>-We offer various IT training programs, workshops, and consulting services.<br /> The information on this website is for general purposes only and may be updated or changed without prior notice.</p> 
-     <h4>3 User Responsibilities :</h4> 
-     <p>-By using our website, you agree that you will:<br /> Provide accurate and complete information when registering for any courses or services. Not misuse, copy, or distribute our course materials without prior consent.<br /> Not engage in any activities that may harm the website, such as hacking, spamming, or attempting to gain unauthorized access.</p>
-      <h4>4.Payment & Refund Policy:</h4>
-      <p>-Fees for training programs must be paid in full before the start of the course unless otherwise agreed. Refunds are subject to our Cancellation & Refund Policy, available on our website. We reserve the right to modify course fees and offerings without prior notice.</p>
-      <h4>5.Intellectual Property Rights :</h4>
-      <p>-All content, including text, images, course materials, and logos, are the property of YGR GOBAL IT Services and are protected under copyright laws. You may not copy, reproduce, or distribute any content without prior written permission.</p>
-      <h4> 6.Disclaimer of Warranties :</h4>
-      <p>- Our training services are provided "as is" without any guarantees or warranties. We do not guarantee job placement after completing any course.</p>
-      <h4> 7.Limitation of Liability:</h4>
-      <p>- YGR GOBAL IT Services is not liable for any direct, indirect, or incidental damages arising from the use of our services or website.</p>
-     <h4> 8.Termination:</h4>
-     <p>- We reserve the right to terminate or restrict access to our services for users who violate these Terms of Use.</p>
-      <h4> 9.Governing Law:</h4>
-      <p>- These Terms of Use are governed by the laws of India and the jurisdiction of Hyderabad, Telangana. Any disputes shall be resolved in the courts of Kukatpally (KPHB), Hyderabad.</p> 
-      <h4>10. Contact Information:</h4>
-      <p>- If you have any questions regarding these Terms of Use, please contact us at:<br /><strong>📧 Email: <a href="mailto:hr@ygrgobalitservice.com"> hr@ygrgobalitservice.com </a><br />📞 Phone: <a href="917794053340">+91 77940 53340</a> <br />📍 Address,1st Floor, Trinity Corporate, KPHB, Hyderabad.</strong></p>
-</div>
+                <div className="terms-info-block">
+                  <div className="terms-info-icon"><i className="fas fa-phone-alt"></i></div>
+                  <div className="terms-info-content">
+                    <h4>Direct Telephone</h4>
+                    <p><a href="tel:+917794053340">+91 77940 53340</a></p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748b' }}>Mon – Fri: 9:30 AM – 6:30 PM IST</p>
+                  </div>
+                </div>
+              </div>
 
-<div className="Address">
-    <h2>📍 Address</h2>
+              <div className="terms-offices-grid">
+                <div className="terms-office-card">
+                  <span className="terms-office-tag head">Registered Head Office</span>
+                  <h3>Corporate Headquarters</h3>
+                  <address>
+                    1st Floor, Manjeera Trinity Corporate, Unit No. 114,<br />
+                    Next to Lulu Mall, Kukatpally Housing Board Colony,<br />
+                    Kukatpally, Hyderabad, Telangana 500072, India
+                  </address>
+                </div>
 
-    <h4>Head Office</h4> 
-    <p><i className="fa fa-map-marker-alt"></i> 
-       1st Floor, Manjeera Trinity Corporate, Unit No. 114,<br />
-       Next to Lulu Mall, Kukatpally Housing Board Colony,<br />
-       Kukatpally, Hyderabad, Telangana 500072
-    </p>
-
-    <h4>Our Branch Office</h4>
-    <p><i className="fa fa-map-marker-alt"></i> 
-       H.No. 15-26-101, 4th Floor, Road No. 2,<br />
-       KPHB Colony, Near KPHB Metro Station, Hyd-72.
-    </p>
-</div>
-
-
-
-
-        </>
-    );
+                <div className="terms-office-card">
+                  <span className="terms-office-tag branch">Regional Training Centre</span>
+                  <h3>KPHB Branch Facility</h3>
+                  <address>
+                    H.No. 15-26-101, 4th Floor, Road No. 2,<br />
+                    KPHB Colony, Near KPHB Metro Station,<br />
+                    Hyderabad, Telangana 500072, India
+                  </address>
+                </div>
+              </div>
+            </article>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Terms;

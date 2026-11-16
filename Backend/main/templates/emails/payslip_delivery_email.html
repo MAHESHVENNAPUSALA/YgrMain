@@ -1,0 +1,28 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear {{ employee_name }},</p>
+
+<p>Your salary statement for <strong>{{ month_name }} {{ year }}</strong> has been approved and published by the Human Resources &amp; Payroll department.</p>
+
+<div class="candidate-details">
+    <p><strong>Pay Period:</strong> {{ month_name }} {{ year }}</p>
+    <p><strong>Employee ID:</strong> {{ employee_emp_id|default:"—" }}</p>
+    <p><strong>Designation:</strong> {{ designation|default:"Staff" }}</p>
+    <p><strong>Gross Earnings:</strong> &#8377; {{ gross_salary }}</p>
+    <p><strong>Total Deductions:</strong> &#8377; {{ total_deductions }}</p>
+    <p><strong>Net Salary:</strong> <span style="color: #16a34a; font-weight: 700;">&#8377; {{ net_salary }}</span></p>
+</div>
+
+<p>Your official salary slip PDF is attached to this email. Please review the detailed breakdown and maintain this record for your tax filing and personal accounting.</p>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ site_url }}/employee/dashboard" class="btn">View on Employee Dashboard</a>
+</div>
+
+<p>If you notice any discrepancies in your attendance or salary computations, please notify Human Resources immediately.</p>
+
+<p>Warm Regards,<br>
+<strong>Human Resources &amp; Payroll Operations</strong><br>
+YGR Global IT Services Pvt. Ltd.</p>
+{% endblock %}

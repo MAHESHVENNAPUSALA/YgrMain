@@ -1,0 +1,439 @@
+/* Joining Letters Management Styles */
+.jl-container {
+  padding: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+}
+
+/* Header */
+.jl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.jl-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+.jl-subtitle {
+  margin: 4px 0 0 0;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.jl-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.jl-btn-primary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px -1px rgba(15, 118, 110, 0.25);
+  transition: all 0.2s ease;
+}
+
+.jl-btn-primary:hover {
+  background: linear-gradient(135deg, #115e59 0%, #134e4a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px -1px rgba(15, 118, 110, 0.35);
+}
+
+/* Stats Cards */
+.jl-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.jl-stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.jl-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.jl-stat-icon.total { background: #f0fdfa; color: #0f766e; }
+.jl-stat-icon.draft { background: #f1f5f9; color: #475569; }
+.jl-stat-icon.approved { background: #dbeafe; color: #1d4ed8; }
+.jl-stat-icon.issued { background: #e0e7ff; color: #4338ca; }
+.jl-stat-icon.sent { background: #dcfce7; color: #16a34a; }
+
+.jl-stat-val {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.jl-stat-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Controls Bar */
+.jl-controls-bar {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.jl-search-box {
+  flex: 1;
+  min-width: 240px;
+}
+
+.jl-input {
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.jl-input:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+}
+
+.jl-status-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.jl-filter-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.jl-filter-btn.active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Table Container */
+.jl-table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.jl-table-scroll {
+  overflow-x: auto;
+}
+
+.jl-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.jl-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.jl-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.jl-table tr:hover td {
+  background: #f8fafc;
+}
+
+/* Badges */
+.jl-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.jl-badge.Draft { background: #f1f5f9; color: #475569; }
+.jl-badge.Approved { background: #dbeafe; color: #1d4ed8; }
+.jl-badge.Issued { background: #e0e7ff; color: #3730a3; }
+.jl-badge.Sent { background: #dcfce7; color: #15803d; }
+
+.jl-email-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.jl-email-badge.Sent { background: #dcfce7; color: #15803d; }
+.jl-email-badge.Failed { background: #fee2e2; color: #b91c1c; }
+.jl-email-badge.Sending { background: #fef3c7; color: #b45309; }
+.jl-email-badge.NotSent { background: #f1f5f9; color: #64748b; }
+
+/* Table Action Buttons */
+.jl-actions-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.jl-action-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.jl-action-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.jl-action-btn.primary {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.jl-action-btn.primary:hover {
+  background: #115e59;
+}
+
+.jl-action-btn.danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.jl-action-btn.danger:hover {
+  background: #fee2e2;
+}
+
+/* Modals */
+.jl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.jl-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 660px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.jl-modal.preview-modal {
+  max-width: 860px;
+}
+
+.jl-modal-header {
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #0f172a 0%, #134e4a 100%);
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.jl-modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.jl-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.jl-modal-close:hover {
+  color: #ffffff;
+}
+
+.jl-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.jl-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.jl-form-row.three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.jl-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.jl-select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+}
+
+.jl-select:focus {
+  border-color: #0f766e;
+}
+
+.jl-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  resize: vertical;
+  min-height: 70px;
+}
+
+.jl-modal-footer {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.jl-preview-frame {
+  width: 100%;
+  height: 580px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .jl-container {
+    padding: 16px;
+  }
+  .jl-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .jl-form-row, .jl-form-row.three {
+    grid-template-columns: 1fr;
+  }
+  .jl-actions-cell {
+    flex-wrap: wrap;
+  }
+}

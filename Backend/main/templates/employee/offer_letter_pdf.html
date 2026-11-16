@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Offer Letter – {{ offer.candidate_name }} – {{ offer.reference_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 14mm 16mm 14mm 16mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            color: #1a2942;
+            line-height: 1.45;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            position: relative;
+        }
+
+        /* WATERMARK */
+        .watermark-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .watermark-wrap img {
+            width: 320px;
+            height: auto;
+            opacity: 0.06;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        .header-outer {
+            border-bottom: 2.5px solid #1a2942;
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-logo-cell {
+            width: 120px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .header-logo-cell img {
+            width: 85px;
+            height: auto;
+        }
+
+        .header-center-cell {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .company-name {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #1a2942;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .company-tagline {
+            font-size: 7.5pt;
+            color: #5e7a99;
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .header-right-cell {
+            width: 140px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .doc-badge {
+            display: inline-block;
+            background: #1a2942;
+            color: #ffffff;
+            font-size: 9pt;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 3px;
+            margin-bottom: 3px;
+        }
+
+        /* META BAR */
+        .meta-bar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            font-size: 8pt;
+            border-bottom: 1px solid #dce4ec;
+            padding-bottom: 6px;
+        }
+
+        .meta-bar td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        /* CANDIDATE INFO BOX */
+        .candidate-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3.5px solid #1a2942;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 8.5pt;
+        }
+
+        .candidate-name {
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        /* SUBJECT & SALUTATION */
+        .subject-line {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #1a2942;
+            margin: 10px 0 8px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+
+        .paragraph {
+            margin: 6px 0;
+            text-align: justify;
+        }
+
+        /* SECTION HEADINGS */
+        .section-head {
+            font-size: 8.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #1a2942;
+            background: #eef3f8;
+            padding: 4px 8px;
+            margin: 10px 0 6px 0;
+            border-left: 3px solid #1a2942;
+        }
+
+        /* DETAILS TABLE */
+        .info-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 8pt;
+        }
+
+        .info-tbl td {
+            padding: 4px 7px;
+            border: 0.5px solid #dce4ec;
+            vertical-align: middle;
+        }
+
+        .info-tbl .lbl {
+            width: 25%;
+            font-weight: bold;
+            color: #5e7a99;
+            background: #f8fafc;
+            text-transform: uppercase;
+            font-size: 7pt;
+            letter-spacing: 0.3px;
+        }
+
+        .info-tbl .val {
+            width: 25%;
+            color: #1a2942;
+            font-weight: 500;
+        }
+
+        /* SALARY TABLE */
+        .salary-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 8pt;
+        }
+
+        .salary-tbl th {
+            background: #1a2942;
+            color: #ffffff;
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 5px 8px;
+            text-align: left;
+        }
+
+        .salary-tbl td {
+            padding: 4px 8px;
+            border: 0.5px solid #dce4ec;
+        }
+
+        .salary-tbl .num {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .salary-tbl .total-row td {
+            background: #f1f5f9;
+            font-weight: bold;
+            color: #1a2942;
+            border-top: 1.5px solid #1a2942;
+        }
+
+        /* SIGNATURE SECTION */
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .sig-cell {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 10px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #1a2942;
+            width: 180px;
+            margin-top: 40px;
+            padding-top: 4px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #1a2942;
+        }
+
+        .sig-title {
+            font-size: 7pt;
+            color: #64748b;
+        }
+
+        /* FOOTER */
+        .footer-note {
+            margin-top: 15px;
+            padding-top: 6px;
+            border-top: 0.5px solid #cbd5e1;
+            font-size: 6.5pt;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- WATERMARK -->
+    {% if logo_data_uri %}
+    <div class="watermark-wrap">
+        <img src="{{ logo_data_uri }}" alt="" />
+    </div>
+    {% endif %}
+
+    <div class="content">
+        <!-- HEADER -->
+        <div class="header-outer">
+            <table class="header-table">
+                <tr>
+                    <td class="header-logo-cell">
+                        {% if logo_data_uri %}
+                        <img src="{{ logo_data_uri }}" alt="YGR Logo" />
+                        {% else %}
+                        <div style="font-size:20pt; font-weight:bold; color:#1a2942;">YGR</div>
+                        {% endif %}
+                    </td>
+                    <td class="header-center-cell">
+                        <div class="company-name">YGR Gobal IT Services</div>
+                        <div class="company-tagline">Human Resources Department &bull; Hyderabad, Telangana, India</div>
+                        <div class="company-tagline">contact@ygrgobalitservices.com &bull; www.ygrgobalitservices.com</div>
+                    </td>
+                    <td class="header-right-cell">
+                        <div class="doc-badge">Offer Letter</div>
+                        <div style="font-size:7.5pt; color:#64748b; margin-top:3px;">CONFIDENTIAL</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- META BAR -->
+        <table class="meta-bar">
+            <tr>
+                <td style="text-align: left;">
+                    <strong>Ref No:</strong> {{ offer.reference_number }}
+                </td>
+                <td style="text-align: right;">
+                    <strong>Date of Issue:</strong> {{ offer.created_at|date:"F d, Y" }}
+                </td>
+            </tr>
+        </table>
+
+        <!-- CANDIDATE DETAILS BOX -->
+        <div class="candidate-box">
+            <div class="candidate-name">{{ offer.candidate_name }}</div>
+            {% if offer.candidate_address %}
+            <div>{{ offer.candidate_address|linebreaksbr }}</div>
+            {% endif %}
+            <div>Email: {{ offer.candidate_email }}{% if offer.candidate_phone %} &bull; Phone: {{ offer.candidate_phone }}{% endif %}</div>
+        </div>
+
+        <!-- SUBJECT -->
+        <div class="subject-line">
+            SUBJECT: OFFER OF EMPLOYMENT FOR THE POSITION OF {{ offer.job_title|upper }}
+        </div>
+
+        <div class="paragraph">
+            Dear <strong>{{ offer.candidate_name }}</strong>,
+        </div>
+
+        <div class="paragraph">
+            We are pleased to offer you employment with <strong>YGR Gobal IT Services</strong> ("the Company") in the role of <strong>{{ offer.job_title }}</strong> within the <strong>{{ offer.department }}</strong> department. Following your interviews and assessments, our management was impressed by your expertise and looks forward to your contributions to our growing team.
+        </div>
+
+        <!-- EMPLOYMENT TERMS -->
+        <div class="section-head">1. Position & Appointment Details</div>
+        <table class="info-tbl">
+            <tr>
+                <td class="lbl">Designation / Role</td>
+                <td class="val">{{ offer.job_title }}</td>
+                <td class="lbl">Department</td>
+                <td class="val">{{ offer.department }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Employment Type</td>
+                <td class="val">{{ offer.employment_type }}</td>
+                <td class="lbl">Work Location</td>
+                <td class="val">{{ offer.work_location }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Proposed Joining Date</td>
+                <td class="val"><strong>{{ offer.joining_date|date:"F d, Y" }}</strong></td>
+                <td class="lbl">Reporting Manager</td>
+                <td class="val">{{ offer.reporting_manager_name|default:"Department Head" }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">Probation Period</td>
+                <td class="val">{{ offer.probation_period_months }} Months</td>
+                <td class="lbl">Notice Period</td>
+                <td class="val">{{ offer.notice_period_days }} Days</td>
+            </tr>
+        </table>
+
+        <!-- COMPENSATION DETAILS -->
+        <div class="section-head">2. Compensation & Benefits Structure</div>
+        <div class="paragraph" style="font-size:8pt; margin-bottom:6px;">
+            Your Total Cost to Company (CTC) will be <strong>INR {{ offer.offered_ctc|floatformat:2 }} per annum</strong>. The detailed indicative breakdown of your annual and monthly compensation is outlined below:
+        </div>
+
+        <table class="salary-tbl">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Salary Component</th>
+                    <th style="width: 25%; text-align: right;">Monthly (INR)</th>
+                    <th style="width: 25%; text-align: right;">Annual (INR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Basic Salary</td>
+                    <td class="num">{{ offer.basic_salary|floatformat:2 }}</td>
+                    <td class="num">{{ offer.basic_salary|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>House Rent Allowance (HRA)</td>
+                    <td class="num">{{ offer.hra|floatformat:2 }}</td>
+                    <td class="num">{{ offer.hra|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Special / Performance Allowance</td>
+                    <td class="num">{{ offer.special_allowance|floatformat:2 }}</td>
+                    <td class="num">{{ offer.special_allowance|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Employer Provident Fund (PF)</td>
+                    <td class="num">{{ offer.provident_fund|floatformat:2 }}</td>
+                    <td class="num">{{ offer.provident_fund|floatformat:2 }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>Total Cost to Company (CTC)</strong></td>
+                    <td class="num"><strong>INR {{ offer.monthly_gross|floatformat:2 }}</strong></td>
+                    <td class="num"><strong>INR {{ offer.offered_ctc|floatformat:2 }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TERMS AND ACCEPTANCE -->
+        <div class="section-head">3. Terms of Employment & Acceptance</div>
+        <div class="paragraph">
+            {% if offer.terms_and_conditions %}
+                {{ offer.terms_and_conditions|linebreaksbr }}
+            {% else %}
+                This offer is subject to satisfactory completion of background verification, reference checks, and submission of mandatory statutory documents (educational transcripts, photo ID, PAN, and proof of address) upon joining. You will be bound by company policies, employee code of conduct, and confidentiality agreements.
+            {% endif %}
+        </div>
+        <div class="paragraph">
+            This offer remains valid until <strong>{{ offer.offer_validity_date|default:offer.joining_date|date:"F d, Y" }}</strong>. Please sign and return the duplicate copy of this letter or confirm your acceptance electronically to formalize your onboarding.
+        </div>
+
+        <!-- SIGNATURES -->
+        <table class="signatures-table">
+            <tr>
+                <td class="sig-cell" style="text-align: left;">
+                    <div>Yours sincerely,</div>
+                    <div style="font-weight: bold; color: #1a2942;">For YGR Gobal IT Services</div>
+                    <div class="sig-line">
+                        {% if offer.approved_by %}{{ offer.approved_by.get_full_name|default:offer.approved_by.username }}{% else %}HR Department{% endif %}
+                    </div>
+                    <div class="sig-title">Authorized Signatory &bull; Human Resources</div>
+                </td>
+                <td class="sig-cell" style="text-align: right;">
+                    <div style="text-align: left; display: inline-block;">
+                        <div>Accepted and Agreed:</div>
+                        <div style="font-weight: bold; color: #1a2942;">Candidate Acceptance</div>
+                        <div class="sig-line">
+                            Candidate Signature &amp; Date
+                        </div>
+                        <div class="sig-title">{{ offer.candidate_name }}</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="footer-note">
+            This is an official document generated by YGR Gobal IT Services HRMS Portal &bull; Ref: {{ offer.reference_number }}
+        </div>
+    </div>
+
+</body>
+</html>

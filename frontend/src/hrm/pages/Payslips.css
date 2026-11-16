@@ -1,0 +1,486 @@
+/* ===================================================================
+   Payslips Module — YGR HRMS
+   Professional Corporate Payslip Styles
+   =================================================================== */
+
+/* ─── TABS ─── */
+.payslip-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 22px;
+}
+
+.payslip-tab {
+  padding: 11px 24px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--transition-base);
+  letter-spacing: 0.2px;
+}
+
+.payslip-tab:hover {
+  color: var(--primary-color);
+}
+
+.payslip-tab.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* ─── FORM GRID ─── */
+.create-payslip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+/* ─── ACTION BUTTONS ─── */
+.btn-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: var(--transition-base);
+  background: #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.btn-action-icon:hover { opacity: 0.8; transform: translateY(-1px); }
+.btn-action-icon:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-action-icon.approve  { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.btn-action-icon.reject   { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.btn-action-icon.email    { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+.btn-action-icon.download { background: #e0f2fe; color: #075985; border-color: #bae6fd; }
+.btn-action-icon.edit     { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+
+/* ─── EMAIL STATUS PILLS ─── */
+.email-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.email-status-pill.sent    { background: #dcfce7; color: #15803d; }
+.email-status-pill.failed  { background: #fee2e2; color: #b91c1c; }
+.email-status-pill.sending { background: #e0f2fe; color: #0369a1; }
+.email-status-pill.notsent { background: #f1f5f9; color: #64748b; }
+
+/* ─── PAYSLIP PREVIEW CARD ─── */
+.payslip-preview-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.payslip-a4 {
+  width: 794px;          /* A4 at 96 dpi */
+  min-height: 900px;
+  background: #ffffff;
+  border: 1px solid #d1dce8;
+  box-shadow: 0 4px 24px rgba(26, 41, 66, 0.10);
+  padding: 40px 48px;
+  position: relative;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: #1a2942;
+  line-height: 1.5;
+  margin: 0 auto;
+}
+
+/* responsive scale-down on small screens */
+@media (max-width: 860px) {
+  .payslip-preview-wrapper {
+    overflow-x: scroll;
+  }
+}
+
+/* ── Watermark ── */
+.payslip-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  height: auto;
+  opacity: 0.06;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.payslip-a4 > *:not(.payslip-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header ── */
+.ps-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2.5px solid #1a2942;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.ps-header-logo {
+  flex: 0 0 auto;
+}
+
+.ps-header-logo img {
+  width: 80px;
+  height: auto;
+}
+
+.ps-header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.ps-company-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a2942;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  line-height: 1.1;
+  font-family: 'Poppins', 'Inter', Arial, sans-serif;
+}
+
+.ps-company-sub {
+  font-size: 10px;
+  color: #5e7a99;
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+}
+
+.ps-header-right {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.ps-badge {
+  display: inline-block;
+  background: #1a2942;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  margin-bottom: 6px;
+}
+
+.ps-period-label {
+  font-size: 9px;
+  color: #5e7a99;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+}
+
+.ps-period-value {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1a4731;
+  display: block;
+}
+
+/* ── Section Heading ── */
+.ps-section-head {
+  background: #1a2942;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  margin: 14px 0 0 0;
+}
+
+/* ── Info Table ── */
+.ps-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.ps-info-table td {
+  border: 1px solid #d1dce8;
+  padding: 5px 9px;
+  vertical-align: middle;
+}
+
+.ps-info-table td.lbl {
+  width: 18%;
+  background: #f0f4f8;
+  color: #3d5875;
+  font-weight: 700;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.ps-info-table td.val {
+  width: 32%;
+  color: #1a2942;
+  font-weight: 600;
+}
+
+/* ── Attendance Table ── */
+.ps-att-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 11.5px;
+}
+
+.ps-att-table th {
+  background: #e8eef5;
+  color: #1a2942;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid #d1dce8;
+  padding: 6px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ps-att-table td {
+  border: 1px solid #d1dce8;
+  padding: 6px 4px;
+  font-weight: 600;
+  color: #1a2942;
+}
+
+/* ── Salary Columns ── */
+.ps-salary-cols {
+  display: flex;
+  gap: 12px;
+  margin-top: 0;
+}
+
+.ps-sal-col {
+  flex: 1;
+}
+
+/* ── Earnings / Deductions table ── */
+.ps-sal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.ps-sal-table thead th {
+  background: #2d4a6d;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 6px 9px;
+  text-align: left;
+  border: 1px solid #2d4a6d;
+}
+
+.ps-sal-table thead th.amt-th {
+  text-align: right;
+  width: 90px;
+}
+
+.ps-sal-table tbody td {
+  border: 1px solid #d1dce8;
+  padding: 5px 9px;
+  color: #1a2942;
+}
+
+.ps-sal-table tbody td.amt {
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  width: 90px;
+}
+
+.ps-sal-table tbody tr.total-row td {
+  background: #f0f4f8;
+  font-weight: 800;
+  border-top: 2px solid #a0b3c8;
+  color: #1a2942;
+}
+
+.ps-sal-table tbody tr.total-row td.amt {
+  color: #1a4731;
+}
+
+/* ── Net Salary Box ── */
+.ps-net-box {
+  border: 2px solid #1a2942;
+  background: #f0f4f8;
+  padding: 12px 18px;
+  margin: 14px 0 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ps-net-left .ps-net-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1a2942;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+}
+
+.ps-net-left .ps-net-words {
+  font-size: 10px;
+  color: #3d5875;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.ps-net-amount {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1a4731;
+  letter-spacing: -0.5px;
+  font-family: 'Poppins', 'Inter', Arial, sans-serif;
+}
+
+/* ── Footer ── */
+.ps-footer {
+  border-top: 1.5px solid #d1dce8;
+  padding-top: 12px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ps-footer-meta {
+  font-size: 10.5px;
+  color: #5e7a99;
+  line-height: 1.7;
+}
+
+.ps-sign-block {
+  text-align: right;
+}
+
+.ps-sign-line {
+  display: inline-block;
+  border-top: 1px solid #5e7a99;
+  width: 160px;
+  padding-top: 4px;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #1a2942;
+  margin-top: 28px;
+}
+
+.ps-sign-sub {
+  font-size: 9px;
+  font-weight: normal;
+  color: #5e7a99;
+  display: block;
+}
+
+.ps-disclaimer {
+  font-size: 9.5px;
+  color: #94a3b8;
+  text-align: center;
+  border-top: 1px dashed #d1dce8;
+  padding-top: 7px;
+  margin-top: 12px;
+}
+
+/* ─── TIMELINE ─── */
+.payslip-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.payslip-timeline-item {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.payslip-timeline-badge {
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  height: fit-content;
+  white-space: nowrap;
+}
+
+.payslip-timeline-badge.approve    { background: #dcfce7; color: #166534; }
+.payslip-timeline-badge.reject     { background: #fee2e2; color: #991b1b; }
+.payslip-timeline-badge.generate   { background: #e0f2fe; color: #0369a1; }
+.payslip-timeline-badge.regenerate { background: #fef3c7; color: #b45309; }
+.payslip-timeline-badge.email      { background: #e0e7ff; color: #3730a3; }
+.payslip-timeline-badge.download   { background: #f1f5f9; color: #475569; }
+.payslip-timeline-badge.paid       { background: #d1fae5; color: #065f46; }
+
+/* ─── SLIP DETAIL GRID (fallback small modal) ─── */
+.slip-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .slip-detail-grid { grid-template-columns: 1fr; }
+  .ps-salary-cols   { flex-direction: column; }
+  .ps-header        { flex-direction: column; text-align: center; gap: 8px; }
+  .ps-header-right  { text-align: center; }
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 5px 0;
+  font-size: 12.5px;
+}
+
+/* ─── MODAL FULL WIDTH ─── */
+.payslip-modal-wide {
+  max-width: 900px !important;
+}

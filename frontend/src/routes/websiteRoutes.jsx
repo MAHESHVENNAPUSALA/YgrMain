@@ -18,6 +18,9 @@ import ClientForm from '../website/pages/ClientForm';
 import JobApplication from '../website/internships/JobApplication';
 import RegisterInternship from '../website/internships/RegisterInternship';
 import CandidateExamGateway from '../website/pages/CandidateExamGateway';
+import Privacy from '../website/pages/Privacy';
+import Terms from '../website/pages/Terms';
+import Cookies from '../website/pages/Cookies';
 
 export const renderWebsiteRoutes = () => (
   <>
@@ -36,6 +39,9 @@ export const renderWebsiteRoutes = () => (
       <Route path={ROUTES.INTERNSHIP_DETAIL} element={<InternshipDetail />} />
       <Route path="/legacy/exampages/job_application" element={<JobApplication />} />
       <Route path={ROUTES.REGISTER_INTERNSHIP} element={<RegisterInternship />} />
+      <Route path={ROUTES.PRIVACY} element={<Privacy />} />
+      <Route path={ROUTES.TERMS} element={<Terms />} />
+      <Route path={ROUTES.COOKIES} element={<Cookies />} />
     </Route>
     {/* Standalone Candidate Exam Page (No Header / No Footer) */}
     <Route path={ROUTES.CANDIDATE_EXAM} element={<CandidateExamGateway />} />

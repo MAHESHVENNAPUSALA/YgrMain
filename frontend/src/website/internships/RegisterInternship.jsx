@@ -85,6 +85,7 @@ const OriginalExampagesRegister = () => {
   const courseTitleParam = searchParams.get('title') || searchParams.get('course_title') || 'Software Engineering Internship';
 
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [registeredId, setRegisteredId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedResume, setSelectedResume] = useState(null);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -131,6 +132,11 @@ const OriginalExampagesRegister = () => {
       }));
     }
   }, [courseTitleParam, courseId]);
+
+  useEffect(() => {
+    // Preload Razorpay checkout script in background so payment modal opens instantly
+    loadRazorpayScript().catch(() => { });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -218,7 +224,7 @@ const OriginalExampagesRegister = () => {
         bodyFormData.append(key, formData[key]);
       }
     });
-    
+
     // Add default plan as it's required by the model
     bodyFormData.append('plan', 'Premium Internship Plan');
 
@@ -245,39 +251,50 @@ const OriginalExampagesRegister = () => {
           throw new Error("Server returned an invalid response format. Please try again or contact support.");
         }
         const registerData = await response.json();
-        
-      
-        const res = await loadRazorpayScript();
-        if (!res) {
-          setGlobalError('Failed to load payment gateway. Please check your internet connection.');
-          setIsSubmitting(false);
-          return;
+        if (registerData.registration_id) {
+          setRegisteredId(registerData.registration_id);
+          sessionStorage.setItem('candidateToken', registerData.registration_id);
+          localStorage.setItem('candidateToken', registerData.registration_id);
         }
 
-        
+
+        if (!window.Razorpay) {
+          const res = await loadRazorpayScript();
+          if (!res) {
+            setGlobalError('Failed to load payment gateway. Please check your internet connection.');
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         try {
           const registration_id = registerData.registration_id;
-          const orderResponse = await fetch(`/api/portal/internships/register/${registration_id}/create_payment/`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken 
-            },
-            body: JSON.stringify({ 
-              payment_type: formData.payment_type 
-            }),
-            credentials: 'same-origin',
-          });
-          const orderData = await orderResponse.json();
+          let orderData = registerData.order;
 
-          if (orderData.payment_bypassed) {
+          // If backend didn't return pre-created order, fallback to create_payment
+          if (!orderData) {
+            const orderResponse = await fetch(`/api/portal/internships/register/${registration_id}/create_payment/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+              },
+              body: JSON.stringify({
+                payment_type: formData.payment_type
+              }),
+              credentials: 'same-origin',
+            });
+            orderData = await orderResponse.json();
+          }
+
+          if (orderData && orderData.free_registration) {
             setSubmittedSuccess(true);
             setIsSubmitting(false);
             return;
           }
 
-          if (!orderResponse.ok || !orderData.order_id) {
-            setGlobalError(orderData.error || 'Failed to create payment order.');
+          if (!orderData || !orderData.order_id) {
+            setGlobalError(orderData?.error || 'Failed to create payment order.');
             setIsSubmitting(false);
             return;
           }
@@ -290,13 +307,25 @@ const OriginalExampagesRegister = () => {
             name: 'YGR Gobal IT Services',
             description: `Internship Registration: ${courseTitleParam}`,
             order_id: orderData.order_id,
+            notes: {
+              address: 'YGR Global IT Services Pvt. Ltd., Hyderabad'
+            },
+            config: {
+              display: {
+                blocks: {
+                  banks: { name: 'Pay via UPI / Bank', instruments: [{ method: 'upi' }, { method: 'netbanking' }] }
+                },
+                sequence: ['block.banks'],
+                preferences: { show_default_blocks: true }
+              }
+            },
             handler: async function (paymentResponse) {
               try {
                 const verifyResponse = await fetch(`/api/portal/internships/register/${registration_id}/verify_payment/`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,  
+                    'X-CSRFToken': csrfToken,
                   },
                   credentials: 'same-origin',
                   body: JSON.stringify({
@@ -442,15 +471,21 @@ const OriginalExampagesRegister = () => {
                 </div>
                 <h2 className="success-title">Internship Registration Successful!</h2>
                 <p className="success-message">
-                  We have successfully received your internship registration. 
-                  <strong> Your Login ID and Password have been sent to your registered Email Address. </strong> 
+                  We have successfully received your internship registration.
+                  <strong> Your Login ID and Password have been sent to your registered Email Address. </strong>
                   Please check your email and log in to your Candidate Dashboard to track your progress and access the technical exam.
                 </p>
 
                 <div className="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                  <Link to="/internships/candidate-login" className="btn-apply-internship" style={{ width: 'auto', textDecoration: 'none' }}>
-                    Login to Candidate Dashboard <i className="fas fa-arrow-right ms-2"></i>
-                  </Link>
+                  {registeredId ? (
+                    <Link to={`/internships/candidate-dashboard/${registeredId}`} className="btn-apply-internship" style={{ width: 'auto', textDecoration: 'none' }}>
+                      Go to My Candidate Dashboard <i className="fas fa-arrow-right ms-2"></i>
+                    </Link>
+                  ) : (
+                    <Link to="/internships/candidate-login" className="btn-apply-internship" style={{ width: 'auto', textDecoration: 'none' }}>
+                      Login to Candidate Dashboard <i className="fas fa-arrow-right ms-2"></i>
+                    </Link>
+                  )}
                   <Link to="/" className="btn-reset-internship" style={{ width: 'auto', textDecoration: 'none' }}>
                     Return Home
                   </Link>
@@ -488,7 +523,7 @@ const OriginalExampagesRegister = () => {
                       <div className="summary-item-val">Online / Offline / Hybrid</div>
                     </div>
                     <div className="summary-item">
-                      <div className="summary-item-label">Location</div>              
+                      <div className="summary-item-label">Location</div>
                       <div className="summary-item-val">Hyderabad HQ</div>
                     </div>
                     <div className="summary-item">
@@ -502,27 +537,7 @@ const OriginalExampagesRegister = () => {
                   </div>
                 </div>
 
-                {/* ── TRUST BADGES (6 Badges) ── */}
-                <div className="intern-trust-bar">
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-check-circle"></i> No Registration Fee
-                  </div>
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-user-tie"></i> Industry Mentors
-                  </div>
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-project-diagram"></i> Live Projects
-                  </div>
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-certificate"></i> Internship Certificate
-                  </div>
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-graduation-cap"></i> Placement Support
-                  </div>
-                  <div className="intern-trust-badge">
-                    <i className="fas fa-file-alt"></i> Resume Building
-                  </div>
-                </div>
+
 
                 {/* ── FORM GLASS CARD ── */}
                 <div className="intern-form-glass-card">

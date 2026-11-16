@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .header {
+            background-color: #0d6efd;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        .content p {
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background-color: #0d6efd;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 15px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(13, 110, 253, 0.25);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .candidate-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #0d6efd;
+            margin: 25px 0;
+        }
+        .candidate-details p {
+            margin: 8px 0;
+        }
+        .candidate-details strong {
+            display: inline-block;
+            width: 150px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>YGR Global IT Services Pvt. Ltd.</h1>
+        </div>
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+            <p><strong>YGR Global IT Services Pvt. Ltd.</strong></p>
+            <p>All-India Internship Selection Program</p>
+            <p><a href="{{ site_url }}" style="color: #0d6efd; text-decoration: none; font-weight: 600;">{{ display_domain|default:"ygrgobalitservices.com" }}</a> &bull; <a href="mailto:{{ contact_email|default:'info@ygrgobalitservices.com' }}" style="color: #0d6efd; text-decoration: none;">{{ contact_email|default:'info@ygrgobalitservices.com' }}</a></p>
+            <p style="margin-top: 20px; font-size: 11px;">This is an automated message, please do not reply directly to this email unless requested.</p>
+        </div>
+    </div>
+</body>
+</html>

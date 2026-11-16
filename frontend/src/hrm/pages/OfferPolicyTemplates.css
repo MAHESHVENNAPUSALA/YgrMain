@@ -1,0 +1,310 @@
+.offer-policy-page {
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #202b3c;
+}
+
+.offer-policy-header,
+.offer-policy-editor-head,
+.offer-policy-list-head,
+.offer-policy-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.offer-policy-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #d5dee8;
+  padding-bottom: 18px;
+}
+
+.offer-policy-header h1,
+.offer-policy-list h2,
+.offer-policy-editor h2 {
+  margin: 0;
+  color: #152b49;
+}
+
+.offer-policy-header h1 {
+  font-size: 1.55rem;
+}
+
+.offer-policy-header p,
+.offer-policy-editor-head p {
+  margin: 5px 0 0;
+  color: #617185;
+  font-size: 0.9rem;
+}
+
+.offer-policy-primary,
+.offer-policy-publish {
+  border: 0;
+  border-radius: 4px;
+  padding: 10px 14px;
+  color: #fff;
+  background: #19385e;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.offer-policy-primary:disabled,
+.offer-policy-publish:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.offer-policy-publish {
+  background: #176b61;
+}
+
+.offer-policy-layout {
+  display: grid;
+  grid-template-columns: minmax(330px, 0.8fr) minmax(520px, 1.7fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.offer-policy-list,
+.offer-policy-editor {
+  min-width: 0;
+  border-top: 3px solid #244b79;
+  background: #fff;
+  padding: 18px 0;
+}
+
+.offer-policy-list-head {
+  margin-bottom: 14px;
+}
+
+.offer-policy-list-head span {
+  color: #617185;
+  font-size: 0.86rem;
+}
+
+.offer-policy-list table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.offer-policy-list th,
+.offer-policy-list td {
+  border-bottom: 1px solid #e0e6ed;
+  padding: 10px 7px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.offer-policy-list th {
+  color: #5a6c81;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.offer-policy-list td small {
+  display: block;
+  color: #617185;
+  margin-top: 3px;
+}
+
+.offer-policy-status {
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: #edf2f7;
+  color: #42566f;
+  font-size: 0.72rem;
+}
+
+.offer-policy-status.published {
+  background: #e7f4ef;
+  color: #176b61;
+}
+
+.offer-policy-status.retired {
+  background: #f0f1f3;
+  color: #687485;
+}
+
+.offer-policy-empty {
+  color: #617185;
+  padding: 12px 0;
+}
+
+.offer-policy-text-button {
+  border: 0;
+  background: none;
+  color: #245c93;
+  padding: 5px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.offer-policy-editor-head {
+  margin-bottom: 18px;
+}
+
+.offer-policy-editor-head h2 {
+  font-size: 1.15rem;
+}
+
+.offer-policy-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 16px 0 22px;
+}
+
+.offer-policy-form-grid label,
+.offer-policy-section-fields label,
+.offer-policy-annexure {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #3a4b60;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.offer-policy-editor input:not([type="checkbox"]),
+.offer-policy-editor select,
+.offer-policy-editor textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  background: #fff;
+  color: #202b3c;
+  padding: 9px 10px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.offer-policy-editor textarea {
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.offer-policy-section-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.offer-policy-section-fields label span {
+  color: #253c5a;
+}
+
+.offer-policy-annexures,
+.offer-policy-review {
+  margin-top: 26px;
+  border-top: 1px solid #dbe3eb;
+  padding-top: 16px;
+}
+
+.offer-policy-annexures h3,
+.offer-policy-review h3 {
+  margin: 0 0 14px;
+  color: #152b49;
+  font-size: 1rem;
+}
+
+.offer-policy-annexure {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e3e8ee;
+}
+
+.offer-policy-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.offer-policy-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #176b61;
+}
+
+.offer-policy-review .offer-policy-form-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
+.offer-policy-actions {
+  justify-content: flex-start;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid #dbe3eb;
+}
+
+.offer-policy-preview {
+  max-height: 68vh;
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid #d5dee8;
+  background: #f7f9fb;
+}
+
+.offer-policy-preview > div:first-child span {
+  display: block;
+  margin-top: 5px;
+  color: #617185;
+  font-size: 0.82rem;
+}
+
+.offer-policy-preview section {
+  border-top: 1px solid #d5dee8;
+  margin-top: 16px;
+  padding-top: 12px;
+}
+
+.offer-policy-preview h3 {
+  color: #19385e;
+  font-size: 0.9rem;
+}
+
+.offer-policy-preview p {
+  white-space: pre-wrap;
+  color: #3d4d60;
+  line-height: 1.5;
+}
+
+@media (max-width: 950px) {
+  .offer-policy-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .offer-policy-page {
+    padding: 16px;
+  }
+
+  .offer-policy-header,
+  .offer-policy-editor-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .offer-policy-form-grid,
+  .offer-policy-section-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.offer-policy-help,
+.offer-policy-routing {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin: 8px 0 14px;
+}
+
+.offer-policy-routing {
+  color: #19385e;
+}
