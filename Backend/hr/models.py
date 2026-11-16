@@ -1334,12 +1334,19 @@ class Payslip(models.Model):
         limit_choices_to={'role__in': ['Employee', 'TeamLead', 'Manager']}
     )
 
+    payslip_number = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    salary_structure = models.ForeignKey('SalaryStructure', on_delete=models.SET_NULL, null=True, blank=True, related_name='payslips')
     month = models.PositiveSmallIntegerField(choices=MONTH_CHOICES)
     year = models.PositiveIntegerField()
+    pay_period_start = models.DateField(null=True, blank=True)
+    pay_period_end = models.DateField(null=True, blank=True)
 
     # Earnings
     basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hra = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="HRA")
+    food_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    travel_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -1362,6 +1369,7 @@ class Payslip(models.Model):
     # Status & Payment
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Draft')
     payment_date = models.DateField(null=True, blank=True)
+    bank_reference = models.CharField(max_length=100, blank=True, null=True)
     is_published = models.BooleanField(default=False)
 
     # Optional PDF upload
@@ -1425,15 +1433,27 @@ class Payslip(models.Model):
     def gross_salary(self):
         from decimal import Decimal
         return (
-            self.basic_salary + self.hra + self.transport_allowance +
-            self.medical_allowance + self.special_allowance + self.bonus
+            Decimal(str(self.basic_salary or 0)) +
+            Decimal(str(self.hra or 0)) +
+            Decimal(str(self.food_allowance or 0)) +
+            Decimal(str(self.travel_allowance or self.transport_allowance or 0)) +
+            Decimal(str(self.medical_allowance or 0)) +
+            Decimal(str(self.special_allowance or 0)) +
+            Decimal(str(self.bonus or 0)) +
+            Decimal(str(self.other_earnings or 0))
         )
 
     @property
     def total_deductions(self):
+        from decimal import Decimal
         return (
-            self.pf_deduction + self.esi_deduction + self.professional_tax +
-            self.tds + self.loan_deduction + self.other_deductions
+            Decimal(str(self.pf_deduction or 0)) +
+            Decimal(str(self.esi_deduction or 0)) +
+            Decimal(str(self.professional_tax or 0)) +
+            Decimal(str(self.tds or 0)) +
+            Decimal(str(self.loan_deduction or 0)) +
+            Decimal(str(self.other_deductions or 0)) +
+            Decimal(str(self.loss_of_pay or 0))
         )
 
     @property
@@ -1447,8 +1467,14 @@ class Payslip(models.Model):
         import calendar
         return calendar.month_name[self.month]
 
+    def save(self, *args, **kwargs):
+        if not self.payslip_number and self.employee_id and self.month and self.year:
+            emp_code = getattr(self.employee, 'emp_id', None) or f"EMP{self.employee_id}"
+            self.payslip_number = f"PAY/{self.year}/{self.month:02d}/{emp_code}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.employee.get_full_name() or self.employee.username} - {self.month_name} {self.year}"
+        return f"{self.employee.get_full_name() or self.employee.username} - {self.month_name} {self.year} ({self.payslip_number or 'No Number'})"
 
 
 class PayslipDownloadLog(models.Model):
@@ -1460,6 +1486,17 @@ class PayslipDownloadLog(models.Model):
     def __str__(self):
         return f"{self.downloaded_by.username} downloaded {self.payslip} at {self.downloaded_at}"
 
+
+class SalaryComponentBreakdown(models.Model):
+    payslip = models.ForeignKey(Payslip, on_delete=models.CASCADE, related_name='component_breakdowns')
+    component = models.ForeignKey('SalaryComponent', on_delete=models.SET_NULL, null=True, blank=True)
+    component_name = models.CharField(max_length=100)
+    component_type = models.CharField(max_length=30)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.payslip_id} - {self.component_name}: ₹{self.amount}"
 
 class Holiday(models.Model):
     """
@@ -1570,14 +1607,59 @@ class HolidayNotification(models.Model):
         return f"Notif → {self.recipient.username}: {self.message[:50]}"
 
 
+
+class SalaryComponent(models.Model):
+    COMPONENT_TYPES = [
+        ('EARNING', 'Earning'),
+        ('DEDUCTION', 'Employee Deduction'),
+        ('EMPLOYER_CONTRIBUTION', 'Employer Contribution'),
+    ]
+    CALCULATION_TYPES = [
+        ('FLAT', 'Flat Amount'),
+        ('PERCENTAGE_BASIC', 'Percentage of Basic Salary'),
+        ('PERCENTAGE_GROSS', 'Percentage of Gross Salary'),
+    ]
+
+    component_name = models.CharField(max_length=100)
+    component_code = models.CharField(max_length=50, unique=True)
+    component_type = models.CharField(max_length=30, choices=COMPONENT_TYPES)
+    calculation_type = models.CharField(max_length=30, choices=CALCULATION_TYPES, default='FLAT')
+    default_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_taxable = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=0)
+    description = models.TextField(blank=True, default='')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'component_name']
+
+    def __str__(self):
+        return f"{self.component_name} ({self.get_component_type_display()})"
+
+
 class SalaryStructure(models.Model):
+
     employee = models.OneToOneField('User', on_delete=models.CASCADE, related_name='salary_structure')
     effective_date = models.DateField(default=timezone.now)
+    effective_from = models.DateField(default=timezone.now)
+    effective_to = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_salary_structures')
+    
+    annual_ctc = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    monthly_ctc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     monthly_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     # Earnings structure (monthly bases)
     basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    food_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    travel_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_allowances = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    employer_pf = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -1615,9 +1697,11 @@ class SalaryStructure(models.Model):
         return (
             Decimal(str(self.basic_salary or 0)) +
             Decimal(str(self.hra or 0)) +
-            Decimal(str(self.transport_allowance or 0)) +
+            Decimal(str(self.food_allowance or 0)) +
+            Decimal(str(self.travel_allowance or self.transport_allowance or 0)) +
             Decimal(str(self.medical_allowance or 0)) +
             Decimal(str(self.special_allowance or 0)) +
+            Decimal(str(self.other_allowances or 0)) +
             Decimal(str(self.bonus or 0))
         )
 
@@ -1648,9 +1732,15 @@ class SalaryHistory(models.Model):
     revised_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='revised_salaries')
     reason = models.CharField(max_length=255, blank=True, default='Salary Revision')
     
+    annual_ctc = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    monthly_ctc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     monthly_gross = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     hra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    food_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    travel_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    other_allowances = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    employer_pf = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     transport_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     medical_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     special_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -2426,3 +2516,93 @@ class JoiningLetter(models.Model):
 
 
 
+
+
+class RelievingLetter(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Pending Approval', 'Pending Approval'),
+        ('Approved', 'Approved'),
+        ('Issued', 'Issued'),
+        ('Revoked', 'Revoked'),
+    ]
+    EMAIL_STATUS_CHOICES = [
+        ('Not Sent', 'Not Sent'),
+        ('Sending', 'Sending'),
+        ('Sent', 'Sent'),
+        ('Failed', 'Failed'),
+    ]
+    NOTICE_STATUS_CHOICES = [
+        ('Served', 'Notice Period Served'),
+        ('Waived', 'Notice Period Waived'),
+        ('Shortfall', 'Notice Period Shortfall'),
+    ]
+    CLEARANCE_STATUS_CHOICES = [
+        ('Completed', 'All Clearances Completed'),
+        ('Pending', 'Clearances Pending'),
+        ('Waived', 'Clearances Waived'),
+    ]
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='relieving_letters')
+    employee_name = models.CharField(max_length=150)
+    employee_email = models.EmailField()
+    employee_phone = models.CharField(max_length=20, blank=True, default='')
+    employee_address = models.TextField(blank=True, default='')
+    employee_id_number = models.CharField(max_length=50, blank=True, default='')
+
+    designation = models.CharField(max_length=150)
+    department = models.CharField(max_length=100)
+    employment_type = models.CharField(max_length=50, default='Full-time')
+    reporting_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinate_relieving')
+    reporting_manager_name = models.CharField(max_length=150, blank=True, default='')
+
+    date_of_joining = models.DateField()
+    last_working_day = models.DateField()
+    resignation_submitted_date = models.DateField(null=True, blank=True)
+    resignation_accepted_date = models.DateField(null=True, blank=True)
+
+    notice_period_months = models.PositiveIntegerField(default=3)
+    notice_period_days = models.PositiveIntegerField(default=90)
+    notice_period_status = models.CharField(max_length=50, choices=NOTICE_STATUS_CHOICES, default='Served')
+    clearance_status = models.CharField(max_length=50, choices=CLEARANCE_STATUS_CHOICES, default='Completed')
+    reason_for_leaving = models.TextField(blank=True, default='')
+
+    reference_number = models.CharField(max_length=100, unique=True)
+    issue_date = models.DateField(null=True, blank=True)
+    letter_content = models.TextField(blank=True, default='')
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Draft')
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_relieving_letters')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    issued_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='issued_relieving_letters')
+    issued_at = models.DateTimeField(null=True, blank=True)
+
+    pdf_file = models.FileField(upload_to='relieving_letters/', blank=True, null=True)
+
+    email_status = models.CharField(max_length=20, choices=EMAIL_STATUS_CHOICES, default='Not Sent')
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error = models.TextField(blank=True, null=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_relieving_letters')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Relieving: {self.employee_name} ({self.reference_number}) - {self.status}"
+
+
+class RelievingLetterAudit(models.Model):
+    letter = models.ForeignKey(RelievingLetter, on_delete=models.CASCADE, related_name='audit_events')
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50)
+    details = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Audit {self.action} on {self.letter.reference_number}"

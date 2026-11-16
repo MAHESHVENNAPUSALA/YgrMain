@@ -12,7 +12,12 @@ export const payrollApi = {
   calculatePayroll: (params) => api.get('/api/payslips/calculate/', { params }),
   downloadPayslipPdf: (id) => api.get(`/api/payslips/${id}/download/`, { responseType: 'blob' }),
   getSalaryStructures: () => api.get('/api/salary-structures/'),
-  createSalaryStructure: (data) => api.post('/api/salary-structures/', data)
+  createSalaryStructure: (data) => api.post('/api/salary-structures/', data),
+  getSalaryComponents: (params) => api.get('/api/salary-components/', { params }),
+  createSalaryComponent: (data) => api.post('/api/salary-components/', data),
+  updateSalaryComponent: (id, data) => api.put(`/api/salary-components/${id}/`, data),
+  recordPayment: (id, data) => api.post(`/api/payslips/${id}/action/`, { action: 'record_payment', ...data }),
+  submitPayslipForApproval: (id) => api.post(`/api/payslips/${id}/action/`, { action: 'submit_for_approval' })
 };
 
 export default payrollApi;

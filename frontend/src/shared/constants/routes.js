@@ -73,6 +73,7 @@ export const ROUTES = {
   HRMS_MANAGER_APPROVED_LEAVES: '/manager-approved-leaves',
   HRMS_TL_APPROVED_LEAVES: '/tl-approved-leaves',
   HRMS_PAYSLIPS: '/payslips',
+  HRMS_RELIEVING_LETTERS: '/relieving-letters',
   HRMS_PAYROLL: '/finance/payroll',
   HRMS_INVOICES: '/finance/invoices',
   HRMS_CLIENT_CREATE: '/finance/clients/new',

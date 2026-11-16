@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Relieving Letter &ndash; {{ letter.employee_name }} &ndash; {{ letter.reference_number }}</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 12mm 15mm 12mm 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.5pt;
+            color: #1a2942;
+            line-height: 1.45;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        .content {
+            position: relative;
+        }
+
+        /* HEADER */
+        .header-outer {
+            border-bottom: 2.5px solid #1a2942;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-logo-cell {
+            width: 110px;
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .header-logo-cell img {
+            width: 75px;
+            height: auto;
+        }
+
+        .header-center-cell {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .company-name {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #1a2942;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .company-tagline {
+            font-size: 7.5pt;
+            color: #5e7a99;
+            margin-top: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .company-address {
+            font-size: 7pt;
+            color: #64748b;
+            margin-top: 2px;
+            line-height: 1.25;
+        }
+
+        .header-right-cell {
+            width: 140px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .doc-badge {
+            display: inline-block;
+            background: #0f766e;
+            color: #ffffff;
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin-bottom: 3px;
+        }
+
+        /* META BAR */
+        .meta-bar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 8pt;
+            border-bottom: 1px solid #dce4ec;
+            padding-bottom: 5px;
+        }
+
+        .meta-bar td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        /* EMPLOYEE BOX */
+        .employee-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3.5px solid #0f766e;
+            padding: 7px 10px;
+            margin-bottom: 10px;
+            font-size: 8pt;
+        }
+
+        .employee-name {
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        /* SUBJECT & SALUTATION */
+        .subject-line {
+            font-size: 9pt;
+            font-weight: bold;
+            color: #0f766e;
+            margin: 8px 0 6px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+
+        .paragraph {
+            margin: 6px 0;
+            text-align: justify;
+            font-size: 8.2pt;
+            line-height: 1.45;
+        }
+
+        /* SECTION HEADINGS */
+        .section-head {
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #0f766e;
+            background: #f0fdfa;
+            padding: 3px 6px;
+            margin: 8px 0 5px 0;
+            border-left: 3px solid #0f766e;
+        }
+
+        /* DETAILS TABLE */
+        .info-tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+            font-size: 7.5pt;
+        }
+
+        .info-tbl td {
+            padding: 3.5px 6px;
+            border: 0.5px solid #dce4ec;
+            vertical-align: middle;
+        }
+
+        .info-tbl .lbl {
+            width: 25%;
+            font-weight: bold;
+            color: #5e7a99;
+            background: #f8fafc;
+            text-transform: uppercase;
+            font-size: 6.8pt;
+            letter-spacing: 0.3px;
+        }
+
+        .info-tbl .val {
+            width: 25%;
+            color: #1a2942;
+            font-weight: 500;
+        }
+
+        /* SIGNATURE SECTION */
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+        }
+
+        .sig-cell {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 8px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #1a2942;
+            width: 170px;
+            margin-top: 36px;
+            padding-top: 4px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #1a2942;
+        }
+
+        .sig-title {
+            font-size: 6.8pt;
+            color: #64748b;
+        }
+
+        /* FOOTER */
+        .footer-note {
+            margin-top: 12px;
+            padding-top: 5px;
+            border-top: 0.5px solid #cbd5e1;
+            font-size: 6.5pt;
+            color: #94a3b8;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="content">
+    <!-- HEADER -->
+    <div class="header-outer">
+        <table class="header-table">
+            <tr>
+                <td class="header-logo-cell">
+                    {% if logo_data_uri %}
+                        <img src="{{ logo_data_uri }}" alt="YGR Logo" />
+                    {% endif %}
+                </td>
+                <td class="header-center-cell">
+                    <div class="company-name">YGR Global IT Services</div>
+                    <div class="company-tagline">Innovation &bull; Excellence &bull; Growth</div>
+                    <div class="company-address">
+                        H.No 1-98/9/3/46, 4th Floor, Silicon Valley, Madhapur, Hyderabad, Telangana &ndash; 500081<br/>
+                        CIN: U72200TG2020PTC145678 &bull; hr@ygrglobal.com &bull; www.ygrglobal.com
+                    </div>
+                </td>
+                <td class="header-right-cell">
+                    <div class="doc-badge">Relieving Letter</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- META BAR -->
+    <table class="meta-bar">
+        <tr>
+            <td style="width: 55%;">
+                <strong>Ref No:</strong> {{ letter.reference_number }}
+            </td>
+            <td style="width: 45%; text-align: right;">
+                <strong>Date of Issue:</strong> {{ letter.issue_date|default:today_date|date:"d F Y" }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- EMPLOYEE BOX -->
+    <div class="employee-box">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 60%; vertical-align: top;">
+                    <span class="employee-name">{{ letter.employee_name }}</span><br/>
+                    <strong>Employee ID:</strong> {{ letter.employee_id_number }}<br/>
+                    <strong>Designation:</strong> {{ letter.designation }}<br/>
+                    <strong>Department:</strong> {{ letter.department }}
+                </td>
+                <td style="width: 40%; vertical-align: top; text-align: right;">
+                    <strong>Employment Type:</strong> {{ letter.employment_type }}<br/>
+                    <strong>Reporting Manager:</strong> {{ letter.reporting_manager_name|default:"Management" }}<br/>
+                    <strong>Contact:</strong> {{ letter.employee_email }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- SUBJECT & SALUTATION -->
+    <div class="subject-line">
+        SUBJECT: RELIEVING ORDER &amp; SERVICE CERTIFICATE
+    </div>
+
+    <div class="paragraph" style="font-weight: bold; margin-bottom: 6px;">
+        To Whom It May Concern,
+    </div>
+
+    <div class="paragraph">
+        This is to certify that <strong>{{ letter.employee_name }}</strong> (Employee ID: <strong>{{ letter.employee_id_number }}</strong>) was employed with <strong>YGR Global IT Services</strong> from <strong>{{ letter.date_of_joining|date:"d F Y" }}</strong> to <strong>{{ letter.last_working_day|date:"d F Y" }}</strong>. During their tenure with the organization, they served as <strong>{{ letter.designation }}</strong> in the <strong>{{ letter.department }}</strong> department.
+    </div>
+
+    <div class="paragraph">
+        Consequent to their resignation, we confirm that {{ letter.employee_name }} has been relieved from their duties and responsibilities as an employee of YGR Global IT Services with effect from the close of business hours on <strong>{{ letter.last_working_day|date:"d F Y" }}</strong>.
+    </div>
+
+    <!-- SERVICE & CLEARANCE SUMMARY -->
+    <div class="section-head">Employment &amp; Exit Record</div>
+    <table class="info-tbl">
+        <tr>
+            <td class="lbl">Date of Joining</td>
+            <td class="val">{{ letter.date_of_joining|date:"d M Y" }}</td>
+            <td class="lbl">Last Working Day</td>
+            <td class="val"><strong>{{ letter.last_working_day|date:"d M Y" }}</strong></td>
+        </tr>
+        <tr>
+            <td class="lbl">Resignation Submitted</td>
+            <td class="val">{{ letter.resignation_submitted_date|default:"Record On File"|date:"d M Y" }}</td>
+            <td class="lbl">Resignation Accepted</td>
+            <td class="val">{{ letter.resignation_accepted_date|default:"Approved"|date:"d M Y" }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Notice Period Status</td>
+            <td class="val">{{ letter.get_notice_period_status_display|default:letter.notice_period_status }}</td>
+            <td class="lbl">Clearance &amp; Handover</td>
+            <td class="val">{{ letter.get_clearance_status_display|default:letter.clearance_status }}</td>
+        </tr>
+    </table>
+
+    <div class="paragraph">
+        The employee has successfully handed over all official company assets, intellectual property, project documentation, credentials, and responsibilities to the designated reporting authority. All applicable exit formalities and departmental clearances stand completed.
+    </div>
+
+    {% if letter.letter_content %}
+    <div class="paragraph">
+        {{ letter.letter_content|linebreaksbr }}
+    </div>
+    {% endif %}
+
+    <div class="paragraph">
+        We take this opportunity to thank <strong>{{ letter.employee_name }}</strong> for their valuable contributions and dedicated service during their tenure with YGR Global IT Services, and we wish them continued success in all their future professional and personal endeavors.
+    </div>
+
+    <!-- SIGNATURES TABLE -->
+    <table class="signatures-table">
+        <tr>
+            <td class="sig-cell">
+                <div class="sig-line">
+                    Employee Acknowledgement<br/>
+                    <span class="sig-title">{{ letter.employee_name }}<br/>Date: ________________________</span>
+                </div>
+            </td>
+            <td class="sig-cell" style="text-align: right;">
+                <div style="display: inline-block; text-align: left;">
+                    <div style="font-weight: bold; color: #1a2942; font-size: 7.8pt;">For YGR Global IT Services</div>
+                    <div class="sig-line">
+                        Authorized Signatory<br/>
+                        <span class="sig-title">
+                            Human Resources Department<br/>
+                            {% if letter.approved_by %}Approved by: {{ letter.approved_by.get_full_name|default:letter.approved_by.username }}<br/>{% endif %}
+                            Date: {{ letter.issue_date|default:today_date|date:"d F Y" }}
+                        </span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- FOOTER NOTE -->
+    <div class="footer-note">
+        This is an official employment record issued by YGR Global IT Services. Verification inquiries may be directed to hr@ygrglobal.com quoting reference number {{ letter.reference_number }}.
+    </div>
+</div>
+</body>
+</html>
+

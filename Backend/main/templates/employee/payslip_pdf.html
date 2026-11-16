@@ -349,6 +349,9 @@
                 <div class="payslip-badge">Payslip</div>
                 <span class="period-label">Pay Period</span>
                 <span class="period-value">{{ month_name }} {{ payslip.year }}</span>
+                {% if payslip.payslip_number %}
+                <span class="period-label" style="font-size: 6.5pt; color: #0f172a; margin-top: 1px;">{{ payslip.payslip_number }}</span>
+                {% endif %}
             </td>
         </tr>
     </table>
@@ -439,9 +442,15 @@
                             <td>House Rent Allowance (HRA)</td>
                             <td class="amt">{{ payslip.hra|floatformat:2 }}</td>
                         </tr>
+                        {% if payslip.food_allowance %}
                         <tr>
-                            <td>Transport Allowance</td>
-                            <td class="amt">{{ payslip.transport_allowance|floatformat:2 }}</td>
+                            <td>Food Allowance</td>
+                            <td class="amt">{{ payslip.food_allowance|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>{% if payslip.travel_allowance and not payslip.transport_allowance %}Travel Allowance{% else %}Transport / Travel Allowance{% endif %}</td>
+                            <td class="amt">{% if payslip.travel_allowance and not payslip.transport_allowance %}{{ payslip.travel_allowance|floatformat:2 }}{% else %}{{ payslip.transport_allowance|floatformat:2 }}{% endif %}</td>
                         </tr>
                         <tr>
                             <td>Medical Allowance</td>
@@ -493,8 +502,14 @@
                             <td>Loan / Advance Recovery</td>
                             <td class="amt">{{ payslip.loan_deduction|floatformat:2 }}</td>
                         </tr>
+                        {% if payslip.loss_of_pay %}
                         <tr>
-                            <td>Other Deductions / LOP</td>
+                            <td>Loss of Pay (LOP)</td>
+                            <td class="amt">{{ payslip.loss_of_pay|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <td>Other Authorized Deductions</td>
                             <td class="amt">{{ payslip.other_deductions|floatformat:2 }}</td>
                         </tr>
                         <tr class="subtotal-row">

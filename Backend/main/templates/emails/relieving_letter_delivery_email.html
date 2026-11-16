@@ -1,0 +1,36 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<p>Dear <strong>{{ employee_name }}</strong>,</p>
+
+<p>Please find attached your official <strong>Relieving Letter &amp; Service Certificate</strong> from <strong>YGR Global IT Services</strong>.</p>
+
+<p>We confirm that you have been relieved of your duties and responsibilities effective from the close of business hours on <strong>{{ last_working_day }}</strong>, subject to completion of all applicable exit and handover formalities.</p>
+
+<div class="candidate-details">
+    <p><strong>Employee Name:</strong> {{ employee_name }}</p>
+    {% if employee_id_number %}
+    <p><strong>Employee ID:</strong> {{ employee_id_number }}</p>
+    {% endif %}
+    <p><strong>Designation:</strong> {{ designation }}</p>
+    <p><strong>Department:</strong> {{ department }}</p>
+    <p><strong>Date of Joining:</strong> {{ date_of_joining }}</p>
+    <p><strong>Last Working Day:</strong> {{ last_working_day }}</p>
+    <p><strong>Notice Period Status:</strong> {{ notice_period_status }}</p>
+    <p><strong>Clearance Status:</strong> {{ clearance_status }}</p>
+    <p><strong>Document Ref No:</strong> {{ reference_number }}</p>
+</div>
+
+<p>The attached PDF document is your authoritative relieving certificate. You may also view and download this letter directly from your HRMS account under <strong>My Documents</strong>.</p>
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ site_url }}/my-documents" class="btn">Access Employment Documents</a>
+</div>
+
+<p>We sincerely appreciate your contributions during your tenure with YGR Global IT Services and wish you continued success and all the best in your future endeavors.</p>
+
+<p>Warm Regards,<br>
+<strong>Human Resources Department</strong><br>
+YGR Global IT Services</p>
+{% endblock %}
+

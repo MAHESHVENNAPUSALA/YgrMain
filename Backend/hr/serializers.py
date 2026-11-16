@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Attendance, Payslip, PayrollAuditLog, Task, Project, AttendanceCorrection, Leave, Holiday, SalaryStructure, SalaryHistory, DailyReport, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, Team, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, LeaveApprovalStep, ProjectReview, OfferLetter, JoiningLetter, JobApplication
+from .models import Attendance, Payslip, PayrollAuditLog, Task, Project, AttendanceCorrection, Leave, Holiday, SalaryStructure, SalaryHistory, DailyReport, HRSettings, ChatMessage, ChatRoom, GroupMessage, CallSession, Client, Service, Invoice, InvoiceItem, Question, Examuser, ExamSession, Result, Team, ProjectDocument, ProjectComment, ProjectAuditLog, Notification, LeaveApprovalStep, ProjectReview, OfferLetter, JoiningLetter, JobApplication, SalaryComponent, SalaryComponentBreakdown, RelievingLetter, RelievingLetterAudit
 
 User = get_user_model()
 
@@ -376,8 +376,15 @@ class PayslipSerializer(serializers.ModelSerializer):
             'employee',
             'employee_emp_id',
             'employee_email',
+            'payslip_number',
+            'salary_structure',
             'month',
             'year',
+            'pay_period_start',
+            'pay_period_end',
+            'food_allowance',
+            'travel_allowance',
+            'other_earnings',
             'basic_salary',
             'hra',
             'transport_allowance',
@@ -403,6 +410,7 @@ class PayslipSerializer(serializers.ModelSerializer):
             'sandwich_leave_days',
             'status',
             'payment_date',
+            'bank_reference',
             'is_published',
             'payslip_pdf',
             'employee_name',
@@ -858,3 +866,76 @@ class JoiningLetterSerializer(serializers.ModelSerializer):
         if obj.pdf_file:
             return obj.pdf_file.url
         return None
+
+
+class SalaryComponentSerializer(serializers.ModelSerializer):
+    component_type_display = serializers.CharField(source='get_component_type_display', read_only=True)
+    calculation_type_display = serializers.CharField(source='get_calculation_type_display', read_only=True)
+
+    class Meta:
+        model = SalaryComponent
+        fields = '__all__'
+
+
+class SalaryComponentBreakdownSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalaryComponentBreakdown
+        fields = '__all__'
+
+
+class RelievingLetterAuditSerializer(serializers.ModelSerializer):
+    actor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RelievingLetterAudit
+        fields = '__all__'
+
+    def get_actor_name(self, obj):
+        if obj.actor:
+            return obj.actor.get_full_name() or obj.actor.username
+        return 'System'
+
+
+class RelievingLetterSerializer(serializers.ModelSerializer):
+    approved_by_name = serializers.SerializerMethodField()
+    issued_by_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+    reporting_manager_display = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+    audit_events = RelievingLetterAuditSerializer(many=True, read_only=True)
+    can_issue = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RelievingLetter
+        fields = '__all__'
+
+    def get_approved_by_name(self, obj):
+        if obj.approved_by:
+            return obj.approved_by.get_full_name() or obj.approved_by.username
+        return None
+
+    def get_issued_by_name(self, obj):
+        if obj.issued_by:
+            return obj.issued_by.get_full_name() or obj.issued_by.username
+        return None
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return None
+
+    def get_reporting_manager_display(self, obj):
+        if obj.reporting_manager:
+            return obj.reporting_manager.get_full_name() or obj.reporting_manager.username
+        return obj.reporting_manager_name or 'Department Head'
+
+    def get_pdf_url(self, obj):
+        if obj.pdf_file:
+            return obj.pdf_file.url
+        return None
+
+    def get_can_issue(self, obj):
+        from django.utils import timezone
+        today = timezone.now().date()
+        # Can issue if status is Approved and today >= last_working_day
+        return obj.status == 'Approved' and (today >= obj.last_working_day)
